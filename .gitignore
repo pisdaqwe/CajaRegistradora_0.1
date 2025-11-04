@@ -1,0 +1,32 @@
+# ==========================
+#  CONFIGURACIÓN GENERAL
+# ==========================
+
+# Archivos de Eclipse
+.classpath
+.project
+.settings/
+
+# Archivos de compilación de Maven
+/target/
+/bin/
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de logs y temporales
+*.log
+*.tmp
+
+# Configuración sensible o local
+config.properties
+
+# Copias y salidas generadas
+/tickets/
+/reportes/
+/backups/
+
+# Archivos de control del entorno
+.idea/
+.vscode/
