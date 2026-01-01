@@ -1,96 +1,93 @@
 package ui.screens;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
+
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import model.Fichaje;
+import model.UsuarioRecordado;
 import service.FichajeFacade;
-import javax.swing.border.LineBorder;
+import service.UsuarioRecordadoService;
 
 public class LoginScreen extends JFrame {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private final FichajeFacade fichajeFacade;
+    private final FichajeFacade fichajeFacade;
+    private final UsuarioRecordadoService usuarioRecordadoService;
+    private final int idTerminal;
 
     private JTextField txtUsuario;
     private JTextArea txtTicket;
+    private JPanel panelBotonesRecordados;
 
-    public LoginScreen(FichajeFacade fichajeFacade) {
+    public LoginScreen(
+            FichajeFacade fichajeFacade,
+            UsuarioRecordadoService usuarioRecordadoService,
+            int idTerminal
+    ) {
         this.fichajeFacade = fichajeFacade;
+        this.usuarioRecordadoService = usuarioRecordadoService;
+        this.idTerminal = idTerminal;
+
         initUI();
+        cargarBotonesRecordados();
     }
 
     private void initUI() {
         setTitle("TPV - Identificación");
-        setSize(1280, 800);                 // ✔ para WindowBuilder
+        setSize(1280, 800);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         // =========================
-        // PANEL FONDO (pantalla completa)
+        // PANEL FONDO
         // =========================
         JPanel panelFondo = new JPanel(new BorderLayout());
         panelFondo.setBackground(new Color(30, 30, 30));
         setContentPane(panelFondo);
-     // Dentro de initUI, después de configurar el panelFondo
+
+        // =========================
+        // RELOJ
+        // =========================
         JLabel lblReloj = new JLabel();
         lblReloj.setFont(new Font("Monospaced", Font.BOLD, 18));
-        lblReloj.setForeground(new Color(200, 200, 200)); // Gris claro elegante
+        lblReloj.setForeground(new Color(200, 200, 200));
         lblReloj.setHorizontalAlignment(SwingConstants.RIGHT);
-        // Margen para que no pegue al borde de la pantalla
-        lblReloj.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 30)); 
-
+        lblReloj.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 30));
         panelFondo.add(lblReloj, BorderLayout.NORTH);
-
-        // Llamamos al motor del reloj
         iniciarReloj(lblReloj);
 
-     // =========================
-     // PANEL WRAPPER (Control de posición)
-     // =========================
-     JPanel panelWrapper = new JPanel(new GridBagLayout());
-     panelWrapper.setOpaque(false); 
-     // Lo mantenemos al ESTE para que esté en la zona derecha
-     panelFondo.add(panelWrapper, BorderLayout.EAST);
+        // =========================
+        // WRAPPER DERECHO
+        // =========================
+        JPanel panelWrapper = new JPanel(new GridBagLayout());
+        panelWrapper.setOpaque(false);
+        panelFondo.add(panelWrapper, BorderLayout.EAST);
 
-     GridBagConstraints gbc = new GridBagConstraints();
-     gbc.gridx = 0;
-     gbc.gridy = 0;
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.weighty = 1.0;
+        gbc.insets = new Insets(0, 0, 50, 40);
 
-     /* EXPLICACIÓN DE LOS CAMBIOS:
-        1. anchor = SOUTH: Empuja el componente hacia la parte inferior del espacio disponible.
-        2. weighty = 1.0: Le dice al layout que use todo el espacio vertical sobrante para empujar.
-        3. Insets: 
-           - El tercer valor (bottom: 50) separa el panel del suelo.
-           - El cuarto valor (right: 40) separa el panel de la pared derecha.
-     */
-     gbc.anchor = GridBagConstraints.SOUTH; 
-     gbc.weighty = 1.0; 
-     gbc.insets = new Insets(0, 0, 50, 40); 
+        // =========================
+        // PANEL CENTRAL TPV
+        // =========================
+        JPanel panelCentral = new JPanel(new BorderLayout(15, 15));
+        panelCentral.setPreferredSize(new Dimension(400, 650));
+        panelCentral.setBackground(new Color(245, 245, 245));
+        panelCentral.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(Color.BLACK, 3, true),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
 
-     // =========================
-     // PANEL CENTRAL (Card TPV)
-     // =========================
-     JPanel panelCentral = new JPanel(new BorderLayout(15, 15));
-
-  // CORRECCIÓN: Debes usar setBorder() y asignar el borde creado
-  panelCentral.setBorder(BorderFactory.createCompoundBorder(
-      new LineBorder(new Color(0, 0, 0), 3, true), // Borde exterior negro redondeado
-      BorderFactory.createEmptyBorder(10, 10, 10, 10) // MARGEN INTERNO (Top, Left, Bottom, Right)
-  ));
-
-  panelCentral.setPreferredSize(new Dimension(350, 500)); 
-  panelCentral.setBackground(new Color(245, 245, 245));
-     // ... resto de tu configuración de bordes ...
-
-     // IMPORTANTE: Al añadirlo al wrapper, usamos el objeto GridBagConstraints
-     panelWrapper.add(panelCentral, gbc);
+        panelWrapper.add(panelCentral, gbc);
 
         // =========================
         // DISPLAY USUARIO
@@ -100,8 +97,16 @@ public class LoginScreen extends JFrame {
         txtUsuario.setHorizontalAlignment(JTextField.CENTER);
         txtUsuario.setFont(new Font("Monospaced", Font.BOLD, 28));
         txtUsuario.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
         panelCentral.add(txtUsuario, BorderLayout.NORTH);
+
+        // =========================
+        // PANEL BOTONES RECORDADOS
+        // =========================
+        panelBotonesRecordados = new JPanel(new GridLayout(2, 3, 12, 12));
+        panelBotonesRecordados.setBorder(
+                BorderFactory.createTitledBorder("Partner Sign-In")
+        );
+        panelBotonesRecordados.setBackground(panelCentral.getBackground());
 
         // =========================
         // TECLADO NUMÉRICO
@@ -112,47 +117,27 @@ public class LoginScreen extends JFrame {
         for (int i = 1; i <= 9; i++) {
             keypad.add(createNumberButton(String.valueOf(i)));
         }
-
         keypad.add(createClearButton());
         keypad.add(createNumberButton("0"));
         keypad.add(createBackButton());
+
+        // =========================
+        // PANEL SUPERIOR (USUARIOS + TECLADO)
+        // =========================
+        JPanel panelSuperior = new JPanel(new BorderLayout(15, 15));
+        panelSuperior.setBackground(panelCentral.getBackground());
+        panelSuperior.add(panelBotonesRecordados, BorderLayout.NORTH);
+        panelSuperior.add(keypad, BorderLayout.CENTER);
 
         // =========================
         // BOTONES DE ACCIÓN
         // =========================
         JButton btnClock = new JButton("Clock In / Out");
         btnClock.setFont(new Font("Arial", Font.BOLD, 18));
+        btnClock.addActionListener(e -> fichar());
 
         JButton btnSignIn = new JButton("Sign In");
         btnSignIn.setFont(new Font("Arial", Font.BOLD, 18));
-
-        JPanel actions = new JPanel(new GridLayout(2, 1, 10, 10));
-        actions.setBackground(panelCentral.getBackground());
-        actions.add(btnClock);
-        actions.add(btnSignIn);
-
-        JPanel center = new JPanel(new BorderLayout(15, 15));
-        center.setBackground(panelCentral.getBackground());
-        center.add(keypad, BorderLayout.CENTER);
-        center.add(actions, BorderLayout.SOUTH);
-
-        panelCentral.add(center, BorderLayout.CENTER);
-
-        // =========================
-        // TICKET SIMULADO
-        // =========================
-        txtTicket = new JTextArea(6, 20);
-        txtTicket.setEditable(false);
-        txtTicket.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        txtTicket.setBorder(BorderFactory.createTitledBorder("Ticket Fichaje"));
-
-        panelCentral.add(new JScrollPane(txtTicket), BorderLayout.SOUTH);
-
-        // =========================
-        // ACCIONES
-        // =========================
-        btnClock.addActionListener(e -> fichar());
-
         btnSignIn.addActionListener(e ->
                 JOptionPane.showMessageDialog(
                         this,
@@ -161,11 +146,33 @@ public class LoginScreen extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE
                 )
         );
+
+        JPanel actions = new JPanel(new GridLayout(2, 1, 10, 10));
+        actions.setBackground(panelCentral.getBackground());
+        actions.add(btnClock);
+        actions.add(btnSignIn);
+
+        // =========================
+        // CENTER
+        // =========================
+        JPanel center = new JPanel(new BorderLayout(15, 15));
+        center.setBackground(panelCentral.getBackground());
+        center.add(panelSuperior, BorderLayout.CENTER);
+        center.add(actions, BorderLayout.SOUTH);
+
+        panelCentral.add(center, BorderLayout.CENTER);
+
+        // =========================
+        // TICKET
+        // =========================
+        txtTicket = new JTextArea(6, 20);
+        txtTicket.setEditable(false);
+        txtTicket.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        txtTicket.setBorder(BorderFactory.createTitledBorder("Ticket Fichaje"));
+        panelCentral.add(new JScrollPane(txtTicket), BorderLayout.SOUTH);
     }
 
-  
-
-	// =========================
+    // =========================
     // BOTONES TECLADO
     // =========================
     private JButton createNumberButton(String number) {
@@ -200,7 +207,6 @@ public class LoginScreen extends JFrame {
     private void fichar() {
         try {
             String usuario = txtUsuario.getText().trim();
-
             if (usuario.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Introduce tu código");
                 return;
@@ -221,18 +227,12 @@ public class LoginScreen extends JFrame {
             txtUsuario.setText("");
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private String generarTicket(Fichaje f, String tipo) {
         StringBuilder sb = new StringBuilder();
-
         sb.append("=============================\n");
         sb.append("        FICHAJE EMPLEADO\n");
         sb.append("=============================\n");
@@ -246,28 +246,57 @@ public class LoginScreen extends JFrame {
         }
 
         sb.append("=============================\n");
-
         return sb.toString();
     }
+
+    // =========================
+    // RELOJ
+    // =========================
     private void iniciarReloj(JLabel label) {
-        // Formatos para fecha y hora
         DateTimeFormatter fechaFormato = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM");
         DateTimeFormatter horaFormato = DateTimeFormatter.ofPattern("HH:mm:ss");
 
         Timer timer = new Timer(1000, e -> {
             LocalDateTime ahora = LocalDateTime.now();
-            
-            // Usamos HTML para que el Label tenga dos líneas
-            String textoReloj = "<html><div style='text-align: right;'>"
-                                + ahora.format(fechaFormato) + "<br>"
-                                + "<span style='font-size: 20px; color: white;'>" 
-                                + ahora.format(horaFormato) + "</span>"
-                                + "</div></html>";
-                                
-            label.setText(textoReloj);
+            label.setText(
+                    "<html><div style='text-align: right;'>"
+                            + ahora.format(fechaFormato) + "<br>"
+                            + "<span style='font-size: 20px; color: white;'>"
+                            + ahora.format(horaFormato)
+                            + "</span></div></html>"
+            );
         });
-        
         timer.start();
     }
-}
 
+    // =========================
+    // USUARIOS RECORDADOS
+    // =========================
+    private void cargarBotonesRecordados() {
+        panelBotonesRecordados.removeAll();
+
+        List<UsuarioRecordado> usuarios =
+                usuarioRecordadoService.getUsuariosRecordadosDelTerminal(idTerminal);
+
+        for (UsuarioRecordado ur : usuarios) {
+            JButton boton = crearBotonUsuarioRecordado(ur);
+            panelBotonesRecordados.add(boton);
+        }
+
+        panelBotonesRecordados.revalidate();
+        panelBotonesRecordados.repaint();
+    }
+
+    private JButton crearBotonUsuarioRecordado(UsuarioRecordado ur) {
+        JButton btn = new JButton(ur.getNombreBoton());
+        btn.setFont(new Font("Arial", Font.BOLD, 16));
+        btn.setBackground(new Color(255, 215, 0));
+        btn.setFocusPainted(false);
+
+        btn.addActionListener(e ->
+                txtUsuario.setText(ur.getNombreBoton())
+        );
+
+        return btn;
+    }
+}
