@@ -3,15 +3,22 @@ package ui.screens;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import app.AppContext;
+
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import model.Fichaje;
+import model.Usuario;
 import model.UsuarioRecordado;
+import service.AuthService;
 import service.FichajeFacade;
 import service.UsuarioRecordadoService;
+import ui.dialog.PinDialog;
+import ui.dialog.PinDialog.PinDialogMode;
+import ui.dialog.PinDialogResult;
 
 public class LoginScreen extends JFrame {
 
@@ -24,15 +31,18 @@ public class LoginScreen extends JFrame {
     private JTextField txtUsuario;
     private JTextArea txtTicket;
     private JPanel panelBotonesRecordados;
+    private AuthService authService;
 
     public LoginScreen(
             FichajeFacade fichajeFacade,
             UsuarioRecordadoService usuarioRecordadoService,
-            int idTerminal
+            int idTerminal,
+            AuthService  authService
     ) {
         this.fichajeFacade = fichajeFacade;
         this.usuarioRecordadoService = usuarioRecordadoService;
         this.idTerminal = idTerminal;
+        this.authService= authService;
 
         initUI();
         cargarBotonesRecordados();
@@ -111,7 +121,7 @@ public class LoginScreen extends JFrame {
         // =========================
         // TECLADO NUMÉRICO
         // =========================
-        JPanel keypad = new JPanel(new GridLayout(4, 3, 10, 10));
+        JPanel keypad = new JPanel(new GridLayout(4, 3, 5, 10));
         keypad.setBackground(panelCentral.getBackground());
 
         for (int i = 1; i <= 9; i++) {
@@ -138,14 +148,58 @@ public class LoginScreen extends JFrame {
 
         JButton btnSignIn = new JButton("Sign In");
         btnSignIn.setFont(new Font("Arial", Font.BOLD, 18));
-        btnSignIn.addActionListener(e ->
+        btnSignIn.addActionListener(e -> {
+
+            // 1. Abrir el PinDialog en modo LOGIN_COMPLETO
+            PinDialog dialog = new PinDialog(
+                    this,
+                    PinDialog.PinDialogMode.LOGIN_COMPLETO,
+                    null
+            );
+
+            // 2. Mostrar el diálogo y esperar resultado
+            PinDialogResult result = dialog.showDialog();
+
+            // 3. Si canceló, no hacemos nada
+            if (result == null) {
+                return;
+            }
+
+            try {
+                // 4. Obtener credenciales
+                String usuario = result.getUsuario();
+                String pin = result.getPin();
+
+                // 5. Autenticación
+                Usuario usuarioLogueado =
+                        authService.loginCompleto(usuario, pin);
+
+                // 6. Guardar sesión
+                AppContext.setUsuario(usuarioLogueado);
+
+                // 7. Registrar / actualizar botón amarillo
+                usuarioRecordadoService.registrarAccesoExitoso(
+                        usuarioLogueado,
+                        idTerminal
+                );
+
+                // 8. Aquí irá la navegación posterior (caja / admin)
                 JOptionPane.showMessageDialog(
                         this,
-                        "Login de caja se implementará después",
-                        "Info",
-                        JOptionPane.INFORMATION_MESSAGE
-                )
-        );
+                        "Login correcto: " + usuarioLogueado.getNombre()
+                );
+
+            } catch (Exception ex) {
+                // 9. Mostrar error controlado
+                JOptionPane.showMessageDialog(
+                        this,
+                        ex.getMessage(),
+                        "Error de login",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        });
+
 
         JPanel actions = new JPanel(new GridLayout(2, 1, 10, 10));
         actions.setBackground(panelCentral.getBackground());
@@ -177,7 +231,7 @@ public class LoginScreen extends JFrame {
     // =========================
     private JButton createNumberButton(String number) {
         JButton btn = new JButton(number);
-        btn.setFont(new Font("Arial", Font.BOLD, 22));
+        btn.setFont(new Font("Arial", Font.BOLD, 50));
         btn.addActionListener(e ->
                 txtUsuario.setText(txtUsuario.getText() + number)
         );
@@ -288,15 +342,71 @@ public class LoginScreen extends JFrame {
     }
 
     private JButton crearBotonUsuarioRecordado(UsuarioRecordado ur) {
+
         JButton btn = new JButton(ur.getNombreBoton());
         btn.setFont(new Font("Arial", Font.BOLD, 16));
         btn.setBackground(new Color(255, 215, 0));
         btn.setFocusPainted(false);
 
-        btn.addActionListener(e ->
-                txtUsuario.setText(ur.getNombreBoton())
-        );
+        // 🔑 El botón "transporta" el usuario
+        btn.putClientProperty("usuarioRecordado", ur);
+
+        // ✅ Listener de LOGIN RÁPIDO
+        btn.addActionListener(e -> {
+
+            // 1. Recuperar el usuario asociado al botón
+            UsuarioRecordado usuario =
+                    (UsuarioRecordado) ((JButton) e.getSource())
+                            .getClientProperty("usuarioRecordado");
+
+            // 2. Abrir PinDialog en modo LOGIN_RAPIDO
+            PinDialog dialog = new PinDialog(
+                    this,
+                    PinDialog.PinDialogMode.LOGIN_RAPIDO,
+                    usuario.getNombreBoton()
+            );
+
+            PinDialogResult result = dialog.showDialog();
+
+            // 3. Si cancela → no hacer nada
+            if (result == null) {
+                return;
+            }
+
+            try {
+                // 4. Validar PIN usando el idUsuario del botón
+                Usuario usuarioLogueado =
+                        authService.loginRapido(
+                                usuario.getIdUsuario(),
+                                result.getPin()
+                        );
+
+                // 5. Guardar sesión
+                AppContext.setUsuario(usuarioLogueado);
+
+                // 6. Actualizar último acceso del botón
+                usuarioRecordadoService.registrarAccesoExitoso(
+                        usuarioLogueado,
+                        idTerminal
+                );
+
+                // 7. Continuar flujo (temporal)
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Bienvenido " + usuarioLogueado.getNombre()
+                );
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        ex.getMessage(),
+                        "Error de autenticación",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        });
 
         return btn;
     }
+
 }
