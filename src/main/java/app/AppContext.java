@@ -2,7 +2,7 @@ package app;
 
 import model.Usuario;
 
-public final class AppContext {
+public  final class AppContext {
 
     private static Usuario usuarioActual;
 

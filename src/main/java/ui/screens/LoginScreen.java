@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import app.AppContext;
+import enums.PostLoginDestination;
 
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import service.UsuarioRecordadoService;
 import ui.dialog.PinDialog;
 import ui.dialog.PinDialog.PinDialogMode;
 import ui.dialog.PinDialogResult;
+import ui.router.PostLoginRouter;
 
 public class LoginScreen extends JFrame {
 
@@ -182,12 +184,10 @@ public class LoginScreen extends JFrame {
                         usuarioLogueado,
                         idTerminal
                 );
+                continuarPostLogin();
 
-                // 8. Aquí irá la navegación posterior (caja / admin)
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Login correcto: " + usuarioLogueado.getNombre()
-                );
+
+               
 
             } catch (Exception ex) {
                 // 9. Mostrar error controlado
@@ -225,8 +225,72 @@ public class LoginScreen extends JFrame {
         txtTicket.setBorder(BorderFactory.createTitledBorder("Ticket Fichaje"));
         panelCentral.add(new JScrollPane(txtTicket), BorderLayout.SOUTH);
     }
+ // ===============================
+ // POST-LOGIN (común para TODOS)
+ // ===============================
+ private void continuarPostLogin() {
 
-    // =========================
+     try {
+         PostLoginRouter router = new PostLoginRouter();
+         PostLoginDestination destino = router.route();
+
+         // Ocultamos el login (no lo destruimos) para volver rápido tras logout
+         this.setVisible(false);
+
+         switch (destino) {
+
+             case ADMIN_PANEL:
+                 abrirAdminDashboard();
+                 break;
+
+             case OPERATIVE_HOME:
+                 abrirOperativeHomePlaceholder(); // de momento placeholder
+                 break;
+
+             default:
+                 throw new IllegalStateException("Destino post-login no soportado: " + destino);
+         }
+
+     } catch (Exception ex) {
+         // Si algo falla, volvemos a mostrar el login
+         this.setVisible(true);
+
+         JOptionPane.showMessageDialog(
+                 this,
+                 ex.getMessage(),
+                 "Error post-login",
+                 JOptionPane.ERROR_MESSAGE
+         );
+     }
+ }
+
+ private void abrirAdminDashboard() {
+
+     AdminDashboardFrame dash = new AdminDashboardFrame(() -> {
+         // Este callback se ejecuta cuando el dashboard hace logout
+         mostrarLoginDeNuevo();
+     });
+
+     dash.setVisible(true);
+ }
+
+ private void abrirOperativeHomePlaceholder() {
+     // TEMPORAL: hasta que creemos OperativeHomeFrame
+     JOptionPane.showMessageDialog(this, "OperativeHome (pendiente)");
+     mostrarLoginDeNuevo();
+ }
+
+ private void mostrarLoginDeNuevo() {
+     // Si quieres, limpia campos aquí también
+     // txtUsuario.setText("");
+     // txtPin.setText("");
+
+     this.setVisible(true);
+     this.toFront();
+     this.requestFocus();
+ }
+
+	// =========================
     // BOTONES TECLADO
     // =========================
     private JButton createNumberButton(String number) {
@@ -395,6 +459,7 @@ public class LoginScreen extends JFrame {
                         this,
                         "Bienvenido " + usuarioLogueado.getNombre()
                 );
+                continuarPostLogin();
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(

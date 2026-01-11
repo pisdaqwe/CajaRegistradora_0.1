@@ -19,8 +19,7 @@ Thumbs.db
 *.log
 *.tmp
 
-# Configuración sensible o local
-config.properties
+# Configuración sensible o local config.properties
 
 # Copias y salidas generadas
 /tickets/
