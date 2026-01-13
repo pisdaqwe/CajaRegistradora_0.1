@@ -142,7 +142,9 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 
     private void onGestionCaja() {
         // TODO abrir CajaHomeFrame
-        JOptionPane.showMessageDialog(this, "Gestión de Caja (pendiente)");
+       GestionCajaFrame frame = 
+    		   new GestionCajaFrame(onLogoutNavigate, ()->this.setVisible(true));
+       frame.setVisible(true);
     }
 
     private void onInformes() {
