@@ -1,12 +1,15 @@
 package dao;
 
 import config.DbPool;
+import dtoS.CajaEstadoDTO;
 import model.SesionCaja;
 import enums.EstadoSesionCaja;
 
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -79,19 +82,24 @@ public class SesionCajaDao {
 
         String sql = """
             INSERT INTO sesion_caja
-            (id_caja, id_usuario_apertura, fecha_apertura,
-             importe_inicial, total_ventas, estado)
-            VALUES (?, ?, NOW(), ?, ?, 'ABIERTA')
+            (id_caja,
+             id_usuario_apertura,
+             id_terminal_apertura,
+             fecha_apertura,
+             importe_inicial,
+             total_ventas,
+             estado)
+            VALUES (?, ?,NOW(), ?, ?, 'ABIERTA')
         """;
 
         try (Connection con = DbPool.getConnection();
              PreparedStatement ps = con.prepareStatement(
                      sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setInt(1, sesion.getIdCaja());
-            ps.setInt(2, sesion.getIdUsuarioApertura());
-            ps.setBigDecimal(3, sesion.getImporteInicial());
-            ps.setBigDecimal(4, sesion.getTotalVentas());
+        	ps.setInt(1, sesion.getIdCaja());
+        	ps.setInt(2, sesion.getIdUsuarioApertura());
+        	ps.setBigDecimal(3, sesion.getImporteInicial());
+        	ps.setBigDecimal(4, sesion.getTotalVentas());
 
             ps.executeUpdate();
 
@@ -105,6 +113,7 @@ public class SesionCajaDao {
             throw new RuntimeException("Error insertando sesión de caja", e);
         }
     }
+
 
     /**
      * Cierra una sesión de caja.
@@ -196,6 +205,54 @@ public class SesionCajaDao {
         return BigDecimal.ZERO;
     }
 
+    public List<CajaEstadoDTO> findEstadoCajas() {
+
+        String sql = """
+            SELECT 
+                c.id_caja,
+                c.nombre AS nombre_caja,
+                c.estado AS estado_caja,
+                sc.id_sesion IS NOT NULL AS ocupada,
+                u.nombre AS empleado
+            FROM caja c
+            LEFT JOIN sesion_caja sc
+                ON sc.id_caja = c.id_caja
+               AND sc.estado = 'ABIERTA'
+            LEFT JOIN usuario u
+                ON sc.id_usuario_apertura = u.id_usuario
+            WHERE c.activa = 1
+            ORDER BY c.id_caja
+        """;
+
+        List<CajaEstadoDTO> resultado = new ArrayList<>();
+
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+
+                boolean operativa =
+                        "OPERATIVA".equals(rs.getString("estado_caja"));
+
+                resultado.add(
+                    new CajaEstadoDTO(
+                        rs.getInt("id_caja"),
+                        rs.getString("nombre_caja"),
+                        operativa,
+                        rs.getString("empleado"),
+                        rs.getBoolean("ocupada")
+                    )
+                );
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error cargando estado de cajas", e);
+        }
+
+        return resultado;
+    }
+
     // =====================================================
     // MAPPER
     // =====================================================
@@ -222,7 +279,7 @@ public class SesionCajaDao {
         if (fc != null) {
             s.setFechaCierre(fc.toLocalDateTime());
         }
-
+        
         s.setImporteInicial(rs.getBigDecimal("importe_inicial"));
         s.setImporteFinal(rs.getBigDecimal("importe_final"));
         s.setTotalVentas(rs.getBigDecimal("total_ventas"));

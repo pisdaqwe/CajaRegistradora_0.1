@@ -2,6 +2,7 @@ package service;
 
 import dao.CajaDao;
 import dao.SesionCajaDao;
+import dtoS.CajaEstadoDTO;
 import enums.EstadoCaja;
 import enums.EstadoSesionCaja;
 import model.Caja;
@@ -9,6 +10,7 @@ import model.SesionCaja;
 
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import app.AppContext;
@@ -88,7 +90,7 @@ public class SesionCajaService {
             );
         }
 
-        // 3. Validar que no haya sesión abierta
+        // 3. Validar que no haya sesión abierta para esa caja
         if (haySesionAbierta(idCaja)) {
             throw new IllegalStateException(
                     "Ya existe una sesión abierta para esta caja"
@@ -103,6 +105,8 @@ public class SesionCajaService {
             );
         }
 
+      
+
         // 5. Crear sesión
         SesionCaja sesion = new SesionCaja();
         sesion.setIdCaja(idCaja);
@@ -111,14 +115,15 @@ public class SesionCajaService {
         sesion.setTotalVentas(BigDecimal.ZERO);
         sesion.setEstado(EstadoSesionCaja.ABIERTA);
 
-        // 6. Persistir
+        // 7. Persistir
         sesionCajaDao.insert(sesion);
 
-        // 7. Actualizar metadatos de la caja
+        // 8. Actualizar metadatos de la caja
         cajaDao.updateUltimaApertura(idCaja);
 
         return sesion;
     }
+
 
     // =====================================================
     // CIERRE DE SESIÓN
@@ -187,4 +192,10 @@ public class SesionCajaService {
             );
         }
     }
+
+
+	public List<CajaEstadoDTO> getEstadoCajas() {
+		// TODO Auto-generated method stub
+		 return sesionCajaDao.findEstadoCajas();
+	}
 }

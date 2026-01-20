@@ -29,6 +29,7 @@ public class SesionCaja {
 	private BigDecimal importeInicial;
 	private BigDecimal importeFinal;
 	
+	
 	private BigDecimal totalVentas;
 	
 	private EstadoSesionCaja estado;
@@ -121,6 +122,7 @@ public class SesionCaja {
 	public void setObservaciones(String observaciones) {
 		this.observaciones = observaciones;
 	}
+	
 	
 	
 	

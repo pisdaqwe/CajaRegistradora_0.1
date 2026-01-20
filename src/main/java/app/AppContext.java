@@ -51,4 +51,6 @@ public  final class AppContext {
     public static void clear() {
         usuarioActual = null;
     }
+
+	
 }

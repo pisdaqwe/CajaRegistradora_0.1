@@ -1,30 +1,49 @@
 package ui.common;
 
-import ui.common.BaseTpvFrame;
+import ui.table.EmpleadosFichadosTableModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.JTableHeader;
+
+import service.AppServices;
+import dtoS.CajaEstadoDTO;
+
 import java.awt.*;
 
-/**
- * Frame de Gestión de Caja (MVP).
- *
- * - No contiene lógica de negocio
- * - Solo UI y estructura
- * - Punto central para abrir / cerrar sesiones de caja
- */
 public class GestionCajaFrame extends BaseTpvFrame {
 
-    private final Runnable onBack;
+    private static final long serialVersionUID = 1L;
 
-    public GestionCajaFrame(Runnable onLogoutNavigate, Runnable onBack) {
+    private final Runnable onBack;
+    private final AppServices services;
+
+    // Empleados fichados (informativo)
+    private JTable tablaEmpleados;
+    private EmpleadosFichadosTableModel empleadosTableModel;
+
+    // Cajas disponibles (informativo)
+    private JPanel panelCajas;
+
+    public GestionCajaFrame(
+            Runnable onLogoutNavigate,
+            Runnable onBack,
+            AppServices services
+    ) {
         super("Gestión de Caja", onLogoutNavigate);
         this.onBack = onBack;
+        this.services = services;
 
         requireAuthenticatedOrExit();
         buildUI();
         refreshHeader();
+        refreshEmpleadosFichados();
+        refreshCajasDisponibles();
     }
+
+    // =====================================================
+    // UI GENERAL
+    // =====================================================
 
     private void buildUI() {
 
@@ -32,17 +51,11 @@ public class GestionCajaFrame extends BaseTpvFrame {
         root.setBorder(new EmptyBorder(16, 16, 16, 16));
         root.setBackground(new Color(18, 18, 18));
 
-        // =========================
-        // TÍTULO
-        // =========================
         JLabel title = new JLabel("GESTIÓN DE CAJA");
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setForeground(Color.WHITE);
         root.add(title, BorderLayout.NORTH);
 
-        // =========================
-        // PANEL CENTRAL
-        // =========================
         JPanel center = new JPanel(new GridLayout(1, 2, 16, 0));
         center.setOpaque(false);
 
@@ -51,9 +64,6 @@ public class GestionCajaFrame extends BaseTpvFrame {
 
         root.add(center, BorderLayout.CENTER);
 
-        // =========================
-        // FOOTER
-        // =========================
         JButton btnVolver = createSecondaryButton("Volver");
         btnVolver.addActionListener(e -> {
             dispose();
@@ -83,13 +93,13 @@ public class GestionCajaFrame extends BaseTpvFrame {
         ));
         panel.setOpaque(false);
 
-        JLabel estado = new JLabel("No hay ninguna sesión de caja abierta");
+        JLabel estado = new JLabel("Pantalla informativa");
         estado.setForeground(Color.LIGHT_GRAY);
         estado.setBorder(new EmptyBorder(8, 8, 8, 8));
 
         JButton btnAbrir = createPrimaryButton("Asignar / Abrir sesión de caja");
         JButton btnCerrar = createDangerButton("Cerrar sesión");
-        btnCerrar.setEnabled(false); // MVP: desactivado
+        btnCerrar.setEnabled(false); // MVP
 
         panel.add(estado);
         panel.add(Box.createVerticalStrut(16));
@@ -101,42 +111,148 @@ public class GestionCajaFrame extends BaseTpvFrame {
     }
 
     // =====================================================
-    // PANEL DERECHO (INFO / VISUAL)
+    // PANEL DERECHO (INFO)
     // =====================================================
 
     private JPanel buildRightPanel() {
 
-        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
 
-        JPanel fichados = createPlaceholderPanel("Empleados fichados");
-        JPanel sesiones = createPlaceholderPanel("Sesiones de caja");
-
-        panel.add(fichados, BorderLayout.CENTER);
-        panel.add(sesiones, BorderLayout.SOUTH);
+        panel.add(buildEmpleadosFichadosPanel());
+        panel.add(Box.createVerticalStrut(16));
+        panel.add(buildEstadoCajaPanel());
 
         return panel;
     }
 
     // =====================================================
-    // COMPONENTES AUXILIARES
+    // EMPLEADOS FICHADOS (INFORMATIVO)
     // =====================================================
 
-    private JPanel createPlaceholderPanel(String title) {
-        JPanel p = new JPanel();
-        p.setBorder(BorderFactory.createTitledBorder(
+    private JPanel buildEmpleadosFichadosPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.DARK_GRAY),
-                title
+                "Empleados fichados"
         ));
-        p.setPreferredSize(new Dimension(200, 180));
-        p.setOpaque(false);
+        panel.setOpaque(false);
 
-        JLabel label = new JLabel("(contenido pendiente)");
-        label.setForeground(Color.GRAY);
-        p.add(label);
+        empleadosTableModel = new EmpleadosFichadosTableModel();
 
-        return p;
+        tablaEmpleados = new JTable(empleadosTableModel);
+        tablaEmpleados.setFillsViewportHeight(true);
+        tablaEmpleados.setRowHeight(24);
+        tablaEmpleados.setEnabled(false);
+        tablaEmpleados.setBackground(new Color(30, 30, 30));
+        tablaEmpleados.setForeground(Color.WHITE);
+        tablaEmpleados.setGridColor(Color.DARK_GRAY);
+
+        JTableHeader header = tablaEmpleados.getTableHeader();
+        header.setBackground(new Color(50, 50, 50));
+        header.setForeground(Color.WHITE);
+
+        JScrollPane scroll = new JScrollPane(tablaEmpleados);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+
+        panel.add(scroll, BorderLayout.CENTER);
+        panel.setPreferredSize(new Dimension(400, 220));
+
+        return panel;
     }
+
+    private void refreshEmpleadosFichados() {
+        try {
+            empleadosTableModel.setDatos(
+                    services.fichajeService.findFichajesActivos()
+            );
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    ex.getMessage(),
+                    "Error cargando empleados fichados",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    // =====================================================
+    // CAJAS DISPONIBLES (INFORMATIVO)
+    // =====================================================
+
+    private JPanel buildEstadoCajaPanel() {
+
+        panelCajas = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 12));
+        panelCajas.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.DARK_GRAY),
+                "Cajas disponibles"
+        ));
+        panelCajas.setOpaque(false);
+        panelCajas.setPreferredSize(new Dimension(400, 160));
+
+        return panelCajas;
+    }
+
+    private void refreshCajasDisponibles() {
+
+        panelCajas.removeAll();
+
+        try {
+            for (CajaEstadoDTO caja : services.sesionCajaService.getEstadoCajas()) {
+                panelCajas.add(crearTarjetaCaja(caja));
+            }
+        } catch (Exception ex) {
+            JLabel error = new JLabel("Error cargando estado de cajas");
+            error.setForeground(Color.RED);
+            panelCajas.add(error);
+        }
+
+        panelCajas.revalidate();
+        panelCajas.repaint();
+    }
+
+    private JPanel crearTarjetaCaja(CajaEstadoDTO caja) {
+
+        JPanel card = new JPanel(new BorderLayout(4, 4));
+        card.setPreferredSize(new Dimension(180, 100));
+
+        Color bg = caja.isOcupada()
+                ? new Color(120, 40, 40)
+                : new Color(40, 120, 40);
+
+        card.setBackground(bg);
+        card.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+
+        JLabel lblNombre = new JLabel(caja.getNombreCaja(), SwingConstants.CENTER);
+        lblNombre.setForeground(Color.WHITE);
+        lblNombre.setFont(new Font("Arial", Font.BOLD, 14));
+
+        JLabel lblEstado = new JLabel(
+                caja.isOcupada() ? "Ocupada" : "Libre",
+                SwingConstants.CENTER
+        );
+        lblEstado.setForeground(Color.WHITE);
+
+        card.add(lblNombre, BorderLayout.NORTH);
+        card.add(lblEstado, BorderLayout.CENTER);
+
+        if (caja.isOcupada() && caja.getEmpleadoAsignado() != null) {
+            JLabel lblEmp = new JLabel(
+                    caja.getEmpleadoAsignado(),
+                    SwingConstants.CENTER
+            );
+            lblEmp.setForeground(Color.LIGHT_GRAY);
+            card.add(lblEmp, BorderLayout.SOUTH);
+        }
+
+        return card;
+    }
+
+    // =====================================================
+    // BOTONES
+    // =====================================================
 
     private JButton createPrimaryButton(String text) {
         JButton b = new JButton(text);
@@ -165,3 +281,4 @@ public class GestionCajaFrame extends BaseTpvFrame {
         return b;
     }
 }
+

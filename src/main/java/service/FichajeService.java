@@ -1,20 +1,29 @@
 package service;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import dao.FichajeDao;
+import dao.UsuarioDao;
+import dtoS.FichajeActivoDTO;
 import enums.EstadoFichaje;
 import model.Fichaje;
+import model.Usuario;
 
 public class FichajeService {
 
     private final FichajeDao fichajeDao;
+    
+    
 
     public FichajeService(FichajeDao fichajeDao) {
         if (fichajeDao == null) {
-            throw new IllegalArgumentException("FichajeDao no puede ser null");
+            throw new IllegalArgumentException("FichajeDao ni Usuariodao no puede ser null");
         }
         this.fichajeDao = fichajeDao;
+        
     }
 
     // =========================
@@ -78,6 +87,13 @@ public class FichajeService {
             throw new IllegalArgumentException("Id de usuario no válido");
         }
     }
+ // ===== FichajeService (usar el DAO directamente) =====
+
+    public List<FichajeActivoDTO> findFichajesActivos() {
+        return fichajeDao.findFichajesActivosConUsuario();
+    }
+
+
 }
 
 	
