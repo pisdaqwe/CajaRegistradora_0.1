@@ -1,64 +1,77 @@
-package app;
-
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-
 import config.ConfigLoader;
 import config.DbPool;
+import dao.CajaDao;
 import dao.FichajeDao;
+import dao.SesionCajaDao;
 import dao.UsuarioDao;
 import dao.UsuarioRecordadoDao;
-import dao.CajaDao;
-import dao.SesionCajaDao;
-import service.AppServices;
+import facade.CajaFacade;
+import facade.FichajeFacade;
 import service.AuthService;
-import service.FichajeFacade;
 import service.FichajeService;
-import service.UsuarioRecordadoService;
 import service.SesionCajaService;
-import ui.screens.LoginScreen;
+import service.UsuarioRecordadoService;
 
 public class MainApp {
 
     public static void main(String[] args) {
 
-        // ===== CARGA CONFIGURACIÓN =====
         ConfigLoader.load();
         DbPool.init();
 
-        // ===== DAOs =====
+        // =========================
+        // DAOs
+        // =========================
         UsuarioDao usuarioDao = new UsuarioDao();
         FichajeDao fichajeDao = new FichajeDao();
-        UsuarioRecordadoDao usuarioRecordadoDao = new UsuarioRecordadoDao();
-        CajaDao cajaDao = new CajaDao();
         SesionCajaDao sesionCajaDao = new SesionCajaDao();
+        CajaDao cajaDao = new CajaDao();
+        UsuarioRecordadoDao usuarioRecordadoDao = new UsuarioRecordadoDao();
 
-        // ===== SERVICES =====
+        // =========================
+        // SERVICES
+        // =========================
         AuthService authService = new AuthService(usuarioDao);
         FichajeService fichajeService = new FichajeService(fichajeDao);
-        FichajeFacade fichajeFacade = new FichajeFacade(usuarioDao, fichajeService);
         UsuarioRecordadoService usuarioRecordadoService =
                 new UsuarioRecordadoService(usuarioRecordadoDao);
+
         SesionCajaService sesionCajaService =
                 new SesionCajaService(cajaDao, sesionCajaDao);
 
-        // ===== CONTENEDOR DE SERVICES =====
-        AppServices services = new AppServices(
+        // =========================
+        // FACADES
+        // =========================
+        FichajeFacade fichajeFacade =
+                new FichajeFacade(usuarioDao, fichajeService);
+
+        CajaFacade cajaFacade =
+                new CajaFacade(sesionCajaDao, fichajeService);
+
+        // =========================
+        // APP SERVICES (CLAVE)
+        // =========================
+        AppServices appServices = new AppServices(
                 authService,
-                fichajeFacade,
                 fichajeService,
                 sesionCajaService,
-                usuarioRecordadoService
+                usuarioRecordadoService,
+                fichajeFacade,
+                cajaFacade
         );
 
         int terminal = 1;
 
-        // ===== ARRANQUE UI =====
+        // =========================
+        // UI
+        // =========================
         SwingUtilities.invokeLater(() -> {
-            LoginScreen screen = new LoginScreen(services, terminal);
+            LoginScreen screen =
+                    new LoginScreen(appServices, terminal);
             screen.setExtendedState(JFrame.MAXIMIZED_BOTH);
             screen.setVisible(true);
         });
     }
 }
+
 

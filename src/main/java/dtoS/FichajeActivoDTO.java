@@ -7,18 +7,28 @@ package dtoS;
  * NO contiene lógica de negocio.
  */
 public class FichajeActivoDTO {
-
+	
+	private int idUsuario;
     private final String nombreEmpleado;
     private final String horaEntrada;
     private final String estado;
 
-    public FichajeActivoDTO(String nombreEmpleado, String horaEntrada, String estado) {
-        this.nombreEmpleado = nombreEmpleado;
+    public FichajeActivoDTO(int idUsuario, String nombreEmpleado, String horaEntrada, String estado) {
+        this.idUsuario = idUsuario;
+    	this.nombreEmpleado = nombreEmpleado;
         this.horaEntrada = horaEntrada;
         this.estado = estado;
     }
 
-    public String getNombreEmpleado() {
+    public int getIdUsuario() {
+		return idUsuario;
+	}
+
+	public void setIdUsuario(int idUsuario) {
+		this.idUsuario = idUsuario;
+	}
+
+	public String getNombreEmpleado() {
         return nombreEmpleado;
     }
 

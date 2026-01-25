@@ -1,8 +1,9 @@
-package service;
+package facade;
 
 import dao.UsuarioDao;
 import model.Fichaje;
 import model.Usuario;
+import service.FichajeService;
 
 public class FichajeFacade {
 

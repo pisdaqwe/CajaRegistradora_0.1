@@ -252,7 +252,55 @@ public class SesionCajaDao {
 
         return resultado;
     }
+    public boolean existeSesionAbiertaEnCaja(int idCaja) {
 
+        String sql = """
+            SELECT 1
+            FROM sesion_caja
+            WHERE id_caja = ?
+              AND estado = 'ABIERTA'
+            LIMIT 1
+        """;
+
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idCaja);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error comprobando sesión de caja", e);
+        }
+    }
+    public boolean existeSesionAbiertaPorUsuario(int idUsuario) {
+
+        String sql = """
+            SELECT 1
+            FROM sesion_caja
+            WHERE id_usuario_apertura = ?
+              AND estado = 'ABIERTA'
+            LIMIT 1
+        """;
+
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idUsuario);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "Error comprobando sesión abierta para usuario " + idUsuario, e
+            );
+        }
+    }
+ 
     // =====================================================
     // MAPPER
     // =====================================================
@@ -288,4 +336,33 @@ public class SesionCajaDao {
 
         return s;
     }
+
+	public void abrirSesionCaja(int idCaja, int idUsuario, BigDecimal importeInicial) {
+		 String sql = """
+			        INSERT INTO sesion_caja (
+			            id_caja,
+			            id_usuario_apertura,
+			            fecha_apertura,
+			            importe_inicial,
+			            total_ventas,
+			            estado
+			        ) VALUES (?, ?, NOW(), ?, 0.00, 'ABIERTA')
+			    """;
+
+			    try (Connection conn = DbPool.getConnection();
+			         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+			        ps.setInt(1, idCaja);
+			        ps.setInt(2, idUsuario);
+			        ps.setBigDecimal(3, importeInicial);
+
+			        ps.executeUpdate();
+
+			    } catch (SQLException e) {
+			        throw new RuntimeException("Error abriendo sesión de caja", e);
+			    }
+		
+	}
+
+	
 }

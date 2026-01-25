@@ -177,12 +177,11 @@ public class FichajeDao {
 		return f;
 	}
 
-	
-
 	public List<FichajeActivoDTO> findFichajesActivosConUsuario() {
 
 		String sql = """
-				    SELECT u.nombre AS nombre_empleado,
+				    SELECT f.id_usuario,
+				           u.nombre AS nombre_empleado,
 				           f.fecha_entrada,
 				           f.estado
 				    FROM fichaje f
@@ -190,7 +189,6 @@ public class FichajeDao {
 				    WHERE f.estado = 'ABIERTO'
 				    ORDER BY f.fecha_entrada
 				""";
-
 		List<FichajeActivoDTO> resultado = new ArrayList<>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -199,7 +197,7 @@ public class FichajeDao {
 				ResultSet rs = ps.executeQuery()) {
 
 			while (rs.next()) {
-				resultado.add(new FichajeActivoDTO(rs.getString("nombre_empleado"),
+				resultado.add(new FichajeActivoDTO(rs.getInt("id_usuario"), rs.getString("nombre_empleado"),
 						rs.getTimestamp("fecha_entrada").toLocalDateTime().format(formatter), rs.getString("estado")));
 			}
 

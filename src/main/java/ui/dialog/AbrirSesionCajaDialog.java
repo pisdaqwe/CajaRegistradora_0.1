@@ -2,52 +2,75 @@ package ui.dialog;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import dtoS.CajaEstadoDTO;
+import dtoS.FichajeActivoDTO;
 import model.Caja;
 import service.AppServices;
+import ui.table.EmpleadosFichadosTableModel;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.math.BigDecimal;
 
 public class AbrirSesionCajaDialog extends JDialog {
-    private JTable tablaEmpleados;
-    private JPanel panelCajas;
-    private JTextField txtImporteCustom;
-    private JLabel lblImporteSeleccionado;
-    private ButtonGroup grupoCajas;
-    private CajaEstadoDTO cajaSeleccionada;
-    private AppServices services;
-	
-	public AbrirSesionCajaDialog (Window owner,AppServices services ) {
-		super(owner,"Abrir sesion de Caja",ModalityType.APPLICATION_MODAL); 
+
+	private JPanel panelCajas;
+	private ButtonGroup grupoCajas;
+
+	private JTextField txtImporteCustom;
+	private JLabel lblImporteSeleccionado;
+	private ButtonGroup grupoImportes;
+	private BigDecimal importeSeleccionado;
+
+	private JLabel lblEmpleadoSleccionado;
+	private JTable tablaEmpleados;
+	private EmpleadosFichadosTableModel tableModel;
+	private FichajeActivoDTO empleadoSeleccionado;
+	private JButton btnConfirmar;
+
+	private CajaEstadoDTO cajaSeleccionada;
+	private AppServices services;
+
+	public AbrirSesionCajaDialog(Window owner, AppServices services) {
+		super(owner, "Abrir sesion de Caja", ModalityType.APPLICATION_MODAL);
 		this.services = services;
 		buildUI();
-		setSize(900,650);
+		cargarEmpleadosFichados();
+		cargarCajas();
+		setSize(900, 650);
 		setLocationRelativeTo(owner);
-		getContentPane().setLayout(new BorderLayout(0, 0));
-		
+
 	}
+
 	public void buildUI() {
-		JPanel root  = new JPanel(new BorderLayout(16,16));
-		root.setBorder(new EmptyBorder(16,16,16,16));
-		root.setBackground(new Color(25,25,25));
+		JPanel root = new JPanel(new BorderLayout(16, 16));
+		root.setBorder(new EmptyBorder(16, 16, 16, 16));
+		root.setBackground(new Color(25, 25, 25));
 		setContentPane(root);
-		
-		
-		
-		
+		root.add(buildHeader(), BorderLayout.NORTH);
+		root.add(buildCneter(), BorderLayout.CENTER);
+		root.add(buildFooter(), BorderLayout.SOUTH);
+
 	}
+	// ===================================================
+	// HEADER,FOOTER,CENTER
+	// ===================================================
+
 	private JComponent buildHeader() {
 		JLabel titulo = new JLabel("Abrir sesion de Caja");
 		JLabel title = new JLabel("ABRIR SESIÓN DE CAJA");
-        title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setForeground(Color.WHITE);
-        return title;
-		
-		
+		title.setFont(new Font("Arial", Font.BOLD, 20));
+		title.setForeground(Color.WHITE);
+		return title;
+
 	}
+
 	private JComponent buildCneter() {
-		JPanel center = new  JPanel();
+		JPanel center = new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.setOpaque(false);
 		center.add(buildEmpleadoPanel());
@@ -56,175 +79,290 @@ public class AbrirSesionCajaDialog extends JDialog {
 		center.add(Box.createVerticalStrut(12));
 		center.add(buildImportePanel());
 		return center;
-		
+
 	}
-	
-	private JComponent  buildEmpleadoPanel() {
-		JPanel panel = new JPanel(new BorderLayout(8,8));
+
+	private JComponent buildFooter() {
+
+		JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
+		footer.setOpaque(false);
+
+		JButton btnCancelar = new JButton("Cancelar");
+		btnCancelar.addActionListener(e -> dispose());
+
+		JButton btnConfirmar = new JButton("Abrir sesión de caja");
+		btnConfirmar.setEnabled(false); // luego se habilita con validaciones
+		btnConfirmar.addActionListener(e->confirmarAperturaCaja());
+		footer.add(btnCancelar);
+		footer.add(btnConfirmar);
+
+		return footer;
+	}
+	// ===================================================
+	// HEADER,FOOTER,CENTER
+	// ===================================================
+
+	// ===================================================
+	// EMPLEADO
+	// ===================================================
+	private JComponent buildEmpleadoPanel() {
+		JPanel panel = new JPanel(new BorderLayout(8, 8));
 		panel.setBorder(BorderFactory.createTitledBorder("Empleados Fichados"));
 		panel.setOpaque(true);
-		
+
 		JTextField txtBuscar = new JTextField();
-		panel.add(txtBuscar,BorderLayout.NORTH);
-		
-		tablaEmpleados = new JTable();
+		panel.add(txtBuscar, BorderLayout.NORTH);
+
+		tableModel = new EmpleadosFichadosTableModel();
+		tablaEmpleados = new JTable(tableModel);
+		// 🔑 selección de UNA fila
+		tablaEmpleados.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tablaEmpleados.setRowHeight(24);
+		tablaEmpleados.setFillsViewportHeight(true);
+		tablaEmpleados.setEnabled(true);
+		// LISTENER DE SELECCIÓN
+		tablaEmpleados.getSelectionModel().addListSelectionListener(e -> {
+
+			if (e.getValueIsAdjusting())
+				return;
+
+			int fila = tablaEmpleados.getSelectedRow();
+
+			if (fila >= 0) {
+				empleadoSeleccionado = tableModel.getEmpleadoAt(fila);
+			} else {
+				empleadoSeleccionado = null;
+			}
+
+			actualizarEstadoConfirmacion();
+		});
+
 		JScrollPane pane = new JScrollPane(tablaEmpleados);
-		panel.add(pane,BorderLayout.CENTER);
-		
-		pane.setPreferredSize(new Dimension(800,180));
+		panel.add(pane, BorderLayout.CENTER);
+
+		pane.setPreferredSize(new Dimension(800, 180));
 		return panel;
-		
+
 	}
+
+	private void cargarEmpleadosFichados() {
+		tableModel.setDatos(services.fichajeService.findFichajesActivos());
+	}
+	// ===================================================
+	// EMPLEADO
+	// ===================================================
+
+	// ===================================================
+	// CAJA
+	// ===================================================
 	private JComponent buildCajasPanel() {
 
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBorder(BorderFactory.createTitledBorder("Cajas"));
-        wrapper.setOpaque(false);
+		JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setBorder(BorderFactory.createTitledBorder("Cajas"));
+		wrapper.setOpaque(false);
 
-        panelCajas = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 12));
-        panelCajas.setOpaque(false);
+		panelCajas = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 12));
+		panelCajas.setOpaque(false);
 
-        // Placeholder visual
-        panelCajas.add(createCajaPlaceholder("Caja 1"));
-        panelCajas.add(createCajaPlaceholder("Caja 2"));
-        panelCajas.add(createCajaPlaceholder("Terraza"));
-        panelCajas.add(createCajaPlaceholder("Foodtruck"));
+		// Placeholder visual
+		panelCajas.add(createCajaPlaceholder("Caja 1"));
+		panelCajas.add(createCajaPlaceholder("Caja 2"));
+		panelCajas.add(createCajaPlaceholder("Terraza"));
+		panelCajas.add(createCajaPlaceholder("Foodtruck"));
 
-        wrapper.add(panelCajas, BorderLayout.CENTER);
-        wrapper.setPreferredSize(new Dimension(800, 150));
+		wrapper.add(panelCajas, BorderLayout.CENTER);
+		wrapper.setPreferredSize(new Dimension(800, 150));
 
-        return wrapper;
-    }
+		return wrapper;
+	}
 
-    private JComponent createCajaPlaceholder(String nombre) {
-        JButton btn = new JButton(nombre);
-        btn.setPreferredSize(new Dimension(160, 60));
-        btn.setEnabled(false);
-        return btn;
-    }
+	private void cargarCajas() {
 
-    // =====================================================
-    // IMPORTE
-    // =====================================================
+		panelCajas.removeAll();
+		grupoCajas = new ButtonGroup();
+		cajaSeleccionada = null;
 
-    private JComponent buildImportePanel() {
+		for (CajaEstadoDTO caja : services.sesionCajaService.getEstadoCajas()) {
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder("Importe inicial"));
-        panel.setOpaque(false);
+			JToggleButton btn = new JToggleButton();
+			btn.setPreferredSize(new Dimension(170, 75));
+			btn.setFocusPainted(false);
+			btn.setForeground(Color.WHITE);
 
-        JPanel botones = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 8));
-        botones.setOpaque(false);
+			String texto = "<html><center><b>" + caja.getNombreCaja() + "</b><br/>";
 
-        botones.add(createImporteButton("100 €"));
-        botones.add(createImporteButton("200 €"));
-        botones.add(createImporteButton("250 €"));
-        botones.add(createImporteButton("300 €"));
+			if (!caja.isOperativa()) {
+				// ⚫ NO OPERATIVA
+				texto += "Fuera de servicio</center></html>";
+				btn.setBackground(Color.GRAY);
+				btn.setEnabled(false);
 
-        JPanel custom = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        custom.setOpaque(false);
+			} else if (caja.isOcupada()) {
+				// 🔴 OCUPADA
+				texto += "Ocupada<br/>(" + caja.getEmpleadoAsignado() + ")</center></html>";
+				btn.setBackground(new Color(170, 60, 60));
+				btn.setEnabled(false);
 
-        txtImporteCustom = new JTextField(10);
-        custom.add(new JLabel("Importe personalizado:"));
-        custom.add(txtImporteCustom);
+			} else {
+				// 🟢 DISPONIBLE
+				texto += "Disponible</center></html>";
+				btn.setBackground(new Color(60, 140, 90));
+				btn.setEnabled(true);
 
-        lblImporteSeleccionado = new JLabel("Importe seleccionado: —");
-        lblImporteSeleccionado.setForeground(Color.LIGHT_GRAY);
+				btn.addActionListener(e -> {
+					cajaSeleccionada = caja;
+					actualizarEstadoConfirmacion();
+				});
+			}
 
-        panel.add(botones);
-        panel.add(custom);
-        panel.add(lblImporteSeleccionado);
+			btn.setText(texto);
 
-        return panel;
-    }
+			grupoCajas.add(btn);
+			panelCajas.add(btn);
+		}
 
-    private JButton createImporteButton(String text) {
-        JButton b = new JButton(text);
-        return b;
-    }
+		panelCajas.revalidate();
+		panelCajas.repaint();
+	}
 
-    // =====================================================
-    // FOOTER
-    // =====================================================
+	private JComponent createCajaPlaceholder(String nombre) {
+		JButton btn = new JButton(nombre);
+		btn.setPreferredSize(new Dimension(160, 60));
+		btn.setEnabled(false);
+		return btn;
+	}
+	// ===================================================
+	// CAJA
+	// ===================================================
 
-    private JComponent buildFooter() {
+	// =====================================================
+	// IMPORTE
+	// =====================================================
 
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
-        footer.setOpaque(false);
+	private JComponent buildImportePanel() {
 
-        JButton btnCancelar = new JButton("Cancelar");
-        btnCancelar.addActionListener(e -> dispose());
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(BorderFactory.createTitledBorder("Importe inicial"));
+		panel.setOpaque(false);
 
-        JButton btnConfirmar = new JButton("Abrir sesión de caja");
-        btnConfirmar.setEnabled(false); // luego se habilita con validaciones
+		grupoImportes = new ButtonGroup();
 
-        footer.add(btnCancelar);
-        footer.add(btnConfirmar);
+		JPanel botones = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 8));
+		botones.setOpaque(false);
 
-        return footer;
-    }
-    //=================================================
-	//Carga de cajas 
-    //=================================================
-    private void cargarCajas() {
+		botones.add(createImporteButton(new BigDecimal(100)));
+		botones.add(createImporteButton(new BigDecimal(200)));
+		botones.add(createImporteButton(new BigDecimal(250)));
+		botones.add(createImporteButton(new BigDecimal(300)));
 
-        panelCajas.removeAll();
-        grupoCajas = new ButtonGroup();
-        cajaSeleccionada = null;
+		JPanel custom = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+		custom.setOpaque(false);
 
-        for (CajaEstadoDTO caja : services.sesionCajaService.getEstadoCajas()) {
+		txtImporteCustom = new JTextField(10);
+		txtImporteCustom.getDocument().addDocumentListener(new DocumentListener() {
 
-            JToggleButton btn = new JToggleButton();
-            btn.setPreferredSize(new Dimension(170, 75));
-            btn.setFocusPainted(false);
-            btn.setForeground(Color.WHITE);
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				onImporteCustomChanged();
+			}
 
-            String texto = "<html><center><b>" + caja.getNombreCaja() + "</b><br/>";
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				onImporteCustomChanged();
+			}
 
-            if (!caja.isOperativa()) {
-                // ⚫ NO OPERATIVA
-                texto += "Fuera de servicio</center></html>";
-                btn.setBackground(Color.GRAY);
-                btn.setEnabled(false);
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				onImporteCustomChanged();
+			}
+		});
 
-            } else if (caja.isOcupada()) {
-                // 🔴 OCUPADA
-                texto += "Ocupada<br/>(" + caja.getEmpleadoAsignado() + ")</center></html>";
-                btn.setBackground(new Color(170, 60, 60));
-                btn.setEnabled(false);
+		custom.add(new JLabel("Importe personalizado:"));
+		custom.add(txtImporteCustom);
 
-            } else {
-                // 🟢 DISPONIBLE
-                texto += "Disponible</center></html>";
-                btn.setBackground(new Color(60, 140, 90));
-                btn.setEnabled(true);
+		lblImporteSeleccionado = new JLabel("Importe seleccionado: —");
+		lblImporteSeleccionado.setForeground(Color.LIGHT_GRAY);
 
-                btn.addActionListener(e -> {
-                    cajaSeleccionada = caja;
-                    actualizarEstadoConfirmacion();
-                });
-            }
+		panel.add(botones);
+		panel.add(custom);
+		panel.add(lblImporteSeleccionado);
 
-            btn.setText(texto);
+		return panel;
+	}
 
-            grupoCajas.add(btn);
-            panelCajas.add(btn);
-        }
+	private JToggleButton createImporteButton(BigDecimal importeP) {
+		JToggleButton b = new JToggleButton(importeP + " € ");
+		grupoImportes.add(b);
+		b.addActionListener(new ActionListener() {
 
-        panelCajas.revalidate();
-        panelCajas.repaint();
-    }
-    private void actualizarEstadoConfirmacion() {
+			public void actionPerformed(ActionEvent e) {
+				onClikImporteButon(importeP);
+			}
+		});
 
-//        boolean puedeConfirmar =
-//                cajaSeleccionada != null
-//                && empleadoSeleccionado != null
-//                && importeSeleccionado != null;
-//
-//        btnConfirmar.setEnabled(puedeConfirmar);
-    }
+		return b;
+	}
 
-    
-	
+	private void onClikImporteButon(BigDecimal importe) {
+		importeSeleccionado = importe;
+		txtImporteCustom.setText("");
+		lblImporteSeleccionado.setText("Importe seleccionado: " + importe + " €");
+		actualizarEstadoConfirmacion();
+	}
+
+	public void onImporteCustomChanged() {
+		String texto = txtImporteCustom.getText().trim();
+
+		if (texto.isEmpty()) {
+			importeSeleccionado = null;
+			lblImporteSeleccionado.setText("Importe seleccionado: -");
+			actualizarEstadoConfirmacion();
+			return;
+
+		}
+		try {
+			BigDecimal valor = new BigDecimal(texto);
+			if (valor.compareTo(BigDecimal.ZERO) <= 0) {
+				throw new NumberFormatException();
+			}
+			grupoImportes.clearSelection();
+			importeSeleccionado = valor;
+			lblImporteSeleccionado.setText("ImporteSleccionado: " + valor + " €");
+
+		} catch (NumberFormatException e) {
+			importeSeleccionado = null;
+			lblImporteSeleccionado.setText("Importe selecccionado: -");
+		}
+		actualizarEstadoConfirmacion();
+	}
+
+	// =====================================================
+	// IMPORTE FIN
+	// =====================================================
+
+	private void actualizarEstadoConfirmacion() {
+
+		boolean puedeConfirmar = cajaSeleccionada != null && empleadoSeleccionado != null
+				&& importeSeleccionado != null;
+
+		btnConfirmar.setEnabled(puedeConfirmar);
+	}
+
+	// =====================================================
+	// APERTURA CAJA
+	// =====================================================
+	private void confirmarAperturaCaja() {
+		try {
+			services.cajaFacade.abrirSesionCaja(empleadoSeleccionado, cajaSeleccionada, importeSeleccionado);
+			JOptionPane.showMessageDialog(this, "Sesión de caja abierta Correctamente", "Caja abierta",
+					JOptionPane.INFORMATION_MESSAGE);
+			dispose();
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al abrir sesión de caja",
+					JOptionPane.ERROR_MESSAGE);
+		}
+
+	}
+
 }

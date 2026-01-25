@@ -8,11 +8,7 @@ import javax.swing.table.AbstractTableModel;
 import dtoS.FichajeActivoDTO;
 
 public class EmpleadosFichadosTableModel extends AbstractTableModel {
-	private  final String[] columnNames = {
-			"Empleado",
-			"Hora entrada",
-			"Estado"
-	};
+	private final String[] columnNames = { "ID", "Empleado", "Hora entrada", "Estado" };
 	private List<FichajeActivoDTO> datos = new ArrayList<>();
 
 	@Override
@@ -29,29 +25,37 @@ public class EmpleadosFichadosTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		 FichajeActivoDTO dto = datos.get(rowIndex);
+		FichajeActivoDTO dto = datos.get(rowIndex);
 
-	        return switch (columnIndex) {
-	            case 0 -> dto.getNombreEmpleado();
-	            case 1 -> dto.getHoraEntrada();
-	            case 2 -> dto.getEstado();
-	            default -> "";
-	        };
+		return switch (columnIndex) {
+			case 0 -> dto.getIdUsuario();
+			case 1 -> dto.getNombreEmpleado();
+			case 2 -> dto.getHoraEntrada();
+			case 3 -> dto.getEstado();
+			default -> "";
+		};
 	}
-	  @Override
-	    public String getColumnName(int column) {
-	        return columnNames[column];
-	    }
-	 @Override
-	    public boolean isCellEditable(int rowIndex, int columnIndex) {
-	        return false; // tabla solo lectura
-	    }
-	 /**
-	     * Reemplaza los datos de la tabla y notifica a la vista.
-	     */
-	    public void setDatos(List<FichajeActivoDTO> nuevosDatos) {
-	        this.datos = nuevosDatos != null ? nuevosDatos : new ArrayList<>();
-	        fireTableDataChanged();
-	    }
+
+	@Override
+	public String getColumnName(int column) {
+		return columnNames[column];
+	}
+
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		return false; // tabla solo lectura
+	}
+
+	/**
+	 * Reemplaza los datos de la tabla y notifica a la vista.
+	 */
+	public void setDatos(List<FichajeActivoDTO> nuevosDatos) {
+		this.datos = nuevosDatos != null ? nuevosDatos : new ArrayList<>();
+		fireTableDataChanged();
+	}
+
+	public FichajeActivoDTO getEmpleadoAt(int row) {
+		return datos.get(row);
+	}
 
 }

@@ -1,5 +1,6 @@
 package ui.common;
 
+import ui.dialog.AbrirSesionCajaDialog;
 import ui.table.EmpleadosFichadosTableModel;
 
 import javax.swing.*;
@@ -280,5 +281,20 @@ public class GestionCajaFrame extends BaseTpvFrame {
         b.setFocusPainted(false);
         return b;
     }
+    // =====================================================
+    // ABRIR DIALOGO DE APERTURA DE CAJA
+    // =====================================================
+    private void abrirDialogoAbrirCaja() {
+
+        AbrirSesionCajaDialog dialog =
+                new AbrirSesionCajaDialog(this, services);
+
+        dialog.setVisible(true);
+
+        // 👇 cuando se cierra el diálogo, refrescamos TODO
+        refreshEmpleadosFichados();
+        refreshCajasDisponibles();
+    }
+    
 }
 
