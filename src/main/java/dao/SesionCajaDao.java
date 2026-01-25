@@ -239,9 +239,9 @@ public class SesionCajaDao {
                     new CajaEstadoDTO(
                         rs.getInt("id_caja"),
                         rs.getString("nombre_caja"),
-                        operativa,
+                        rs.getBoolean("ocupada"),
                         rs.getString("empleado"),
-                        rs.getBoolean("ocupada")
+                        operativa
                     )
                 );
             }

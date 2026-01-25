@@ -99,6 +99,7 @@ public class GestionCajaFrame extends BaseTpvFrame {
         estado.setBorder(new EmptyBorder(8, 8, 8, 8));
 
         JButton btnAbrir = createPrimaryButton("Asignar / Abrir sesión de caja");
+        btnAbrir.addActionListener(e->abrirDialogoAbrirCaja());
         JButton btnCerrar = createDangerButton("Cerrar sesión");
         btnCerrar.setEnabled(false); // MVP
 

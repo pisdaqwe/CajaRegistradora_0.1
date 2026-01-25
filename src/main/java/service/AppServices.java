@@ -18,10 +18,10 @@ public class AppServices {
 
     public AppServices(
             AuthService authService,
-            FichajeFacade fichajeFacade,
             FichajeService fichajeService,
             SesionCajaService sesionCajaService,
             UsuarioRecordadoService usuarioRecordadoService,
+            FichajeFacade fichajeFacade,
             CajaFacade  cajaFacade
     ) {
         this.authService = authService;

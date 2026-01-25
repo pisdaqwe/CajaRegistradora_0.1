@@ -1,3 +1,7 @@
+package app;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+
 import config.ConfigLoader;
 import config.DbPool;
 import dao.CajaDao;
@@ -7,17 +11,24 @@ import dao.UsuarioDao;
 import dao.UsuarioRecordadoDao;
 import facade.CajaFacade;
 import facade.FichajeFacade;
+import service.AppServices;
 import service.AuthService;
 import service.FichajeService;
 import service.SesionCajaService;
 import service.UsuarioRecordadoService;
+import ui.screens.LoginScreen;
 
 public class MainApp {
 
     public static void main(String[] args) {
-
+    	System.out.println(
+    		    Thread.currentThread()
+    		          .getContextClassLoader()
+    		          .getResource("logback.xml")
+    		);
         ConfigLoader.load();
         DbPool.init();
+       
 
         // =========================
         // DAOs
@@ -45,8 +56,7 @@ public class MainApp {
         FichajeFacade fichajeFacade =
                 new FichajeFacade(usuarioDao, fichajeService);
 
-        CajaFacade cajaFacade =
-                new CajaFacade(sesionCajaDao, fichajeService);
+        CajaFacade cajaFacade =new CajaFacade(sesionCajaService);
 
         // =========================
         // APP SERVICES (CLAVE)

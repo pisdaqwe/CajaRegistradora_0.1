@@ -4,10 +4,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import dtoS.CajaEstadoDTO;
 import dtoS.FichajeActivoDTO;
-import model.Caja;
 import service.AppServices;
 import ui.table.EmpleadosFichadosTableModel;
 
@@ -18,6 +19,10 @@ import java.math.BigDecimal;
 
 public class AbrirSesionCajaDialog extends JDialog {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private JPanel panelCajas;
 	private ButtonGroup grupoCajas;
 
@@ -28,9 +33,12 @@ public class AbrirSesionCajaDialog extends JDialog {
 
 	private JLabel lblEmpleadoSleccionado;
 	private JTable tablaEmpleados;
+	TableRowSorter<EmpleadosFichadosTableModel> sorter ;
+
 	private EmpleadosFichadosTableModel tableModel;
 	private FichajeActivoDTO empleadoSeleccionado;
 	private JButton btnConfirmar;
+	JButton btnCancelar ;
 
 	private CajaEstadoDTO cajaSeleccionada;
 	private AppServices services;
@@ -87,10 +95,11 @@ public class AbrirSesionCajaDialog extends JDialog {
 		JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
 		footer.setOpaque(false);
 
-		JButton btnCancelar = new JButton("Cancelar");
+		
+		btnCancelar = new JButton("Cancelar");
 		btnCancelar.addActionListener(e -> dispose());
 
-		JButton btnConfirmar = new JButton("Abrir sesión de caja");
+		btnConfirmar = new JButton("Abrir sesión de caja");
 		btnConfirmar.setEnabled(false); // luego se habilita con validaciones
 		btnConfirmar.addActionListener(e->confirmarAperturaCaja());
 		footer.add(btnCancelar);
@@ -106,44 +115,88 @@ public class AbrirSesionCajaDialog extends JDialog {
 	// EMPLEADO
 	// ===================================================
 	private JComponent buildEmpleadoPanel() {
-		JPanel panel = new JPanel(new BorderLayout(8, 8));
-		panel.setBorder(BorderFactory.createTitledBorder("Empleados Fichados"));
-		panel.setOpaque(true);
 
-		JTextField txtBuscar = new JTextField();
-		panel.add(txtBuscar, BorderLayout.NORTH);
+	    JPanel panel = new JPanel(new BorderLayout(8, 8));
+	    panel.setBorder(BorderFactory.createTitledBorder("Empleados fichados"));
+	    panel.setOpaque(true);
 
-		tableModel = new EmpleadosFichadosTableModel();
-		tablaEmpleados = new JTable(tableModel);
-		// 🔑 selección de UNA fila
-		tablaEmpleados.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		tablaEmpleados.setRowHeight(24);
-		tablaEmpleados.setFillsViewportHeight(true);
-		tablaEmpleados.setEnabled(true);
-		// LISTENER DE SELECCIÓN
-		tablaEmpleados.getSelectionModel().addListSelectionListener(e -> {
+	    JTextField txtBuscar = new JTextField();
+	    panel.add(txtBuscar, BorderLayout.NORTH);
 
-			if (e.getValueIsAdjusting())
-				return;
+	    tableModel = new EmpleadosFichadosTableModel();
+	    tablaEmpleados = new JTable(tableModel);
 
-			int fila = tablaEmpleados.getSelectedRow();
+	    tablaEmpleados.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+	    tablaEmpleados.setRowHeight(24);
+	    tablaEmpleados.setFillsViewportHeight(true);
+	    tablaEmpleados.setEnabled(true);
 
-			if (fila >= 0) {
-				empleadoSeleccionado = tableModel.getEmpleadoAt(fila);
-			} else {
-				empleadoSeleccionado = null;
-			}
+	    // SORTER
+	    sorter = new TableRowSorter<>(tableModel);
+	    tablaEmpleados.setRowSorter(sorter);
 
-			actualizarEstadoConfirmacion();
-		});
+	    // LISTENER SELECCIÓN CORRECTO (con conversión vista → modelo)
+	    tablaEmpleados.getSelectionModel().addListSelectionListener(e -> {
 
-		JScrollPane pane = new JScrollPane(tablaEmpleados);
-		panel.add(pane, BorderLayout.CENTER);
+	        if (e.getValueIsAdjusting()) return;
 
-		pane.setPreferredSize(new Dimension(800, 180));
-		return panel;
+	        int filaVista = tablaEmpleados.getSelectedRow();
 
+	        if (filaVista >= 0) {
+	            int filaModelo = tablaEmpleados.convertRowIndexToModel(filaVista);
+	            empleadoSeleccionado = tableModel.getEmpleadoAt(filaModelo);
+	        } else {
+	            empleadoSeleccionado = null;
+	        }
+
+	        actualizarEstadoConfirmacion();
+	    });
+
+	    // FILTRO DEL TEXTFIELD
+	    txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
+
+	        @Override
+	        public void insertUpdate(DocumentEvent e) {
+				filtrar();
+	        }
+
+	        @Override
+	        public void removeUpdate(DocumentEvent e) {
+	            filtrar();
+	        }
+
+	        @Override
+	        public void changedUpdate(DocumentEvent e) {
+	            filtrar();
+	        }
+
+	        private void filtrar() {
+	            String texto = txtBuscar.getText().trim().toLowerCase();
+
+	            if (texto.isEmpty()) {
+	                sorter.setRowFilter(null);
+	                return;
+	            }
+
+	            sorter.setRowFilter(new RowFilter<EmpleadosFichadosTableModel, Integer>() {
+	                @Override
+	                public boolean include(Entry<? extends EmpleadosFichadosTableModel, ? extends Integer> entry) {
+	                    String nombre = entry.getStringValue(0);
+	                    return nombre != null && nombre.toLowerCase().contains(texto);
+	                }
+	            });
+	        }
+
+	    });
+
+	    JScrollPane scroll = new JScrollPane(tablaEmpleados);
+	    panel.add(scroll, BorderLayout.CENTER);
+
+	    panel.setPreferredSize(new Dimension(800, 180));
+
+	    return panel;
 	}
+
 
 	private void cargarEmpleadosFichados() {
 		tableModel.setDatos(services.fichajeService.findFichajesActivos());
