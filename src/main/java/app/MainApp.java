@@ -16,6 +16,7 @@ import service.AuthService;
 import service.FichajeService;
 import service.SesionCajaService;
 import service.UsuarioRecordadoService;
+import service.UsuarioService;
 import ui.screens.LoginScreen;
 
 public class MainApp {
@@ -49,6 +50,7 @@ public class MainApp {
 
         SesionCajaService sesionCajaService =
                 new SesionCajaService(cajaDao, sesionCajaDao);
+        UsuarioService usuarioService = new UsuarioService(usuarioDao);
 
         // =========================
         // FACADES
@@ -67,7 +69,8 @@ public class MainApp {
                 sesionCajaService,
                 usuarioRecordadoService,
                 fichajeFacade,
-                cajaFacade
+                cajaFacade,
+                usuarioService
         );
 
         int terminal = 1;

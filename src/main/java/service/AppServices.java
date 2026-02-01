@@ -15,6 +15,7 @@ public class AppServices {
     public final SesionCajaService sesionCajaService;
     public final UsuarioRecordadoService usuarioRecordadoService;
     public final CajaFacade  cajaFacade;
+    public final UsuarioService usuarioService;
 
     public AppServices(
             AuthService authService,
@@ -22,7 +23,9 @@ public class AppServices {
             SesionCajaService sesionCajaService,
             UsuarioRecordadoService usuarioRecordadoService,
             FichajeFacade fichajeFacade,
-            CajaFacade  cajaFacade
+            CajaFacade  cajaFacade,
+            UsuarioService usuarioService
+            
     ) {
         this.authService = authService;
         this.fichajeFacade = fichajeFacade;
@@ -30,5 +33,6 @@ public class AppServices {
         this.sesionCajaService = sesionCajaService;
         this.usuarioRecordadoService = usuarioRecordadoService;
         this.cajaFacade = cajaFacade;
+        this.usuarioService = usuarioService;
     }
 }

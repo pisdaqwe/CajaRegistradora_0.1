@@ -26,4 +26,19 @@ public class CajaFacade {
             importeInicial
         );
     }
+    
+    public void cerrarSesionCaja(
+    	    CajaEstadoDTO caja,
+    	    BigDecimal importeFinal,
+    	    String observaciones,
+    	    int idUsuarioCierre
+    	) {
+    	    sesionCajaService.cerrarSesionCaja(
+    	        caja.getIdCaja(),
+    	        idUsuarioCierre,
+    	        importeFinal,
+    	        observaciones
+    	    );
+    }
+    
 }
