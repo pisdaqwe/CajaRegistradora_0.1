@@ -75,38 +75,41 @@ public class SesionCajaDao {
 	 */
 	public void insert(SesionCaja sesion) {
 
-		String sql = """
-				    INSERT INTO sesion_caja
-				    (id_caja,
-				     id_usuario_apertura,
-				     id_terminal_apertura,
-				     fecha_apertura,
-				     importe_inicial,
-				     total_ventas,
-				     estado)
-				    VALUES (?, ?,NOW(), ?, ?, 'ABIERTA')
-				""";
+	    String sql = """
+	        INSERT INTO sesion_caja
+	        (
+	            id_caja,
+	            id_usuario_apertura,
+	            fecha_apertura,
+	            importe_inicial,
+	            total_ventas,
+	            estado
+	        )
+	        VALUES (?, ?, NOW(), ?, ?, 'ABIERTA')
+	    """;
 
-		try (Connection con = DbPool.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	    try (Connection con = DbPool.getConnection();
+	         PreparedStatement ps = con.prepareStatement(
+	                 sql, Statement.RETURN_GENERATED_KEYS)) {
 
-			ps.setInt(1, sesion.getIdCaja());
-			ps.setInt(2, sesion.getIdUsuarioApertura());
-			ps.setBigDecimal(3, sesion.getImporteInicial());
-			ps.setBigDecimal(4, sesion.getTotalVentas());
+	        ps.setInt(1, sesion.getIdCaja());
+	        ps.setInt(2, sesion.getIdUsuarioApertura());
+	        ps.setBigDecimal(3, sesion.getImporteInicial());
+	        ps.setBigDecimal(4, sesion.getTotalVentas());
 
-			ps.executeUpdate();
+	        ps.executeUpdate();
 
-			try (ResultSet keys = ps.getGeneratedKeys()) {
-				if (keys.next()) {
-					sesion.setIdSesion(keys.getInt(1));
-				}
-			}
+	        try (ResultSet rs = ps.getGeneratedKeys()) {
+	            if (rs.next()) {
+	                sesion.setIdSesion(rs.getInt(1));
+	            }
+	        }
 
-		} catch (SQLException e) {
-			throw new RuntimeException("Error insertando sesión de caja", e);
-		}
+	    } catch (SQLException e) {
+	        throw new RuntimeException("Error insertando sesión de caja", e);
+	    }
 	}
+
 
 	/**
 	 * Cierra una sesión de caja.
@@ -121,7 +124,7 @@ public class SesionCajaDao {
 				        observaciones = ?,
 				        estado = 'CERRADA'
 				    WHERE id_sesion = ? AND estado = 'ABIERTA'
-				    
+
 				""";
 
 		try (Connection con = DbPool.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {

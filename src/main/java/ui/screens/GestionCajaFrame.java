@@ -1,6 +1,8 @@
-package ui.common;
+package ui.screens;
 
+import ui.common.BaseTpvFrame;
 import ui.dialog.AbrirSesionCajaDialog;
+import ui.dialog.CerrarSesionCajaDialog;
 import ui.table.EmpleadosFichadosTableModel;
 
 import javax.swing.*;
@@ -101,7 +103,8 @@ public class GestionCajaFrame extends BaseTpvFrame {
         JButton btnAbrir = createPrimaryButton("Asignar / Abrir sesión de caja");
         btnAbrir.addActionListener(e->abrirDialogoAbrirCaja());
         JButton btnCerrar = createDangerButton("Cerrar sesión");
-        btnCerrar.setEnabled(false); // MVP
+        btnCerrar.setEnabled(true); 
+        btnCerrar.addActionListener(e->abrirDialogoCerrarCaja());
 
         panel.add(estado);
         panel.add(Box.createVerticalStrut(16));
@@ -295,6 +298,13 @@ public class GestionCajaFrame extends BaseTpvFrame {
         // 👇 cuando se cierra el diálogo, refrescamos TODO
         refreshEmpleadosFichados();
         refreshCajasDisponibles();
+    }
+    private void abrirDialogoCerrarCaja() {
+    	CerrarSesionCajaDialog dialog = new CerrarSesionCajaDialog(this, services);
+    	dialog.setVisible(true);
+    	refreshCajasDisponibles();
+    	refreshEmpleadosFichados();
+    	
     }
     
 }

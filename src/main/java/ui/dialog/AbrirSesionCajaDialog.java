@@ -180,10 +180,11 @@ public class AbrirSesionCajaDialog extends JDialog {
 	            sorter.setRowFilter(new RowFilter<EmpleadosFichadosTableModel, Integer>() {
 	                @Override
 	                public boolean include(Entry<? extends EmpleadosFichadosTableModel, ? extends Integer> entry) {
-	                    String nombre = entry.getStringValue(0);
+	                    String nombre = entry.getStringValue(1); // EMPLEADO
 	                    return nombre != null && nombre.toLowerCase().contains(texto);
 	                }
 	            });
+
 	        }
 
 	    });

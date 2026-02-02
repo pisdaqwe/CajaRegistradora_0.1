@@ -265,13 +265,22 @@ public class CerrarSesionCajaDialog extends JDialog {
         panelCajas.removeAll();
         grupoCajas = new ButtonGroup();
 
-        appServices.sesionCajaService.getEstadoCajas().stream()
+        var cajasOcupadas = appServices.sesionCajaService.getEstadoCajas().stream()
                 .filter(CajaEstadoDTO::isOcupada)
-                .forEach(caja -> {
-                    JToggleButton btn = crearBotonCaja(caja);
-                    grupoCajas.add(btn);
-                    panelCajas.add(btn);
-                });
+                .toList();
+
+        if (cajasOcupadas.isEmpty()) {
+            JLabel lbl = new JLabel("No hay sesiones de caja abiertas");
+            lbl.setForeground(Color.LIGHT_GRAY);
+            lbl.setFont(new Font("Arial", Font.ITALIC, 14));
+            panelCajas.add(lbl);
+        } else {
+            for (CajaEstadoDTO caja : cajasOcupadas) {
+                JToggleButton btn = crearBotonCaja(caja);
+                grupoCajas.add(btn);
+                panelCajas.add(btn);
+            }
+        }
 
         panelCajas.revalidate();
         panelCajas.repaint();
