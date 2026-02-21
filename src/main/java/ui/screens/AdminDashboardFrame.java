@@ -133,10 +133,13 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	}
 
 	private void onGestionCaja() {
-		GestionCajaFrame frame = new GestionCajaFrame(onLogoutNavigate, () -> this.setVisible(true), services);
+		GestionCajaFrame frame = new GestionCajaFrame(onLogoutNavigate,() -> {
+			        this.refreshState();
+			        this.setVisible(true);
+			    },
+			    services
+			);
 		frame.setVisible(true);
-		this.setVisible(false);
-
 	}
 
 	private void onInformes() {
@@ -202,5 +205,10 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 		b.setForeground(Color.WHITE);
 		b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
 		return b;
+	}
+	
+	public void refreshState() {
+	    refreshHeader();
+	    refreshNuevoPedidoVisibility();
 	}
 }
