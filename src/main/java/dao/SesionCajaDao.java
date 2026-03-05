@@ -2,6 +2,7 @@ package dao;
 
 import config.DbPool;
 import dtoS.CajaEstadoDTO;
+import dtoS.SesionCajaRefDTO;
 import model.SesionCaja;
 import enums.EstadoSesionCaja;
 
@@ -346,5 +347,70 @@ public class SesionCajaDao {
 		}
 
 	}
+	public Optional<SesionCaja> selectAbiertaByUsuario(int idUsuario) {
+
+	    String sql = """
+	        SELECT *
+	        FROM sesion_caja
+	        WHERE id_usuario_apertura = ?
+	          AND estado = 'ABIERTA'
+	        LIMIT 1
+	    """;
+
+	    try (Connection con = DbPool.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setInt(1, idUsuario);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return Optional.of(mapSesionCaja(rs));
+	            }
+	        }
+
+	    } catch (SQLException e) {
+	        throw new RuntimeException("Error buscando sesión abierta por usuario " + idUsuario, e);
+	    }
+
+	    return Optional.empty();
+	}
+	public Optional<SesionCajaRefDTO> selectRefAbiertaByUsuario(int idUsuario) {
+
+	    String sql = """
+	        SELECT
+	            sc.id_sesion,
+	            sc.id_caja,
+	            c.id_sucursal,
+	            c.nombre AS nombre_caja
+	        FROM sesion_caja sc
+	        JOIN caja c ON c.id_caja = sc.id_caja
+	        WHERE sc.id_usuario_apertura = ?
+	          AND sc.estado = 'ABIERTA'
+	        LIMIT 1
+	    """;
+
+	    try (Connection con = DbPool.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setInt(1, idUsuario);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return Optional.of(new SesionCajaRefDTO(
+	                    rs.getInt("id_sesion"),
+	                    rs.getInt("id_caja"),
+	                    rs.getInt("id_sucursal"),
+	                    rs.getString("nombre_caja")
+	                ));
+	            }
+	        }
+
+	    } catch (SQLException e) {
+	        throw new RuntimeException("Error buscando SesionCajaRef por usuario " + idUsuario, e);
+	    }
+
+	    return Optional.empty();
+	}
+	
 
 }

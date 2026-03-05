@@ -5,14 +5,18 @@ import javax.swing.SwingUtilities;
 import config.ConfigLoader;
 import config.DbPool;
 import dao.CajaDao;
+import dao.CategoriaDao;
 import dao.FichajeDao;
+import dao.ProductoDao;
 import dao.SesionCajaDao;
+import dao.SubcategoriaDao;
 import dao.UsuarioDao;
 import dao.UsuarioRecordadoDao;
 import facade.CajaFacade;
 import facade.FichajeFacade;
 import service.AppServices;
 import service.AuthService;
+import service.CatalogoService;
 import service.FichajeService;
 import service.SesionCajaService;
 import service.UsuarioRecordadoService;
@@ -39,6 +43,9 @@ public class MainApp {
         SesionCajaDao sesionCajaDao = new SesionCajaDao();
         CajaDao cajaDao = new CajaDao();
         UsuarioRecordadoDao usuarioRecordadoDao = new UsuarioRecordadoDao();
+        CategoriaDao categoriaDao = new CategoriaDao();
+        SubcategoriaDao subcategoriaDao = new SubcategoriaDao();
+        ProductoDao productoDao = new ProductoDao();
 
         // =========================
         // SERVICES
@@ -51,6 +58,7 @@ public class MainApp {
         SesionCajaService sesionCajaService =
                 new SesionCajaService(cajaDao, sesionCajaDao);
         UsuarioService usuarioService = new UsuarioService(usuarioDao);
+        CatalogoService catalogoService = new CatalogoService(categoriaDao, subcategoriaDao, productoDao);
 
         // =========================
         // FACADES
@@ -70,7 +78,8 @@ public class MainApp {
                 usuarioRecordadoService,
                 fichajeFacade,
                 cajaFacade,
-                usuarioService
+                usuarioService,
+                catalogoService
         );
 
         int terminal = 1;

@@ -3,6 +3,7 @@ package service;
 import dao.CajaDao;
 import dao.SesionCajaDao;
 import dtoS.CajaEstadoDTO;
+import dtoS.SesionCajaRefDTO;
 import enums.EstadoCaja;
 import enums.EstadoSesionCaja;
 import model.Caja;
@@ -197,5 +198,11 @@ public class SesionCajaService {
 	public List<CajaEstadoDTO> getEstadoCajas() {
 		// TODO Auto-generated method stub
 		 return sesionCajaDao.findEstadoCajas();
+	}
+	public SesionCajaRefDTO requireSesionAbiertaPorUsuario(int idUsuario) {
+	    return sesionCajaDao.selectRefAbiertaByUsuario(idUsuario)
+	        .orElseThrow(() -> new IllegalStateException(
+	            "No tienes una sesión de caja asignada/abierta. Pide al encargado que te abra una."
+	        ));
 	}
 }

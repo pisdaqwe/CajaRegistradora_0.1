@@ -5,6 +5,7 @@ import model.Usuario;
 import service.AppServices;
 import service.SesionCajaService;
 import dao.SesionCajaDao;
+import dtoS.SesionCajaRefDTO;
 import dao.CajaDao;
 import ui.common.*;
 
@@ -128,18 +129,41 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private void onNuevoPedido() {
-		// TODO abrir CajaFrame (TPV operativo)
-		JOptionPane.showMessageDialog(this, "Abrir TPV (pendiente)");
+	    try {
+	        int idUsuario = AppContext.getUsuarioId();
+
+	        // 1) Gate: exige sesión abierta y trae el ref (idSesion, idCaja, idSucursal, nombreCaja)
+	        SesionCajaRefDTO ref = services.sesionCajaService
+	                .requireSesionAbiertaPorUsuario(idUsuario);
+
+	        // 2) Guardar en AppContext (lo usará VentasFrame)
+	        AppContext.setSesionCajaActual(ref);
+
+	        // 3) Abrir VentasFrame
+	        // (de momento placeholder si aún no existe)
+	        JOptionPane.showMessageDialog(this,
+	                "OK: Sesión asignada -> " + ref.getNombreCaja()
+	                        + " (sesión " + ref.getIdSesion() + ").\n"
+	                        + "Siguiente: abrir VentasFrame.",
+	                "Gate OK", JOptionPane.INFORMATION_MESSAGE);
+
+	       
+	         VentasFrame frame = new VentasFrame(onLogoutNavigate, () -> this.setVisible(true), services);
+	         frame.setVisible(true);
+	         this.setVisible(false);
+
+	    } catch (Exception ex) {
+	        JOptionPane.showMessageDialog(this, ex.getMessage(),
+	                "No se puede abrir Ventas", JOptionPane.WARNING_MESSAGE);
+	    }
+	    refreshNuevoPedidoVisibility();
 	}
 
 	private void onGestionCaja() {
-		GestionCajaFrame frame = new GestionCajaFrame(onLogoutNavigate,() -> {
-			        this.refreshState();
-			        this.setVisible(true);
-			    },
-			    services
-			);
+		GestionCajaFrame frame = new GestionCajaFrame(onLogoutNavigate, () -> this.setVisible(true), services);
 		frame.setVisible(true);
+		this.setVisible(false);
+
 	}
 
 	private void onInformes() {
@@ -205,10 +229,5 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 		b.setForeground(Color.WHITE);
 		b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
 		return b;
-	}
-	
-	public void refreshState() {
-	    refreshHeader();
-	    refreshNuevoPedidoVisibility();
 	}
 }
