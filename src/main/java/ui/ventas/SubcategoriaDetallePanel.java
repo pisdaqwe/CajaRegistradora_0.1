@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SubcategoriaDetallePanel extends JPanel {
 
@@ -15,13 +16,15 @@ public class SubcategoriaDetallePanel extends JPanel {
 
     private final AppServices services;
     private final Runnable onBack;
+    private final Consumer<ProductoDTO> onProductoClicked;
 
     private final JLabel lblTitle = new JLabel("", SwingConstants.LEFT);
     private final JPanel grid = new JPanel();
 
-    public SubcategoriaDetallePanel(AppServices services, Runnable onBack) {
+    public SubcategoriaDetallePanel(AppServices services, Runnable onBack,Consumer<ProductoDTO> onProductoClicked) {
         this.services = services;
         this.onBack = onBack;
+        this.onProductoClicked = onProductoClicked;
 
         setLayout(new BorderLayout(12, 12));
         setBackground(new Color(20, 20, 20));
@@ -70,9 +73,10 @@ public class SubcategoriaDetallePanel extends JPanel {
 
         for (ProductoDTO p : productos) {
             JButton b = createYellowButton(p.getNombre());
-            // AÚN NO AÑADIMOS AL TICKET
-            b.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                    "Producto pulsado (aún no añade al ticket): " + p.getNombre()));
+           
+            b.addActionListener(e -> {
+                if (onProductoClicked != null) onProductoClicked.accept(p);
+            });
             grid.add(b);
         }
 

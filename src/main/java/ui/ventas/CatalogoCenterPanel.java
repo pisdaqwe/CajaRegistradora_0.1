@@ -1,10 +1,12 @@
 package ui.ventas;
 
+import dtoS.ProductoDTO;
 import dtoS.SubCategoriaDTO;
 import service.AppServices;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class CatalogoCenterPanel extends JPanel {
 
@@ -21,18 +23,20 @@ public class CatalogoCenterPanel extends JPanel {
     // Para volver al resumen de la categoría actual
     private int currentCategoriaId = -1;
 
-    public CatalogoCenterPanel(AppServices services) {
+    public CatalogoCenterPanel(AppServices services,Consumer<ProductoDTO> onProductoClicked) {
         setLayout(layout);
         setBackground(new Color(20, 20, 20));
 
         resumenPanel = new ResumenCategoriaPanel(
                 services,
-                this::showSubcategoriaDetalle
+                this::showSubcategoriaDetalle,
+                onProductoClicked
         );
 
         detallePanel = new SubcategoriaDetallePanel(
                 services,
-                this::showResumenActual
+                this::showResumenActual,
+                onProductoClicked
         );
 
         add(resumenPanel, CARD_RESUMEN);

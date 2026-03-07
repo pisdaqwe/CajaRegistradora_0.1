@@ -18,11 +18,13 @@ public class ResumenCategoriaPanel extends JPanel {
 
     private final JPanel content = new JPanel();
     private final JScrollPane scroll;
-    Consumer<SubCategoriaDTO>onHeaderClick;
+    private final Consumer<SubCategoriaDTO>onHeaderClick;
+    private final Consumer<ProductoDTO> onProductoClicked;
 
-    public ResumenCategoriaPanel(AppServices services,Consumer<SubCategoriaDTO> onHeaderClick) {
+    public ResumenCategoriaPanel(AppServices services,Consumer<SubCategoriaDTO> onHeaderClick,Consumer<ProductoDTO> onProductoClicked) {
         this.services = services;
         this.onHeaderClick = onHeaderClick;
+        this.onProductoClicked = onProductoClicked;
 
         setLayout(new BorderLayout());
         setBackground(new Color(20, 20, 20));
@@ -76,8 +78,9 @@ public class ResumenCategoriaPanel extends JPanel {
         for (ProductoDTO p : top) {
             JButton b = createProductoButton(p.getNombre());
             // AÚN NO AÑADIMOS AL TICKET
-            b.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                    "Producto pulsado (aún no añade al ticket): " + p.getNombre()));
+            b.addActionListener(e -> {
+                if (onProductoClicked != null) onProductoClicked.accept(p);
+            });
             grid.add(b);
         }
 

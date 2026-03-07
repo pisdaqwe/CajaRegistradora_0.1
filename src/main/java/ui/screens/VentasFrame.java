@@ -4,6 +4,7 @@ package ui.screens;
 
 import app.AppContext;
 import dtoS.CategoriaDTO;
+import dtoS.ProductoDTO;
 import model.TicketSession;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
@@ -74,21 +75,26 @@ public class VentasFrame extends BaseTpvFrame {
         // -------------------------
         // CENTER: CardLayout (CATALOGO / PAGO)
         // -------------------------
-        centerPanel = new VentasCenterPanel(services);
+        centerPanel = new VentasCenterPanel(services, this::onProductoClicked);
         root.add(centerPanel, BorderLayout.CENTER);
 
-        // -------------------------
-        // EAST: Ticket + Customization (vertical)
-        // -------------------------
+     // EAST: Customization (izquierda) + Ticket (derecha)
         JPanel east = new JPanel(new BorderLayout(12, 12));
         east.setOpaque(false);
-        east.setPreferredSize(new Dimension(420, 0)); // columna derecha tipo TPV
+        east.setPreferredSize(new Dimension(520, 0)); // columna derecha total
 
         ticketPanel = new TicketPanel(ticketSession, this::onTicketSelectionChanged);
         customizationPanel = new CustomizationPanel(ticketSession, services);
 
+        // Panel izquierdo (customización) fijo
+        JPanel customWrap = new JPanel(new BorderLayout());
+        customWrap.setOpaque(false);
+        customWrap.setPreferredSize(new Dimension(170, 0)); // ancho del panel de customización
+        customWrap.add(customizationPanel, BorderLayout.CENTER);
+
+        // Ticket ocupa el resto
+        east.add(customWrap, BorderLayout.WEST);
         east.add(ticketPanel, BorderLayout.CENTER);
-        east.add(customizationPanel, BorderLayout.SOUTH);
 
         root.add(east, BorderLayout.EAST);
 
@@ -111,7 +117,34 @@ public class VentasFrame extends BaseTpvFrame {
     // =====================================================
     // EVENTOS
     // =====================================================
+    private void onProductoClicked(ProductoDTO producto) {
 
+        // 1) Resolver tamaño default + precio (regla B)
+    	dtoS.TamanoPrecioDTO def = services.catalogoService.getTamanoDefaultYPrecio(producto.getIdProducto());
+        // Si no quieres var:
+        // TamanoPrecioDTO def = services.catalogoService.getTamanoDefaultYPrecio(producto.getIdProducto());
+
+        // 2) Añadir al ticket
+        ticketSession.addItem(producto, def.getTamanoDTO(), def.getPrecio());
+
+        // 3) Seleccionar el item recién añadido (fila ITEM de ese item)
+        int newItemIndex = ticketSession.getItems().size() - 1;
+        ticketSession.setSelectedFlatIndex(findFlatIndexForItem(newItemIndex));
+
+        // 4) Refrescar UI
+        refreshAll();
+    }
+
+    private int findFlatIndexForItem(int itemIndex) {
+        List<model.TicketRow> rows = ticketSession.buildRows();
+        for (int i = 0; i < rows.size(); i++) {
+            model.TicketRow r = rows.get(i);
+            if (r.getType() == enums.TicketRowType.ITEM && r.getItemIndex() == itemIndex) {
+                return i;
+            }
+        }
+        return -1;
+    }
     private void onTicketSelectionChanged() {
         customizationPanel.refresh();
     }

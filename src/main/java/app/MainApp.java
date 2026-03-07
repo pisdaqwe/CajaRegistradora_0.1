@@ -8,12 +8,14 @@ import dao.CajaDao;
 import dao.CategoriaDao;
 import dao.FichajeDao;
 import dao.ProductoDao;
+import dao.ProductoTamanoDao;
 import dao.SesionCajaDao;
 import dao.SubcategoriaDao;
 import dao.UsuarioDao;
 import dao.UsuarioRecordadoDao;
 import facade.CajaFacade;
 import facade.FichajeFacade;
+import model.ProductoTamano;
 import service.AppServices;
 import service.AuthService;
 import service.CatalogoService;
@@ -46,6 +48,7 @@ public class MainApp {
         CategoriaDao categoriaDao = new CategoriaDao();
         SubcategoriaDao subcategoriaDao = new SubcategoriaDao();
         ProductoDao productoDao = new ProductoDao();
+        ProductoTamanoDao productoTamanoDao = new ProductoTamanoDao();
 
         // =========================
         // SERVICES
@@ -58,8 +61,12 @@ public class MainApp {
         SesionCajaService sesionCajaService =
                 new SesionCajaService(cajaDao, sesionCajaDao);
         UsuarioService usuarioService = new UsuarioService(usuarioDao);
-        CatalogoService catalogoService = new CatalogoService(categoriaDao, subcategoriaDao, productoDao);
-
+        CatalogoService catalogoService = new CatalogoService(
+                new CategoriaDao(),
+                new SubcategoriaDao(),
+                new ProductoDao(),
+                new ProductoTamanoDao()
+        );
         // =========================
         // FACADES
         // =========================
