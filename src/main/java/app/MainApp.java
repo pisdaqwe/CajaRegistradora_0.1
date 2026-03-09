@@ -6,7 +6,9 @@ import config.ConfigLoader;
 import config.DbPool;
 import dao.CajaDao;
 import dao.CategoriaDao;
+import dao.ExtraDao;
 import dao.FichajeDao;
+import dao.PersonalizacionDao;
 import dao.ProductoDao;
 import dao.ProductoTamanoDao;
 import dao.SesionCajaDao;
@@ -20,6 +22,8 @@ import service.AppServices;
 import service.AuthService;
 import service.CatalogoService;
 import service.FichajeService;
+import service.PersonalizacionService;
+import service.ProductoPersonalizacionService;
 import service.SesionCajaService;
 import service.UsuarioRecordadoService;
 import service.UsuarioService;
@@ -49,6 +53,8 @@ public class MainApp {
         SubcategoriaDao subcategoriaDao = new SubcategoriaDao();
         ProductoDao productoDao = new ProductoDao();
         ProductoTamanoDao productoTamanoDao = new ProductoTamanoDao();
+        ExtraDao extraDao = new ExtraDao();
+        PersonalizacionDao personalizacionDao = new PersonalizacionDao();
 
         // =========================
         // SERVICES
@@ -67,7 +73,8 @@ public class MainApp {
                 new ProductoDao(),
                 new ProductoTamanoDao()
         );
-        // =========================
+        ProductoPersonalizacionService productoPersonalizacionService = new ProductoPersonalizacionService(productoTamanoDao, extraDao, personalizacionDao);
+     // =========================
         // FACADES
         // =========================
         FichajeFacade fichajeFacade =
@@ -86,7 +93,8 @@ public class MainApp {
                 fichajeFacade,
                 cajaFacade,
                 usuarioService,
-                catalogoService
+                catalogoService,
+                productoPersonalizacionService
         );
 
         int terminal = 1;

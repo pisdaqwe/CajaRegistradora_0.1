@@ -2,10 +2,6 @@ package service;
 
 import facade.CajaFacade;
 import facade.FichajeFacade;
-import service.AuthService;
-import service.FichajeService;
-import service.SesionCajaService;
-import service.UsuarioRecordadoService;
 
 public class AppServices {
 
@@ -14,9 +10,10 @@ public class AppServices {
     public final FichajeService fichajeService;
     public final SesionCajaService sesionCajaService;
     public final UsuarioRecordadoService usuarioRecordadoService;
-    public final CajaFacade  cajaFacade;
+    public final CajaFacade cajaFacade;
     public final UsuarioService usuarioService;
     public final CatalogoService catalogoService;
+    public final ProductoPersonalizacionService productoPersonalizacionService;
 
     public AppServices(
             AuthService authService,
@@ -24,10 +21,10 @@ public class AppServices {
             SesionCajaService sesionCajaService,
             UsuarioRecordadoService usuarioRecordadoService,
             FichajeFacade fichajeFacade,
-            CajaFacade  cajaFacade,
+            CajaFacade cajaFacade,
             UsuarioService usuarioService,
-            CatalogoService catalogoService
-            
+            CatalogoService catalogoService,
+            ProductoPersonalizacionService productoPersonalizacionService
     ) {
         this.authService = authService;
         this.fichajeFacade = fichajeFacade;
@@ -37,5 +34,6 @@ public class AppServices {
         this.cajaFacade = cajaFacade;
         this.usuarioService = usuarioService;
         this.catalogoService = catalogoService;
+        this.productoPersonalizacionService = productoPersonalizacionService;
     }
 }

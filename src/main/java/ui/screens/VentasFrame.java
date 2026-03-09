@@ -4,12 +4,17 @@ package ui.screens;
 
 import app.AppContext;
 import dtoS.CategoriaDTO;
+import dtoS.ExtraDTO;
+import dtoS.PersonalizacionDTO;
+import dtoS.ProductoCustomizationDTO;
 import dtoS.ProductoDTO;
+import model.TicketRow;
 import model.TicketSession;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
 import ui.ventas.BottomBarPanel;
 import ui.ventas.CategoriasBarPanel;
+import ui.ventas.CustomizationCenterPanel;
 import ui.ventas.CustomizationPanel;
 import ui.ventas.TicketPanel;
 import ui.ventas.VentasCenterPanel;
@@ -77,14 +82,29 @@ public class VentasFrame extends BaseTpvFrame {
         // -------------------------
         centerPanel = new VentasCenterPanel(services, this::onProductoClicked);
         root.add(centerPanel, BorderLayout.CENTER);
+        centerPanel.setCustomizationActionListener(new CustomizationCenterPanel.CustomizationActionListener() {
+            @Override
+            public void onExtraClicked(dtoS.ExtraDTO extra) {
+                onCenterExtraClicked(extra);
+            }
 
+            @Override
+            public void onPersonalizacionClicked(dtoS.PersonalizacionDTO personalizacion) {
+                onCenterPersonalizacionClicked(personalizacion);
+            }
+        });
+        
      // EAST: Customization (izquierda) + Ticket (derecha)
         JPanel east = new JPanel(new BorderLayout(12, 12));
         east.setOpaque(false);
         east.setPreferredSize(new Dimension(520, 0)); // columna derecha total
 
         ticketPanel = new TicketPanel(ticketSession, this::onTicketSelectionChanged);
-        customizationPanel = new CustomizationPanel(ticketSession, services);
+        customizationPanel = new CustomizationPanel(
+                ticketSession,
+                services,
+                card -> centerPanel.showCustomCard(card)
+        );
 
         // Panel izquierdo (customización) fijo
         JPanel customWrap = new JPanel(new BorderLayout());
@@ -117,6 +137,7 @@ public class VentasFrame extends BaseTpvFrame {
     // =====================================================
     // EVENTOS
     // =====================================================
+   
     private void onProductoClicked(ProductoDTO producto) {
 
         // 1) Resolver tamaño default + precio (regla B)
@@ -133,8 +154,9 @@ public class VentasFrame extends BaseTpvFrame {
 
         // 4) Refrescar UI
         refreshAll();
+        loadCustomizationForSelectedItem();
     }
-
+   
     private int findFlatIndexForItem(int itemIndex) {
         List<model.TicketRow> rows = ticketSession.buildRows();
         for (int i = 0; i < rows.size(); i++) {
@@ -145,8 +167,25 @@ public class VentasFrame extends BaseTpvFrame {
         }
         return -1;
     }
+    private void loadCustomizationForSelectedItem() {
+        model.TicketItem item = ticketSession.getSelectedItemOrNull();
+
+        if (item == null) {
+            centerPanel.clearCustomizationData();
+            return;
+        }
+
+        int idProducto = item.getProducto().getIdProducto();
+
+        ProductoCustomizationDTO dto =
+                services.productoPersonalizacionService.getCustomizationByProducto(idProducto);
+
+        centerPanel.loadCustomizationData(dto);
+    }
+    
     private void onTicketSelectionChanged() {
         customizationPanel.refresh();
+        loadCustomizationForSelectedItem();
     }
 
     private void onCobrar() {
@@ -166,8 +205,47 @@ public class VentasFrame extends BaseTpvFrame {
         if (res == JOptionPane.YES_OPTION) {
             ticketSession.clear();
             centerPanel.showCatalogo();
+            centerPanel.clearCustomizationData();
             refreshAll();
         }
+    }
+    private void onCenterExtraClicked(ExtraDTO extra) {
+        if (extra == null) return;
+
+        TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
+        if (selectedRow == null) return;
+
+        int itemIndex = selectedRow.getItemIndex();
+        if (itemIndex < 0) return;
+
+        String tipo = extra.getTipo() == null ? "" : extra.getTipo().trim().toUpperCase();
+
+        switch (tipo) {
+            case "MILK" -> ticketSession.replaceExtraByTipo(itemIndex, extra);
+
+            case "SHOT",
+                 "SYRUP",
+                 "TOPPING",
+                 "FOOD_EXTRA" -> ticketSession.addExtra(itemIndex, extra);
+
+            default -> ticketSession.addExtra(itemIndex, extra);
+        }
+
+        refreshAll();
+    }
+
+    private void onCenterPersonalizacionClicked(PersonalizacionDTO personalizacion) {
+        if (personalizacion == null) return;
+
+        TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
+        if (selectedRow == null) return;
+
+        int itemIndex = selectedRow.getItemIndex();
+        if (itemIndex < 0) return;
+
+        ticketSession.togglePersonalizacion(itemIndex, personalizacion);
+
+        refreshAll();
     }
 
     private void onOpciones() {

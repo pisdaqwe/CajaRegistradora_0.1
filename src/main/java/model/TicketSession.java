@@ -111,6 +111,15 @@ public final class TicketSession {
         item.addExtra(extra);
     }
 
+    /**
+     * Reemplaza el extra de un tipo concreto por el nuevo.
+     * Caso típico: MILK.
+     */
+    public void replaceExtraByTipo(int itemIndex, ExtraDTO extra) {
+        TicketItem item = getItemOrThrow(itemIndex);
+        item.replaceExtraByTipo(extra);
+    }
+
     public void togglePersonalizacion(int itemIndex, PersonalizacionDTO p) {
         TicketItem item = getItemOrThrow(itemIndex);
         item.togglePersonalizacion(p);

@@ -14,7 +14,7 @@ import dtoS.TamanoDTO;
 
 /**
  * Un item del ticket: producto + tamaño + precio base + extras + personalizaciones.
- * - Extras: repetibles (lista)
+ * - Extras: repetibles (lista), salvo cuando la lógica use replace por tipo
  * - Personalizaciones: no repetibles (LinkedHashMap por id para toggle)
  */
 public final class TicketItem {
@@ -74,11 +74,18 @@ public final class TicketItem {
         }
     }
 
+    /**
+     * Añade un extra al item.
+     * Para tipos repetibles (SHOT, SYRUP, TOPPING) esta operación vale directamente.
+     * Para tipos exclusivos como MILK, se usará replaceExtraByTipo(...) desde fuera.
+     */
     public void addExtra(ExtraDTO extraDto) {
         Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+
         extras.add(new TicketExtra(
                 extraDto.getIdExtra(),
                 extraDto.getNombre(),
+                extraDto.getTipo(),
                 extraDto.getPrecio()
         ));
     }
@@ -88,6 +95,33 @@ public final class TicketItem {
             throw new IndexOutOfBoundsException("extraIndex fuera de rango: " + extraIndex);
         }
         extras.remove(extraIndex);
+    }
+
+    /**
+     * Elimina todos los extras de un tipo concreto.
+     * Ejemplo típico: borrar la leche actual antes de poner otra.
+     */
+    public void removeExtrasByTipo(String tipo) {
+        Objects.requireNonNull(tipo, "tipo no puede ser null");
+        extras.removeIf(e -> tipo.equalsIgnoreCase(e.getTipo()));
+    }
+
+    /**
+     * Reemplaza el extra de un tipo por el nuevo.
+     * Muy útil para MILK: solo debe haber una leche activa por item.
+     */
+    public void replaceExtraByTipo(ExtraDTO extraDto) {
+        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+        removeExtrasByTipo(extraDto.getTipo());
+        addExtra(extraDto);
+    }
+
+    /**
+     * Permite saber si un extra concreto ya está aplicado.
+     * Puede servir para evitar duplicados en algunos casos.
+     */
+    public boolean hasExtraById(int idExtra) {
+        return extras.stream().anyMatch(e -> e.getIdExtra() == idExtra);
     }
 
     public boolean togglePersonalizacion(PersonalizacionDTO pDto) {

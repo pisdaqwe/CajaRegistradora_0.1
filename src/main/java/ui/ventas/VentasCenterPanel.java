@@ -1,71 +1,116 @@
 package ui.ventas;
 
-import service.AppServices;
-
-import java.awt.CardLayout;
-import java.util.function.Consumer;
-
-import javax.swing.JPanel;
-
+import dtoS.ProductoCustomizationDTO;
 import dtoS.ProductoDTO;
 import enums.CustomizationCard;
+import service.AppServices;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.function.Consumer;
 
 public class VentasCenterPanel extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public static final String CARD_CATALOGO = "CATALOGO";
-	public static final String CARD_PAGO = "PAGO";
-	public static final String CARD_CUSTOM = "CUSTOM";
+    private static final String CARD_CATALOGO = "CATALOGO";
+    private static final String CARD_CUSTOM   = "CUSTOM";
+    private static final String CARD_PAGO     = "PAGO";
 
-	private final CardLayout cardLayout;
+    private final CardLayout cardLayout = new CardLayout();
 
-	private final CatalogoCenterPanel catalogoPanel;
-	private final PagoCenterPanel pagoPanel;
-	private final CustomizationCenterPanel customizationCenterPanel;
+    private final AppServices services;
 
-	public VentasCenterPanel(AppServices services, Consumer<ProductoDTO> onProductoCicked) {
-		this.cardLayout = new CardLayout();
-		setLayout(cardLayout);
+    private final CatalogoCenterPanel catalogoPanel;
+    private final CustomizationCenterPanel customizationCenterPanel;
+    private final JPanel pagoPanel;
 
-		this.catalogoPanel = new CatalogoCenterPanel(services, onProductoCicked);
-		this.pagoPanel = new PagoCenterPanel(); // placeholder
-		this.customizationCenterPanel = new CustomizationCenterPanel();
+    public VentasCenterPanel(AppServices services, Consumer<ProductoDTO> onProductoClicked) {
+        this.services = services;
 
-		add(catalogoPanel, CARD_CATALOGO);
-		add(pagoPanel, CARD_PAGO);
-		add(customizationCenterPanel, CARD_CUSTOM);
+        setLayout(cardLayout);
+        setOpaque(false);
 
-		showCatalogo();
-	}
+        // Card catálogo
+        this.catalogoPanel = new CatalogoCenterPanel(services, onProductoClicked);
 
-	public CatalogoCenterPanel getCatalogoPanel() {
-		return catalogoPanel;
-	}
+        // Card customización
+        this.customizationCenterPanel = new CustomizationCenterPanel();
 
-	public CustomizationCenterPanel getCustomizationCenterPanel() {
-		return customizationCenterPanel;
-	}
+        // Card pago (placeholder por ahora)
+        this.pagoPanel = buildPagoPanel();
 
-	public void showCatalogo() {
-		showCard(CARD_CATALOGO);
-	}
+        add(catalogoPanel, CARD_CATALOGO);
+        add(customizationCenterPanel, CARD_CUSTOM);
+        add(pagoPanel, CARD_PAGO);
 
-	public void showPago() {
-		showCard(CARD_PAGO);
-	}
+        showCatalogo();
+    }
 
-	public void showCustom() {
-		showCard(CARD_CUSTOM);
-	}
+    private JPanel buildPagoPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(20, 20, 20));
 
-	public void showCard(String name) {
-		cardLayout.show(this, name);
-	}
-	
-	 public void showCustomCard(CustomizationCard card) {
-	        showCustom();
-	        customizationCenterPanel.showCard(card);
-	    }
+        JLabel lbl = new JLabel("PAGO", SwingConstants.CENTER);
+        lbl.setFont(new Font("Monospaced", Font.BOLD, 28));
+        lbl.setForeground(Color.WHITE);
 
+        panel.add(lbl, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // =========================================================
+    // NAVEGACIÓN GENERAL
+    // =========================================================
+
+    public void showCatalogo() {
+        cardLayout.show(this, CARD_CATALOGO);
+    }
+
+    public void showCustom() {
+        cardLayout.show(this, CARD_CUSTOM);
+    }
+
+    public void showPago() {
+        cardLayout.show(this, CARD_PAGO);
+    }
+
+    public void showCustomCard(CustomizationCard card) {
+        showCustom();
+        customizationCenterPanel.showCard(card);
+    }
+
+    // =========================================================
+    // CUSTOMIZATION DATA
+    // =========================================================
+
+    public void loadCustomizationData(ProductoCustomizationDTO dto) {
+        customizationCenterPanel.loadCustomizationData(dto);
+    }
+
+    public void clearCustomizationData() {
+        customizationCenterPanel.clearCustomizationData();
+    }
+
+    public void setCustomizationActionListener(
+            CustomizationCenterPanel.CustomizationActionListener listener
+    ) {
+        customizationCenterPanel.setActionListener(listener);
+    }
+
+    // =========================================================
+    // GETTERS
+    // =========================================================
+
+    public CatalogoCenterPanel getCatalogoPanel() {
+        return catalogoPanel;
+    }
+
+    public CustomizationCenterPanel getCustomizationCenterPanel() {
+        return customizationCenterPanel;
+    }
+
+    public AppServices getServices() {
+        return services;
+    }
 }
