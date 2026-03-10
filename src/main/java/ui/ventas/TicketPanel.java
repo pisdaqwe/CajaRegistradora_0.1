@@ -14,6 +14,7 @@ public class TicketPanel extends JPanel {
 
     private final TicketSession ticketSession;
     private final Runnable onSelectionChanged;
+    private boolean syncingSelection = false;
 
     private final DefaultListModel<TicketRow> model = new DefaultListModel<>();
     private final JList<TicketRow> list = new JList<>(model);
@@ -46,6 +47,7 @@ public class TicketPanel extends JPanel {
 
         list.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
+            if (syncingSelection) return;
 
             int idx = list.getSelectedIndex();
             ticketSession.setSelectedFlatIndex(idx);
@@ -77,12 +79,17 @@ public class TicketPanel extends JPanel {
     }
 
     public void syncSelectionFromSession() {
-        int idx = ticketSession.getSelectedFlatIndex();
-        if (idx >= 0 && idx < model.size()) {
-            list.setSelectedIndex(idx);
-            list.ensureIndexIsVisible(idx);
-        } else {
-            list.clearSelection();
+        syncingSelection = true;
+        try {
+            int idx = ticketSession.getSelectedFlatIndex();
+            if (idx >= 0 && idx < model.size()) {
+                list.setSelectedIndex(idx);
+                list.ensureIndexIsVisible(idx);
+            } else {
+                list.clearSelection();
+            }
+        } finally {
+            syncingSelection = false;
         }
     }
 

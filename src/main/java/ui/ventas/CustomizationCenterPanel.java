@@ -45,6 +45,7 @@ public class CustomizationCenterPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final CardLayout cardLayout = new CardLayout();
+    private CustomizationCard currentCard = CustomizationCard.MILK;
 
     /**
      * Guardamos el grid de cada card para reconstruirlo dinámicamente.
@@ -93,6 +94,7 @@ public class CustomizationCenterPanel extends JPanel {
 
     public void showCard(CustomizationCard card) {
         if (card == null) return;
+        this.currentCard = card;
         cardLayout.show(this, card.name());
     }
 
@@ -104,6 +106,9 @@ public class CustomizationCenterPanel extends JPanel {
 
         this.currentData = dto;
         rebuildAllCards();
+
+        // Mantener la card que el usuario estaba viendo
+        showCard(currentCard);
     }
 
     public void clearCustomizationData() {
@@ -112,7 +117,11 @@ public class CustomizationCenterPanel extends JPanel {
                 new ArrayList<>(),
                 new ArrayList<>()
         );
+
         rebuildAllCards();
+
+        // Mantener también aquí la card actual
+        showCard(currentCard);
     }
 
     // =========================================================

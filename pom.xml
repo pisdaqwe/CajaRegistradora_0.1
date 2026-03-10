@@ -88,13 +88,6 @@
             <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
-
-
-        <dependency>
-        	<groupId>AccesoAdatos</groupId>
-        	<artifactId>AccesoAdatos</artifactId>
-        	<version>0.0.1-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
     <!-- ========================================================= -->
