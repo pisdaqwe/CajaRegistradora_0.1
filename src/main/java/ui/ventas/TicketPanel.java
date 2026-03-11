@@ -68,14 +68,25 @@ public class TicketPanel extends JPanel {
     // =========================================================
 
     public void refreshFromTicket() {
-        model.clear();
+        syncingSelection = true;
+        try {
+            model.clear();
 
-        List<TicketRow> rows = ticketSession.buildRows();
-        for (TicketRow r : rows) {
-            model.addElement(r);
+            List<TicketRow> rows = ticketSession.buildRows();
+            for (TicketRow r : rows) {
+                model.addElement(r);
+            }
+
+            int idx = ticketSession.getSelectedFlatIndex();
+            if (idx >= 0 && idx < model.size()) {
+                list.setSelectedIndex(idx);
+                list.ensureIndexIsVisible(idx);
+            } else {
+                list.clearSelection();
+            }
+        } finally {
+            syncingSelection = false;
         }
-
-        syncSelectionFromSession();
     }
 
     public void syncSelectionFromSession() {

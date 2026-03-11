@@ -68,6 +68,7 @@ public class CustomizationCenterPanel extends JPanel {
     public interface CustomizationActionListener {
         void onExtraClicked(ExtraDTO extra);
         void onPersonalizacionClicked(PersonalizacionDTO personalizacion);
+        void onAskMeClicked();
     }
 
     public CustomizationCenterPanel() {
@@ -195,6 +196,9 @@ public class CustomizationCenterPanel extends JPanel {
 
         grid.removeAll();
 
+        // Botón fijo Ask Me siempre visible en PREP y PREP_FOOD
+        grid.add(createAskMeButton());
+
         if (preps.isEmpty()) {
             grid.add(createEmptyState("No hay opciones disponibles"));
         } else {
@@ -275,6 +279,20 @@ public class CustomizationCenterPanel extends JPanel {
     // =========================================================
     // BOTONES DINÁMICOS
     // =========================================================
+   
+    private void fireAskMeClicked() {
+        if (actionListener != null) {
+            actionListener.onAskMeClicked();
+        }
+    }
+    private JButton createAskMeButton() {
+        JButton b = new JButton("ASK ME");
+        styleOptionButton(b);
+
+        b.addActionListener(e -> fireAskMeClicked());
+
+        return b;
+    }
 
     private JButton createExtraButton(ExtraDTO extra) {
         JButton b = new JButton(buildButtonText(extra.getNombre(), extra.getPrecio()));

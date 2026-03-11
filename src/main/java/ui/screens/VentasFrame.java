@@ -95,6 +95,11 @@ public class VentasFrame extends BaseTpvFrame {
             public void onPersonalizacionClicked(dtoS.PersonalizacionDTO personalizacion) {
                 onCenterPersonalizacionClicked(personalizacion);
             }
+            @Override
+            public void onAskMeClicked() {
+            	VentasFrame.this.onAskMeClicked();
+            }
+            
         });
         
      // EAST: Customization (izquierda) + Ticket (derecha)
@@ -278,6 +283,9 @@ public class VentasFrame extends BaseTpvFrame {
         ticketSession.setSelectedFlatIndex(findFlatIndexForItem(itemIndex));
 
         refreshAll();
+    }
+    private void onAskMeClicked() {
+        JOptionPane.showMessageDialog(this, "ASK ME pulsado");
     }
 
     private void onOpciones() {

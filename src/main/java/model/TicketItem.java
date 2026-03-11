@@ -13,151 +13,177 @@ import dtoS.ProductoDTO;
 import dtoS.TamanoDTO;
 
 /**
- * Un item del ticket: producto + tamaño + precio base + extras + personalizaciones.
- * - Extras: repetibles (lista), salvo cuando la lógica use replace por tipo
- * - Personalizaciones: no repetibles (LinkedHashMap por id para toggle)
+ * Un item del ticket: producto + tamaño + precio base + extras +
+ * personalizaciones. - Extras: repetibles (lista), salvo cuando la lógica use
+ * replace por tipo - Personalizaciones: no repetibles (LinkedHashMap por id
+ * para toggle)
  */
 public final class TicketItem {
 
-    private final ProductoDTO producto;
+	private final ProductoDTO producto;
 
-    private TamanoDTO tamano;
-    private BigDecimal precioBase; // precio del tamaño
+	private TamanoDTO tamano;
+	private BigDecimal precioBase; // precio del tamaño
 
-    private final List<TicketExtra> extras = new ArrayList<>();
-    private final LinkedHashMap<Integer, TicketPersonalizacion> personalizaciones = new LinkedHashMap<>();
+	private final List<TicketExtra> extras = new ArrayList<>();
+	private final LinkedHashMap<Integer, TicketPersonalizacion> personalizaciones = new LinkedHashMap<>();
+	private final List<String> askMes = new ArrayList<>();
 
-    public TicketItem(ProductoDTO producto, TamanoDTO tamano, BigDecimal precioBase) {
-        this.producto = Objects.requireNonNull(producto, "producto no puede ser null");
-        this.tamano = Objects.requireNonNull(tamano, "tamano no puede ser null");
+	public TicketItem(ProductoDTO producto, TamanoDTO tamano, BigDecimal precioBase) {
+		this.producto = Objects.requireNonNull(producto, "producto no puede ser null");
+		this.tamano = Objects.requireNonNull(tamano, "tamano no puede ser null");
 
-        this.precioBase = Objects.requireNonNull(precioBase, "precioBase no puede ser null");
-        if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("precioBase no puede ser negativo");
-        }
-    }
+		this.precioBase = Objects.requireNonNull(precioBase, "precioBase no puede ser null");
+		if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("precioBase no puede ser negativo");
+		}
+	}
 
-    // =========================
-    // GETTERS
-    // =========================
+	// =========================
+	// GETTERS
+	// =========================
 
-    public ProductoDTO getProducto() {
-        return producto;
-    }
+	public ProductoDTO getProducto() {
+		return producto;
+	}
 
-    public TamanoDTO getTamano() {
-        return tamano;
-    }
+	public TamanoDTO getTamano() {
+		return tamano;
+	}
 
-    public BigDecimal getPrecioBase() {
-        return precioBase;
-    }
+	public BigDecimal getPrecioBase() {
+		return precioBase;
+	}
 
-    public List<TicketExtra> getExtras() {
-        return extras;
-    }
+	public List<TicketExtra> getExtras() {
+		return extras;
+	}
 
-    public Map<Integer, TicketPersonalizacion> getPersonalizaciones() {
-        return personalizaciones;
-    }
+	public Map<Integer, TicketPersonalizacion> getPersonalizaciones() {
+		return personalizaciones;
+	}
 
-    // =========================
-    // OPERACIONES
-    // =========================
+	public List<String> getAskMes() {
+		return askMes;
+	}
 
-    public void setTamano(TamanoDTO nuevoTamano, BigDecimal nuevoPrecioBase) {
-        this.tamano = Objects.requireNonNull(nuevoTamano, "nuevoTamano no puede ser null");
+	// =========================
+	// OPERACIONES
+	// =========================
 
-        this.precioBase = Objects.requireNonNull(nuevoPrecioBase, "nuevoPrecioBase no puede ser null");
-        if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("nuevoPrecioBase no puede ser negativo");
-        }
-    }
+	public void setTamano(TamanoDTO nuevoTamano, BigDecimal nuevoPrecioBase) {
+		this.tamano = Objects.requireNonNull(nuevoTamano, "nuevoTamano no puede ser null");
 
-    /**
-     * Añade un extra al item.
-     * Para tipos repetibles (SHOT, SYRUP, TOPPING) esta operación vale directamente.
-     * Para tipos exclusivos como MILK, se usará replaceExtraByTipo(...) desde fuera.
-     */
-    public void addExtra(ExtraDTO extraDto) {
-        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+		this.precioBase = Objects.requireNonNull(nuevoPrecioBase, "nuevoPrecioBase no puede ser null");
+		if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("nuevoPrecioBase no puede ser negativo");
+		}
+	}
 
-        extras.add(new TicketExtra(
-                extraDto.getIdExtra(),
-                extraDto.getNombre(),
-                extraDto.getTipo(),
-                extraDto.getPrecio()
-        ));
-    }
+	/**
+	 * Añade un extra al item. Para tipos repetibles (SHOT, SYRUP, TOPPING) esta
+	 * operación vale directamente. Para tipos exclusivos como MILK, se usará
+	 * replaceExtraByTipo(...) desde fuera.
+	 */
+	public void addExtra(ExtraDTO extraDto) {
+		Objects.requireNonNull(extraDto, "extraDto no puede ser null");
 
-    public void removeExtraByIndex(int extraIndex) {
-        if (extraIndex < 0 || extraIndex >= extras.size()) {
-            throw new IndexOutOfBoundsException("extraIndex fuera de rango: " + extraIndex);
-        }
-        extras.remove(extraIndex);
-    }
+		extras.add(
+				new TicketExtra(extraDto.getIdExtra(), extraDto.getNombre(), extraDto.getTipo(), extraDto.getPrecio()));
+	}
 
-    /**
-     * Elimina todos los extras de un tipo concreto.
-     * Ejemplo típico: borrar la leche actual antes de poner otra.
-     */
-    public void removeExtrasByTipo(String tipo) {
-        Objects.requireNonNull(tipo, "tipo no puede ser null");
-        extras.removeIf(e -> tipo.equalsIgnoreCase(e.getTipo()));
-    }
+	public void addAskMe(String text) {
+		if (text == null) {
+			return;
+		}
 
-    /**
-     * Reemplaza el extra de un tipo por el nuevo.
-     * Muy útil para MILK: solo debe haber una leche activa por item.
-     */
-    public void replaceExtraByTipo(ExtraDTO extraDto) {
-        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
-        removeExtrasByTipo(extraDto.getTipo());
-        addExtra(extraDto);
-    }
+		String normalized = text.trim();
+		if (normalized.isEmpty()) {
+			return;
+		}
 
-    /**
-     * Permite saber si un extra concreto ya está aplicado.
-     * Puede servir para evitar duplicados en algunos casos.
-     */
-    public boolean hasExtraById(int idExtra) {
-        return extras.stream().anyMatch(e -> e.getIdExtra() == idExtra);
-    }
+		askMes.add(normalized);
+	}
 
-    public boolean togglePersonalizacion(PersonalizacionDTO pDto) {
-        Objects.requireNonNull(pDto, "pDto no puede ser null");
-        int id = pDto.getIdPersonalizacion();
+	public void removeAskMeByIndex(int askMeIndex) {
+		if (askMeIndex < 0 || askMeIndex >= askMes.size()) {
+			throw new IndexOutOfBoundsException("askMeIndex fuera de rango: " + askMeIndex);
+		}
+		askMes.remove(askMeIndex);
+	}
 
-        if (personalizaciones.containsKey(id)) {
-            personalizaciones.remove(id);
-            return false; // desactivada
-        }
+	public void clearAskMes() {
+		askMes.clear();
+	}
 
-        personalizaciones.put(id, new TicketPersonalizacion(
-                pDto.getIdPersonalizacion(),
-                pDto.getNombre(),
-                pDto.getTipo(),
-                pDto.getPrecio()
-        ));
+	public boolean hasAskMes() {
+		return !askMes.isEmpty();
+	}
 
-        return true; // activada
-    }
+	public void removeExtraByIndex(int extraIndex) {
+		if (extraIndex < 0 || extraIndex >= extras.size()) {
+			throw new IndexOutOfBoundsException("extraIndex fuera de rango: " + extraIndex);
+		}
+		extras.remove(extraIndex);
+	}
 
-    // =========================
-    // TOTALES
-    // =========================
+	/**
+	 * Elimina todos los extras de un tipo concreto. Ejemplo típico: borrar la leche
+	 * actual antes de poner otra.
+	 */
+	public void removeExtrasByTipo(String tipo) {
+		Objects.requireNonNull(tipo, "tipo no puede ser null");
+		extras.removeIf(e -> tipo.equalsIgnoreCase(e.getTipo()));
+	}
 
-    public BigDecimal getSubtotal() {
-        BigDecimal total = precioBase;
+	/**
+	 * Reemplaza el extra de un tipo por el nuevo. Muy útil para MILK: solo debe
+	 * haber una leche activa por item.
+	 */
+	public void replaceExtraByTipo(ExtraDTO extraDto) {
+		Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+		removeExtrasByTipo(extraDto.getTipo());
+		addExtra(extraDto);
+	}
 
-        for (TicketExtra e : extras) {
-            total = total.add(e.getPrecio());
-        }
+	/**
+	 * Permite saber si un extra concreto ya está aplicado. Puede servir para evitar
+	 * duplicados en algunos casos.
+	 */
+	public boolean hasExtraById(int idExtra) {
+		return extras.stream().anyMatch(e -> e.getIdExtra() == idExtra);
+	}
 
-        for (TicketPersonalizacion p : personalizaciones.values()) {
-            total = total.add(p.getPrecio());
-        }
+	public boolean togglePersonalizacion(PersonalizacionDTO pDto) {
+		Objects.requireNonNull(pDto, "pDto no puede ser null");
+		int id = pDto.getIdPersonalizacion();
 
-        return total;
-    }
+		if (personalizaciones.containsKey(id)) {
+			personalizaciones.remove(id);
+			return false; // desactivada
+		}
+
+		personalizaciones.put(id, new TicketPersonalizacion(pDto.getIdPersonalizacion(), pDto.getNombre(),
+				pDto.getTipo(), pDto.getPrecio()));
+
+		return true; // activada
+	}
+
+	// =========================
+	// TOTALES
+	// =========================
+
+	public BigDecimal getSubtotal() {
+		BigDecimal total = precioBase;
+
+		for (TicketExtra e : extras) {
+			total = total.add(e.getPrecio());
+		}
+
+		for (TicketPersonalizacion p : personalizaciones.values()) {
+			total = total.add(p.getPrecio());
+		}
+
+		return total;
+	}
 }

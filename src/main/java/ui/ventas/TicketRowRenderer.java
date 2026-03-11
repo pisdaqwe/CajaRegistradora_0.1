@@ -48,11 +48,20 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
 
         // Indent según tipo
         String prefix = "";
-        if (value.getType() == TicketRowType.EXTRA || value.getType() == TicketRowType.PERSONALIZACION) {
-            prefix = "   "; // sangría
+        if (value.getType() == TicketRowType.EXTRA
+                || value.getType() == TicketRowType.PERSONALIZACION
+                || value.getType() == TicketRowType.ASK_ME) {
+            prefix = "   ";
         }
-
         lblLeft.setText(prefix + value.getLabel());
+
+        if (value.getType() == TicketRowType.ASK_ME) {
+            lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        } else if (value.getType() == TicketRowType.ITEM) {
+            lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        } else {
+            lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        }
 
         BigDecimal amount = value.getAmount();
         lblRight.setText(amount == null ? "" : amount.toString() + "€");
@@ -61,10 +70,16 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
         if (isSelected) {
             setBackground(new Color(60, 60, 60));
             lblLeft.setForeground(Color.WHITE);
-            lblRight.setForeground(new Color(255, 210, 0)); // amarillo
+            lblRight.setForeground(new Color(255, 210, 0));
         } else {
             setBackground(new Color(30, 30, 30));
-            lblLeft.setForeground(new Color(230, 230, 230));
+
+            if (value.getType() == TicketRowType.ASK_ME) {
+                lblLeft.setForeground(new Color(180, 220, 255));
+            } else {
+                lblLeft.setForeground(new Color(230, 230, 230));
+            }
+
             lblRight.setForeground(new Color(200, 200, 200));
         }
 

@@ -149,22 +149,36 @@ public final class TicketSession {
 
         switch (row.getType()) {
 
-            case ITEM -> items.remove(itemIndex);
+        case ITEM -> items.remove(itemIndex);
 
-            case EXTRA -> {
-                int extraIndex = row.getSubIndex();
-                item.removeExtraByIndex(extraIndex);
-            }
+        case EXTRA -> {
+            int extraIndex = row.getSubIndex();
+            item.removeExtraByIndex(extraIndex);
+        }
 
-            case PERSONALIZACION -> {
-                Integer idP = row.getIdPersonalizacion();
-                if (idP != null) {
-                    item.getPersonalizaciones().remove(idP);
-                }
+        case PERSONALIZACION -> {
+            Integer idP = row.getIdPersonalizacion();
+            if (idP != null) {
+                item.getPersonalizaciones().remove(idP);
             }
         }
 
+        case ASK_ME -> {
+            int askMeIndex = row.getSubIndex();
+            item.removeAskMeByIndex(askMeIndex);
+        }
+    }
+
         clearSelection();
+    }
+    public void addAskMe(int itemIndex, String text) {
+        TicketItem item = getItemOrThrow(itemIndex);
+        item.addAskMe(text);
+    }
+
+    public void removeAskMe(int itemIndex, int askMeIndex) {
+        TicketItem item = getItemOrThrow(itemIndex);
+        item.removeAskMeByIndex(askMeIndex);
     }
 
     // =====================================================
@@ -250,6 +264,22 @@ public final class TicketSession {
                         p.getPrecio().compareTo(BigDecimal.ZERO) == 0 ? null : p.getPrecio()
                 ));
             }
+            //ASK ME
+            for (int a = 0; a < item.getAskMes().size(); a++) {
+                String askMe = item.getAskMes().get(a);
+
+                rows.add(new TicketRow(
+                        TicketRowType.ASK_ME,
+                        i,
+                        a,
+                        null,
+                        null,
+                        "Ask Me: " + askMe,
+                        null
+                ));
+            }
+            
+            
         }
 
         return rows;
