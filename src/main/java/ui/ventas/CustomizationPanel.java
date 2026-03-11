@@ -64,12 +64,14 @@ public class CustomizationPanel extends JPanel {
 	private final JButton btnToppings = createNavButton("TOPPINGS", CustomizationCard.TOPPINGS);
 	private final JButton btnMilk = createNavButton("MILK", CustomizationCard.MILK);
 	private final JButton btnPrep = createNavButton("PREP", CustomizationCard.PREP);
-
+	private final JButton btnPrepFood = createNavButton("PREP", CustomizationCard.PREP_FOOD);
+	private final JButton btnOpcionesFood = createNavButton("EXTRAS", CustomizationCard.OPCIONES_FOOD);
 	// =========================================================
 	// CARD COMIDA
 	// =========================================================
 	private final JLabel lblFoodTitle = new JLabel("CUSTOM FOOD", SwingConstants.LEFT);
-	private final JTextArea foodInfo = new JTextArea();
+	private final DefaultListModel<TamanoDTO> foodSizeListModel = new DefaultListModel<>();
+	private final JList<TamanoDTO> lstFoodSizes = new JList<>(foodSizeListModel);
 
 	public CustomizationPanel(TicketSession ticketSession, AppServices services,
 			Consumer<CustomizationCard> onCardSelected,
@@ -113,7 +115,11 @@ public class CustomizationPanel extends JPanel {
 	                    services.productoPersonalizacionService.getTamanosByProducto(dto.getIdProducto());
 	            refreshDrinkCard(item, tamanos);
 	        }
-	        case COMIDA -> refreshFoodCard(item);
+	        case COMIDA ->{ 
+	        	List<TamanoDTO> tamanos =
+	                    services.productoPersonalizacionService.getTamanosByProducto(dto.getIdProducto());
+	            refreshFoodCard(item, tamanos);
+	        }
 	        case VACIO -> refreshEmptyCard(item);
 	    }
 
@@ -244,6 +250,61 @@ public class CustomizationPanel extends JPanel {
 
 		return panel;
 	}
+	private JComponent buildFoodSizesBlock() {
+	    JPanel panel = new JPanel(new BorderLayout(6, 6));
+	    panel.setOpaque(false);
+	    panel.setBorder(new EmptyBorder(8, 0, 8, 0));
+
+	    JLabel lblSizes = new JLabel("TAMAÑOS");
+	    lblSizes.setFont(new Font("Monospaced", Font.BOLD, 12));
+	    lblSizes.setForeground(new Color(230, 230, 230));
+
+	    lstFoodSizes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+	    lstFoodSizes.setVisibleRowCount(3);
+	    lstFoodSizes.setFixedCellHeight(28);
+	    lstFoodSizes.setBackground(new Color(30, 30, 30));
+	    lstFoodSizes.setForeground(Color.WHITE);
+	    lstFoodSizes.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60)));
+	    lstFoodSizes.setCellRenderer(new DefaultListCellRenderer() {
+	        private static final long serialVersionUID = 1L;
+
+	        @Override
+	        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+	                                                      boolean isSelected, boolean cellHasFocus) {
+	            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+	            if (value instanceof TamanoDTO t) {
+	                setText(t.getNombre());
+	            }
+
+	            setFont(new Font("Monospaced", Font.BOLD, 12));
+	            return this;
+	        }
+	    });
+
+	    lstFoodSizes.setEnabled(true);
+	    lstFoodSizes.addListSelectionListener(e -> {
+	        if (e.getValueIsAdjusting()) return;
+	        if (syncingSizesSelection) return;
+
+	        TamanoDTO seleccionado = lstFoodSizes.getSelectedValue();
+	        if (seleccionado == null) return;
+
+	        if (onTamanoSelected != null) {
+	            onTamanoSelected.accept(seleccionado);
+	        }
+	    });
+
+	    JScrollPane sp = new JScrollPane(lstFoodSizes);
+	    sp.setBorder(BorderFactory.createEmptyBorder());
+	    sp.setPreferredSize(new Dimension(130, 95));
+	    sp.getVerticalScrollBar().setUnitIncrement(16);
+
+	    panel.add(lblSizes, BorderLayout.NORTH);
+	    panel.add(sp, BorderLayout.CENTER);
+
+	    return panel;
+	}
 
 	private void refreshDrinkCard(TicketItem item, List<TamanoDTO> tamanos) {
 	    lblDrinkTitle.setText(safeProductName(item));
@@ -266,30 +327,44 @@ public class CustomizationPanel extends JPanel {
 	// =========================================================
 
 	private JPanel buildFoodCard() {
-		JPanel root = new JPanel(new BorderLayout(8, 8));
-		root.setBackground(new Color(20, 20, 20));
-		root.setBorder(new EmptyBorder(0, 0, 0, 0));
+	    JPanel root = new JPanel(new BorderLayout(10, 10));
+	    root.setBackground(new Color(20, 20, 20));
+	    root.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-		lblFoodTitle.setFont(new Font("Monospaced", Font.BOLD, 16));
-		lblFoodTitle.setForeground(Color.WHITE);
+	    JPanel top = new JPanel(new BorderLayout(6, 6));
+	    top.setOpaque(false);
 
-		foodInfo.setEditable(false);
-		foodInfo.setFont(new Font("Monospaced", Font.PLAIN, 13));
-		foodInfo.setBackground(new Color(30, 30, 30));
-		foodInfo.setForeground(new Color(220, 220, 220));
-		foodInfo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		foodInfo.setLineWrap(true);
-		foodInfo.setWrapStyleWord(true);
+	    lblFoodTitle.setFont(new Font("Monospaced", Font.BOLD, 16));
+	    lblFoodTitle.setForeground(Color.WHITE);
 
-		root.add(lblFoodTitle, BorderLayout.NORTH);
-		root.add(new JScrollPane(foodInfo), BorderLayout.CENTER);
+	    top.add(lblFoodTitle, BorderLayout.NORTH);
+	    top.add(buildFoodSizesBlock(), BorderLayout.CENTER);
 
-		return root;
+	    JPanel nav = new JPanel(new GridLayout(0, 1, 8, 8));
+	    nav.setOpaque(false);
+	    nav.add(btnOpcionesFood);
+	    nav.add(btnPrepFood);
+
+	    root.add(top, BorderLayout.NORTH);
+	    root.add(nav, BorderLayout.CENTER);
+
+	    return root;
 	}
 
-	private void refreshFoodCard(TicketItem item) {
-		lblFoodTitle.setText(safeProductName(item));
-		foodInfo.setText("Customización de comida.\n\n" + "Aquí después meteremos las opciones laterales de comida.");
+	private void refreshFoodCard(TicketItem item, List<TamanoDTO> tamanos) {
+	    lblFoodTitle.setText(safeProductName(item));
+
+	    foodSizeListModel.clear();
+
+	    if (tamanos != null && !tamanos.isEmpty()) {
+	        for (TamanoDTO tamanoDTO : tamanos) {
+	            foodSizeListModel.addElement(tamanoDTO);
+	        }
+
+	        seleccionarTamanoActualFood(item.getTamano());
+	    } else {
+	        lstFoodSizes.clearSelection();
+	    }
 	}
 
 	// =========================================================
@@ -368,6 +443,28 @@ public class CustomizationPanel extends JPanel {
 	        }
 
 	        lstSizes.clearSelection();
+	    } finally {
+	        syncingSizesSelection = false;
+	    }
+	}
+	private void seleccionarTamanoActualFood(TamanoDTO tamanoActual) {
+	    syncingSizesSelection = true;
+	    try {
+	        if (tamanoActual == null) {
+	            lstFoodSizes.clearSelection();
+	            return;
+	        }
+
+	        for (int i = 0; i < foodSizeListModel.size(); i++) {
+	            TamanoDTO candidato = foodSizeListModel.getElementAt(i);
+	            if (candidato.getIdTamano() == tamanoActual.getIdTamano()) {
+	                lstFoodSizes.setSelectedIndex(i);
+	                lstFoodSizes.ensureIndexIsVisible(i);
+	                return;
+	            }
+	        }
+
+	        lstFoodSizes.clearSelection();
 	    } finally {
 	        syncingSizesSelection = false;
 	    }

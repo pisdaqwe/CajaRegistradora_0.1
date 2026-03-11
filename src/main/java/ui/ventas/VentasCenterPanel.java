@@ -3,6 +3,7 @@ package ui.ventas;
 import dtoS.ProductoCustomizationDTO;
 import dtoS.ProductoDTO;
 import enums.CustomizationCard;
+import model.TicketItem;
 import service.AppServices;
 
 import javax.swing.*;
@@ -113,4 +114,8 @@ public class VentasCenterPanel extends JPanel {
     public AppServices getServices() {
         return services;
     }
+    public void ensureValidCustomCardForMode(enums.CustomizationMode mode) {
+        customizationCenterPanel.ensureValidCurrentCardForMode(mode);
+    }
+  
 }

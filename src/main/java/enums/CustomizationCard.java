@@ -6,5 +6,8 @@ public enum CustomizationCard {
     SYRUPS,
     TOPPINGS,
     MILK,
-    PREP
+    PREP,
+    OPCIONES_FOOD,
+    PREP_FOOD
+    
 }

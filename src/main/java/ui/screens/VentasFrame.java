@@ -185,6 +185,9 @@ public class VentasFrame extends BaseTpvFrame {
                 services.productoPersonalizacionService.getCustomizationByProducto(idProducto);
 
         centerPanel.loadCustomizationData(dto);
+
+        enums.CustomizationMode mode = resolveMode(item);
+        centerPanel.ensureValidCustomCardForMode(mode);
     }
     
     private void onTicketSelectionChanged() {
@@ -308,6 +311,23 @@ public class VentasFrame extends BaseTpvFrame {
         ticketPanel.refreshFromTicket();
         customizationPanel.refresh();
         bottomBarPanel.refresh();
+    }
+    private enums.CustomizationMode resolveMode(TicketItem item) {
+        if (item == null || item.getProducto() == null) {
+            return enums.CustomizationMode.VACIO;
+        }
+
+        int idSubcategoria = item.getProducto().getIdSubcategoria();
+
+        if (idSubcategoria == 1 || idSubcategoria == 2 || idSubcategoria == 3 || idSubcategoria == 4) {
+            return enums.CustomizationMode.BEBIDA;
+        }
+
+        if (idSubcategoria == 5 || idSubcategoria == 6 || idSubcategoria == 7) {
+            return enums.CustomizationMode.COMIDA;
+        }
+
+        return enums.CustomizationMode.VACIO;
     }
 
 }

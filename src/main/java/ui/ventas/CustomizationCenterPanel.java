@@ -79,7 +79,8 @@ public class CustomizationCenterPanel extends JPanel {
         add(buildEmptyDynamicCard("TOPPINGS", CustomizationCard.TOPPINGS), CustomizationCard.TOPPINGS.name());
         add(buildEmptyDynamicCard("MILK", CustomizationCard.MILK), CustomizationCard.MILK.name());
         add(buildEmptyDynamicCard("PREP", CustomizationCard.PREP), CustomizationCard.PREP.name());
-
+        add(buildEmptyDynamicCard("PREP_FOOD", CustomizationCard.PREP_FOOD),CustomizationCard.PREP_FOOD.name());
+        add(buildEmptyDynamicCard("OPCIONES_FOOD", CustomizationCard.OPCIONES_FOOD),CustomizationCard.OPCIONES_FOOD.name());
         showCard(CustomizationCard.MILK);
         clearCustomizationData();
     }
@@ -162,7 +163,12 @@ public class CustomizationCenterPanel extends JPanel {
         rebuildExtrasCard(CustomizationCard.SYRUPS, filterExtrasByCard(CustomizationCard.SYRUPS));
         rebuildExtrasCard(CustomizationCard.TOPPINGS, filterExtrasByCard(CustomizationCard.TOPPINGS));
         rebuildExtrasCard(CustomizationCard.MILK, filterExtrasByCard(CustomizationCard.MILK));
-        rebuildPrepCard(filterPreps());
+
+        rebuildExtrasCard(CustomizationCard.OPCIONES_FOOD, filterFoodExtras());
+
+        List<PersonalizacionDTO> preps = filterPreps();
+        rebuildPrepCard(CustomizationCard.PREP, preps);
+        rebuildPrepCard(CustomizationCard.PREP_FOOD, preps);
     }
 
     private void rebuildExtrasCard(CustomizationCard card, List<ExtraDTO> extras) {
@@ -183,8 +189,8 @@ public class CustomizationCenterPanel extends JPanel {
         grid.repaint();
     }
 
-    private void rebuildPrepCard(List<PersonalizacionDTO> preps) {
-        JPanel grid = gridByCard.get(CustomizationCard.PREP);
+    private void rebuildPrepCard(CustomizationCard card, List<PersonalizacionDTO> preps) {
+        JPanel grid = gridByCard.get(card);
         if (grid == null) return;
 
         grid.removeAll();
@@ -235,6 +241,20 @@ public class CustomizationCenterPanel extends JPanel {
 
         return result;
     }
+    private List<ExtraDTO> filterFoodExtras() {
+        List<ExtraDTO> result = new ArrayList<>();
+
+        for (ExtraDTO extra : currentData.getExtras()) {
+            if (extra == null || extra.getTipo() == null) continue;
+
+            String tipo = normalize(extra.getTipo());
+            if ("FOOD_EXTRA".equals(tipo)) {
+                result.add(extra);
+            }
+        }
+
+        return result;
+    }
 
     private boolean matchesExtraCard(CustomizationCard card, String tipo) {
         return switch (card) {
@@ -243,6 +263,8 @@ public class CustomizationCenterPanel extends JPanel {
             case TOPPINGS -> "TOPPING".equals(tipo) || "TOPPINGS".equals(tipo);
             case MILK -> "MILK".equals(tipo);
             case PREP -> false;
+            case PREP_FOOD ->false;
+            case OPCIONES_FOOD ->false;
         };
     }
 
@@ -304,5 +326,39 @@ public class CustomizationCenterPanel extends JPanel {
         wrapper.setOpaque(false);
         wrapper.add(lbl, BorderLayout.CENTER);
         return wrapper;
+    }
+    public void ensureValidCurrentCardForMode(enums.CustomizationMode mode) {
+        if (mode == null) return;
+
+        switch (mode) {
+            case BEBIDA -> {
+                boolean valid =
+                        currentCard == CustomizationCard.SHOTS ||
+                        currentCard == CustomizationCard.SYRUPS ||
+                        currentCard == CustomizationCard.TOPPINGS ||
+                        currentCard == CustomizationCard.MILK ||
+                        currentCard == CustomizationCard.PREP;
+
+                if (!valid) {
+                    currentCard = CustomizationCard.MILK;
+                }
+            }
+
+            case COMIDA -> {
+                boolean valid =
+                        currentCard == CustomizationCard.OPCIONES_FOOD ||
+                        currentCard == CustomizationCard.PREP_FOOD;
+
+                if (!valid) {
+                    currentCard = CustomizationCard.OPCIONES_FOOD;
+                }
+            }
+
+            case VACIO -> {
+                // no hacemos nada aquí
+            }
+        }
+
+        showCard(currentCard);
     }
 }
