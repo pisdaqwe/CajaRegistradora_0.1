@@ -15,6 +15,8 @@ import model.TicketRow;
 import model.TicketSession;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
+import ui.dialog.AskMeDialog;
+import ui.dialog.AskMeDialogResult;
 import ui.ventas.BottomBarPanel;
 import ui.ventas.CategoriasBarPanel;
 import ui.ventas.CustomizationCenterPanel;
@@ -285,9 +287,27 @@ public class VentasFrame extends BaseTpvFrame {
         refreshAll();
     }
     private void onAskMeClicked() {
-        JOptionPane.showMessageDialog(this, "ASK ME pulsado");
-    }
+        TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
+        TicketItem item = ticketSession.getSelectedItemOrNull();
 
+        if (selectedRow == null || item == null) {
+            return;
+        }
+
+        int itemIndex = selectedRow.getItemIndex();
+
+        AskMeDialog dialog = new AskMeDialog(this, item.getProducto().getNombre(), 25);
+        AskMeDialogResult result = dialog.showDialog();
+
+        if (result.isConfirmed()) {
+            ticketSession.addAskMe(itemIndex, result.getText());
+
+            int parentFlatIndex = findFlatIndexForItem(itemIndex);
+            ticketSession.setSelectedFlatIndex(parentFlatIndex);
+
+            refreshAll();
+        }
+    }
     private void onOpciones() {
         JOptionPane.showMessageDialog(this, "Opciones (pendiente)");
     }
