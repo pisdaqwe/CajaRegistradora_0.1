@@ -13,6 +13,7 @@ import model.SesionCaja;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import dtoS.LoginRapidoButtonDTO;
 
 import app.AppContext;
 
@@ -193,7 +194,14 @@ public class SesionCajaService {
             );
         }
     }
+    public List<LoginRapidoButtonDTO> getBotonesLoginRapido(int idCaja) {
+        if (idCaja <= 0) {
+            throw new IllegalArgumentException("idCaja debe ser > 0");
+        }
 
+        return sesionCajaDao.selectBotonesLoginRapidoByCaja(idCaja);
+    }
+    
 
 	public List<CajaEstadoDTO> getEstadoCajas() {
 		// TODO Auto-generated method stub
@@ -205,4 +213,5 @@ public class SesionCajaService {
 	            "No tienes una sesión de caja asignada/abierta. Pide al encargado que te abra una."
 	        ));
 	}
+	
 }

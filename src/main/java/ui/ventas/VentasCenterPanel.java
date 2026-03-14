@@ -4,9 +4,13 @@ import dtoS.ProductoCustomizationDTO;
 import dtoS.ProductoDTO;
 import enums.CustomizationCard;
 import model.TicketItem;
+import model.Usuario;
 import service.AppServices;
 
 import javax.swing.*;
+
+import app.AppContext;
+
 import java.awt.*;
 import java.util.function.Consumer;
 
@@ -17,6 +21,7 @@ public class VentasCenterPanel extends JPanel {
     private static final String CARD_CATALOGO = "CATALOGO";
     private static final String CARD_CUSTOM   = "CUSTOM";
     private static final String CARD_PAGO     = "PAGO";
+    private static final String CARD_OPCIONES = "OPCIONES";
 
     private final CardLayout cardLayout = new CardLayout();
 
@@ -24,6 +29,7 @@ public class VentasCenterPanel extends JPanel {
 
     private final CatalogoCenterPanel catalogoPanel;
     private final CustomizationCenterPanel customizationCenterPanel;
+    private final OpcionesPanel opcionesPanel;
     private final JPanel pagoPanel;
 
     public VentasCenterPanel(AppServices services, Consumer<ProductoDTO> onProductoClicked) {
@@ -38,12 +44,15 @@ public class VentasCenterPanel extends JPanel {
         // Card customización
         this.customizationCenterPanel = new CustomizationCenterPanel();
 
+        //Card Opciones 
+        this.opcionesPanel = new OpcionesPanel();
         // Card pago (placeholder por ahora)
         this.pagoPanel = buildPagoPanel();
 
         add(catalogoPanel, CARD_CATALOGO);
         add(customizationCenterPanel, CARD_CUSTOM);
         add(pagoPanel, CARD_PAGO);
+        add(opcionesPanel, CARD_OPCIONES);
 
         showCatalogo();
     }
@@ -75,6 +84,9 @@ public class VentasCenterPanel extends JPanel {
     public void showPago() {
         cardLayout.show(this, CARD_PAGO);
     }
+    public void showOpciones() {
+    	cardLayout.show(this, CARD_OPCIONES);
+    }
 
     public void showCustomCard(CustomizationCard card) {
         showCustom();
@@ -98,7 +110,29 @@ public class VentasCenterPanel extends JPanel {
     ) {
         customizationCenterPanel.setActionListener(listener);
     }
+    // =========================================================
+    // OPCIONES DATA
+    // =========================================================
+    
+    private boolean isAdminActual() {
+        Usuario usuario = AppContext.getUsuario();
+        if (usuario == null || usuario.getRol() == null || usuario.getRol().getNombre() == null) {
+            return false;
+        }
 
+        String nombreRol = usuario.getRol().getNombre().trim().toUpperCase();
+        return "ADMIN".equals(nombreRol) || "ENCARGADO".equals(nombreRol);
+    }
+    
+    public void setOpcionesActionListener(
+    		OpcionesPanel.OpcionesActionListener listener
+           
+    ) {
+        opcionesPanel.setActionListener(listener);
+    }
+    public void setOpcionesAdminMode(boolean adminMode) {
+        opcionesPanel.setAdminMode(adminMode);
+    }
     // =========================================================
     // GETTERS
     // =========================================================
@@ -117,5 +151,7 @@ public class VentasCenterPanel extends JPanel {
     public void ensureValidCustomCardForMode(enums.CustomizationMode mode) {
         customizationCenterPanel.ensureValidCurrentCardForMode(mode);
     }
+    
+   
   
 }

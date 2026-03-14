@@ -124,6 +124,13 @@ public final class TicketSession {
         TicketItem item = getItemOrThrow(itemIndex);
         item.togglePersonalizacion(p);
     }
+    public int duplicateItem(int itemIndex) {
+        TicketItem original = getItemOrThrow(itemIndex);
+        TicketItem copy = original.duplicate();
+
+        items.add(copy);
+        return items.size() - 1;
+    }
 
     // =====================================================
     // ELIMINACIÓN (por selección o por flatIndex)
@@ -214,6 +221,24 @@ public final class TicketSession {
 
         return items.get(itemIndex);
     }
+    
+    public int findFlatIndexForItem(int itemIndex) {
+        if (itemIndex < 0 || itemIndex >= items.size()) {
+            return -1;
+        }
+
+        List<TicketRow> rows = buildRows();
+
+        for (int i = 0; i < rows.size(); i++) {
+            TicketRow row = rows.get(i);
+
+            if (row.getType() == TicketRowType.ITEM && row.getItemIndex() == itemIndex) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 
     // =====================================================
     // FILAS PLANAS (para UI: JList<TicketRow>)
@@ -294,5 +319,9 @@ public final class TicketSession {
             throw new IndexOutOfBoundsException("itemIndex fuera de rango: " + itemIndex);
         }
         return items.get(itemIndex);
+    }
+    public void selectItemRow(int itemIndex) {
+        int flatIndex = findFlatIndexForItem(itemIndex);
+        setSelectedFlatIndex(flatIndex);
     }
 }

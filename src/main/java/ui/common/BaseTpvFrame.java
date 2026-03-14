@@ -59,6 +59,7 @@ public abstract class BaseTpvFrame extends JFrame {
     protected final void doLogout() {
         AppContext.clear();
         safeDispose();
+        
         if (onLogoutNavigate != null) onLogoutNavigate.run();
     }
 

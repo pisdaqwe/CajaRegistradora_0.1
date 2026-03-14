@@ -1,8 +1,8 @@
 package service;
 
 import dao.UsuarioDao;
-import model.Usuario;
 import exceptions.AuthenticationException;
+import model.Usuario;
 import util.HashUtil;
 
 public class AuthService {
@@ -29,11 +29,8 @@ public class AuthService {
             throw new AuthenticationException("PIN requerido");
         }
 
-        Usuario usuario = usuarioDao.findByUsuario(usuarioTxt).get();
-
-        if (usuario == null) {
-            throw new AuthenticationException("Usuario no existe");
-        }
+        Usuario usuario = usuarioDao.findByUsuario(usuarioTxt.trim())
+                .orElseThrow(() -> new AuthenticationException("Usuario no existe"));
 
         validarUsuarioActivo(usuario);
         validarPin(usuario, pin);
@@ -54,11 +51,8 @@ public class AuthService {
             throw new AuthenticationException("PIN requerido");
         }
 
-        Usuario usuario = usuarioDao.findById(idUsuario).get();
-
-        if (usuario == null) {
-            throw new AuthenticationException("Usuario no existe");
-        }
+        Usuario usuario = usuarioDao.findById(idUsuario)
+                .orElseThrow(() -> new AuthenticationException("Usuario no existe"));
 
         validarUsuarioActivo(usuario);
         validarPin(usuario, pin);
@@ -76,7 +70,6 @@ public class AuthService {
     }
 
     private void validarPin(Usuario usuario, String pinPlano) {
-
         String pinHash = HashUtil.sha256(pinPlano);
 
         if (!pinHash.equals(usuario.getPinHash())) {

@@ -70,6 +70,36 @@ public final class TicketItem {
 	// =========================
 	// OPERACIONES
 	// =========================
+	
+	public TicketItem duplicate() {
+	    TicketItem copy = new TicketItem(this.producto, this.tamano, this.precioBase);
+
+	    // Copiar extras
+	    for (TicketExtra extra : this.extras) {
+	        copy.extras.add(new TicketExtra(
+	                extra.getIdExtra(),
+	                extra.getNombre(),
+	                extra.getTipo(),
+	                extra.getPrecio()
+	        ));
+	    }
+
+	    // Copiar personalizaciones
+	    for (TicketPersonalizacion p : this.personalizaciones.values()) {
+	        TicketPersonalizacion copyP = new TicketPersonalizacion(
+	                p.getIdPersonalizacion(),
+	                p.getNombre(),
+	                p.getTipo(),
+	                p.getPrecio()
+	        );
+	        copy.personalizaciones.put(copyP.getIdPersonalizacion(), copyP);
+	    }
+
+	    // Copiar Ask Me
+	    copy.askMes.addAll(this.askMes);
+
+	    return copy;
+	}
 
 	public void setTamano(TamanoDTO nuevoTamano, BigDecimal nuevoPrecioBase) {
 		this.tamano = Objects.requireNonNull(nuevoTamano, "nuevoTamano no puede ser null");

@@ -5,11 +5,13 @@ import dao.ProductoDao;
 import dao.ProductoTamanoDao;
 import dao.SubcategoriaDao;
 import dtoS.CategoriaDTO;
+import dtoS.ProductoBusquedaRowDTO;
 import dtoS.ProductoDTO;
 import dtoS.SubCategoriaDTO;
 import dtoS.TamanoPrecioDTO;
 
 import java.util.List;
+import java.util.Optional;
 
 public class CatalogoService {
 
@@ -39,6 +41,16 @@ public class CatalogoService {
 
     public List<ProductoDTO> getTopProductosBySubcategoria(int idSubcategoria, int limit) {
         return productoDao.findTopBySubcategoriaOrdenados(idSubcategoria, limit);
+    }
+    public Optional<ProductoDTO> buscarProductoPorSku(String sku) {
+        if (sku == null || sku.isBlank()) {
+            return Optional.empty();
+        }
+
+        return productoDao.findBySku(sku.trim());
+    }
+    public List<ProductoBusquedaRowDTO> getFilasBusquedaProducto() {
+        return productoDao.findFilasBusquedaProducto();
     }
  // =====================================================
     // TAMAÑO DEFAULT + PRECIO (Regla B)

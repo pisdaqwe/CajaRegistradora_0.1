@@ -97,14 +97,14 @@ public class MainApp {
                 productoPersonalizacionService
         );
 
-        int terminal = 1;
+        int id_caja = 1;
 
         // =========================
         // UI
         // =========================
         SwingUtilities.invokeLater(() -> {
             LoginScreen screen =
-                    new LoginScreen(appServices, terminal);
+                    new LoginScreen(appServices, id_caja);
             screen.setExtendedState(JFrame.MAXIMIZED_BOTH);
             screen.setVisible(true);
         });

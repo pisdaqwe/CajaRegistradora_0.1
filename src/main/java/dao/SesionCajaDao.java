@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import dtoS.LoginRapidoButtonDTO;
 
 /**
  * DAO de acceso a datos para SESION_CAJA.
@@ -289,6 +290,24 @@ public class SesionCajaDao {
 	// =====================================================
 	// MAPPER
 	// =====================================================
+	private String generarNombreBoton(String nombreCompleto) {
+
+	    if (nombreCompleto == null || nombreCompleto.isBlank()) {
+	        return "USUARIO";
+	    }
+
+	    String[] partes = nombreCompleto.trim().split("\\s+");
+
+	    if (partes.length == 1) {
+	        return partes[0].toUpperCase();
+	    }
+
+	    String inicialApellido = partes[partes.length - 1]
+	            .substring(0, 1)
+	            .toUpperCase();
+
+	    return partes[0] + " " + inicialApellido;
+	}
 
 	private SesionCaja mapSesionCaja(ResultSet rs) throws SQLException {
 
@@ -410,6 +429,59 @@ public class SesionCajaDao {
 	    }
 
 	    return Optional.empty();
+	}
+	public List<LoginRapidoButtonDTO> selectBotonesLoginRapidoByCaja(int idCaja) {
+
+	    if (idCaja <= 0) {
+	        throw new IllegalArgumentException("idCaja debe ser > 0");
+	    }
+
+	    String sql = """
+	        SELECT DISTINCT
+	            u.id_usuario,
+	            u.nombre
+	        FROM sesion_caja sc
+	        JOIN caja c
+	            ON c.id_caja = sc.id_caja
+	        JOIN usuario u
+	            ON u.id_usuario = sc.id_usuario_apertura
+	        JOIN fichaje f
+	            ON f.id_usuario = u.id_usuario
+	        WHERE sc.id_caja = ?
+	          AND sc.estado = 'ABIERTA'
+	          AND c.activa = 1
+	          AND c.estado = 'OPERATIVA'
+	          AND u.activo = 1
+	          AND f.estado = 'ABIERTO'
+	        ORDER BY u.nombre
+	    """;
+
+	    List<LoginRapidoButtonDTO> resultado = new ArrayList<>();
+
+	    try (Connection con = DbPool.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setInt(1, idCaja);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                int idUsuario = rs.getInt("id_usuario");
+	                String nombre = rs.getString("nombre");
+
+	                resultado.add(new LoginRapidoButtonDTO(
+	                    idUsuario,
+	                    generarNombreBoton(nombre)
+	                ));
+	            }
+	        }
+
+	    } catch (SQLException e) {
+	        throw new RuntimeException(
+	            "Error cargando botones de login rápido para la caja " + idCaja, e
+	        );
+	    }
+
+	    return resultado;
 	}
 	
 
