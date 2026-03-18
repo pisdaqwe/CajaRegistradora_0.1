@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import dao.FichajeDao;
+import dao.SesionCajaDao;
 import dao.UsuarioDao;
 import dtoS.FichajeActivoDTO;
 import enums.EstadoFichaje;
@@ -13,18 +14,17 @@ import model.Fichaje;
 import model.Usuario;
 
 public class FichajeService {
-
     private final FichajeDao fichajeDao;
-    
-    
+    private final SesionCajaDao sesionCajaDao;
 
-    public FichajeService(FichajeDao fichajeDao) {
-        if (fichajeDao == null) {
-            throw new IllegalArgumentException("FichajeDao ni Usuariodao no puede ser null");
+    public FichajeService(FichajeDao fichajeDao, SesionCajaDao sesionCajaDao) {
+        if (fichajeDao == null || sesionCajaDao == null) {
+            throw new IllegalArgumentException("Dependencias no pueden ser null");
         }
         this.fichajeDao = fichajeDao;
-        
+        this.sesionCajaDao = sesionCajaDao;
     }
+    
 
     // =========================
     // FICHAR ENTRADA
@@ -66,7 +66,11 @@ public class FichajeService {
                                 "Usuario no tiene fichaje abierto"
                         )
                 );
-
+        if (sesionCajaDao.existeSesionAbiertaPorUsuario(idUsuario)) {
+            throw new IllegalStateException(
+                "No puedes fichar salida mientras tengas una sesión de caja abierta. Cierra primero la caja asignada."
+            );
+        }
         // La BD pone fecha_salida y calcula duración
         fichajeDao.cerrarFichaje(abierto.getIdFichaje());
 

@@ -2,6 +2,7 @@ package service;
 
 import facade.CajaFacade;
 import facade.FichajeFacade;
+import facade.VentaFacade;
 
 public class AppServices {
 
@@ -14,8 +15,11 @@ public class AppServices {
     public final UsuarioService usuarioService;
     public final CatalogoService catalogoService;
     public final ProductoPersonalizacionService productoPersonalizacionService;
-
+    public final VentaFacade ventaFacade;
+    public final ColaImpresionService colaImpresionService;
+    public final TicketClienteService ticketClienteService;
     public AppServices(
+    		
             AuthService authService,
             FichajeService fichajeService,
             SesionCajaService sesionCajaService,
@@ -24,7 +28,10 @@ public class AppServices {
             CajaFacade cajaFacade,
             UsuarioService usuarioService,
             CatalogoService catalogoService,
-            ProductoPersonalizacionService productoPersonalizacionService
+            ProductoPersonalizacionService productoPersonalizacionService,
+            VentaFacade ventaFacade,
+            ColaImpresionService colaImpresionService,
+            TicketClienteService ticketClienteService
     ) {
         this.authService = authService;
         this.fichajeFacade = fichajeFacade;
@@ -35,5 +42,8 @@ public class AppServices {
         this.usuarioService = usuarioService;
         this.catalogoService = catalogoService;
         this.productoPersonalizacionService = productoPersonalizacionService;
+        this.ventaFacade = ventaFacade;
+        this.colaImpresionService = colaImpresionService;
+        this.ticketClienteService = ticketClienteService;
     }
 }

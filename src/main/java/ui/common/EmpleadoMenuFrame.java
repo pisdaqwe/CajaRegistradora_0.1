@@ -4,6 +4,9 @@ import ui.common.BaseTpvFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import service.AppServices;
+
 import java.awt.*;
 
 /**
@@ -16,11 +19,12 @@ import java.awt.*;
 public class EmpleadoMenuFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
+    private final AppServices services;
 
-    public EmpleadoMenuFrame(Runnable onLogoutNavigate, Runnable onBack) {
-        super("Gestión de Empleados", onLogoutNavigate);
+    public EmpleadoMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
+        super("Gestión de Empleados", onLogoutNavigate,services);
         this.onBack = onBack;
-
+        this.services =  services;
         requireAuthenticatedOrExit();
         buildUI();
         refreshHeader();

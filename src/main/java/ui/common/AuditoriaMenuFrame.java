@@ -4,15 +4,20 @@ import ui.common.BaseTpvFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import service.AppServices;
+
 import java.awt.*;
 
 public class AuditoriaMenuFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
+    private final AppServices services;
 
-    public AuditoriaMenuFrame(Runnable onLogoutNavigate, Runnable onBack) {
-        super("Auditoría", onLogoutNavigate);
+    public AuditoriaMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
+        super("Auditoría", onLogoutNavigate,services);
         this.onBack = onBack;
+        this.services =  services;
 
         requireAuthenticatedOrExit();
         buildUI();

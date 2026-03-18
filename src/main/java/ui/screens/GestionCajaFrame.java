@@ -33,7 +33,7 @@ public class GestionCajaFrame extends BaseTpvFrame {
             Runnable onBack,
             AppServices services
     ) {
-        super("Gestión de Caja", onLogoutNavigate);
+        super("Gestión de Caja", onLogoutNavigate,services);
         this.onBack = onBack;
         this.services = services;
 

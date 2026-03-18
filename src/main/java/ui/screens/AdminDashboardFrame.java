@@ -27,7 +27,7 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	private JButton btnNuevoPedido;
 
 	public AdminDashboardFrame(Runnable onLogoutNavigate, AppServices services) {
-		super("Panel de Administración", onLogoutNavigate);
+		super("Panel de Administración", onLogoutNavigate,services);
 		this.onLogoutNavigate = onLogoutNavigate;
 
 		this.services = services;
@@ -168,32 +168,32 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 
 	private void onInformes() {
 		this.setVisible(false);
-		InformesMenuFrame frame = new InformesMenuFrame(onLogoutNavigate, () -> this.setVisible(true));
+		InformesMenuFrame frame = new InformesMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
 		frame.setVisible(true);
 	}
 
 	private void onEmpleados() {
 		this.setVisible(false);
-		EmpleadoMenuFrame frame = new EmpleadoMenuFrame(onLogoutNavigate, () -> this.setVisible(true));
+		EmpleadoMenuFrame frame = new EmpleadoMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
 		frame.setVisible(true);
 	}
 
 	private void onConfig() {
 
 		this.setVisible(false);
-		ConfiguracionMenuFrame frame = new ConfiguracionMenuFrame(onLogoutNavigate, () -> this.setVisible(true));
+		ConfiguracionMenuFrame frame = new ConfiguracionMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
 		frame.setVisible(true);
 	}
 
 	private void onAuditoria() {
 		this.setVisible(false);
-		AuditoriaMenuFrame frame = new AuditoriaMenuFrame(onLogoutNavigate, () -> this.setVisible(true));
+		AuditoriaMenuFrame frame = new AuditoriaMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
 		frame.setVisible(true);
 	}
 
 	private void onHerramientas() {
 		this.setVisible(false);
-		SistemaMenuFrame frame = new SistemaMenuFrame(onLogoutNavigate, () -> this.setVisible(true));
+		SistemaMenuFrame frame = new SistemaMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
 		frame.setVisible(true);
 	}
 

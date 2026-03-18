@@ -14,6 +14,7 @@ public final class ProductoBusquedaRowDTO {
     private final int idTamano;
     private final String nombreTamano;
     private final BigDecimal precio;
+    private BigDecimal iva_porcentaje;
 
     public ProductoBusquedaRowDTO(
             int idProducto,
@@ -23,7 +24,8 @@ public final class ProductoBusquedaRowDTO {
             boolean permitePersonalizacion,
             int idTamano,
             String nombreTamano,
-            BigDecimal precio
+            BigDecimal precio,
+            BigDecimal iva_porcentaje
     ) {
         this.idProducto = idProducto;
         this.idSubcategoria = idSubcategoria;
@@ -33,9 +35,18 @@ public final class ProductoBusquedaRowDTO {
         this.idTamano = idTamano;
         this.nombreTamano = nombreTamano;
         this.precio = precio;
+        this.iva_porcentaje = iva_porcentaje;
     }
 
-    public int getIdProducto() {
+    public BigDecimal getIva_porcentaje() {
+		return iva_porcentaje;
+	}
+
+	public void setIva_porcentaje(BigDecimal iva_porcentaje) {
+		this.iva_porcentaje = iva_porcentaje;
+	}
+
+	public int getIdProducto() {
         return idProducto;
     }
 

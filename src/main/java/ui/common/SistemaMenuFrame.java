@@ -4,6 +4,9 @@ import ui.common.BaseTpvFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import service.AppServices;
+
 import java.awt.*;
 
 /**
@@ -16,11 +19,12 @@ import java.awt.*;
 public class SistemaMenuFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
-
-    public SistemaMenuFrame(Runnable onLogoutNavigate, Runnable onBack) {
-        super("Sistema / Herramientas", onLogoutNavigate);
+    private final AppServices appServices;
+    public SistemaMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
+        super("Sistema / Herramientas", onLogoutNavigate,services);
         this.onBack = onBack;
-
+        this.appServices = services;
+        	
         requireAuthenticatedOrExit();
         buildUI();
         refreshHeader();

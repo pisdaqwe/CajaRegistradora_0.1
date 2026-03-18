@@ -4,6 +4,9 @@ import ui.common.BaseTpvFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import service.AppServices;
+
 import java.awt.*;
 
 /**
@@ -19,10 +22,13 @@ public class InformesMenuFrame extends BaseTpvFrame {
 	 */
 	private static final long serialVersionUID = 1L;
 	private final Runnable onBack;
+	private final AppServices appServices;
 
-    public InformesMenuFrame(Runnable onLogoutNavigate, Runnable onBack) {
-        super("Informes", onLogoutNavigate);
+    public InformesMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
+        super("Informes", onLogoutNavigate,services);
         this.onBack = onBack;
+        this.appServices = services;
+        
 
         // Guard: si no hay sesión, sale
         requireAuthenticatedOrExit();

@@ -4,15 +4,21 @@ import ui.common.BaseTpvFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import service.AppServices;
+
 import java.awt.*;
 
 public class ConfiguracionMenuFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
+    private final AppServices appServices;
 
-    public ConfiguracionMenuFrame(Runnable onLogoutNavigate, Runnable onBack) {
-        super("Configuración", onLogoutNavigate);
+    public ConfiguracionMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
+        super("Configuración", onLogoutNavigate,services);
         this.onBack = onBack;
+        this.appServices = services;
+        
 
         requireAuthenticatedOrExit();
         buildUI();
