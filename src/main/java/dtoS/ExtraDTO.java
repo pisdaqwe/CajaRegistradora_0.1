@@ -1,3 +1,4 @@
+
 package dtoS;
 
 import java.math.BigDecimal;
@@ -9,21 +10,30 @@ public final class ExtraDTO {
     private final String nombre;
     private final String tipo;
     private final BigDecimal precio;
+    private final boolean disponible;
 
-    public ExtraDTO(int idExtra, String nombre, String tipo, BigDecimal precio) {
-        if (idExtra <= 0) throw new IllegalArgumentException("idExtra debe ser > 0");
+    public ExtraDTO(int idExtra, String nombre, String tipo, BigDecimal precio, boolean disponible) {
+        if (idExtra <= 0) {
+            throw new IllegalArgumentException("idExtra debe ser > 0");
+        }
         this.idExtra = idExtra;
 
         this.nombre = Objects.requireNonNull(nombre, "nombre no puede ser null").trim();
-        if (this.nombre.isEmpty()) throw new IllegalArgumentException("nombre no puede estar vacío");
+        if (this.nombre.isEmpty()) {
+            throw new IllegalArgumentException("nombre no puede estar vacío");
+        }
 
         this.tipo = Objects.requireNonNull(tipo, "tipo no puede ser null").trim();
-        if (this.tipo.isEmpty()) throw new IllegalArgumentException("tipo no puede estar vacío");
+        if (this.tipo.isEmpty()) {
+            throw new IllegalArgumentException("tipo no puede estar vacío");
+        }
 
         this.precio = Objects.requireNonNull(precio, "precio no puede ser null");
         if (this.precio.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("precio no puede ser negativo");
         }
+
+        this.disponible = disponible;
     }
 
     public int getIdExtra() {
@@ -42,11 +52,17 @@ public final class ExtraDTO {
         return precio;
     }
 
+    public boolean isDisponible() {
+        return disponible;
+    }
+
     @Override
     public String toString() {
         return "ExtraDTO{idExtra=" + idExtra
                 + ", nombre='" + nombre + '\''
                 + ", tipo='" + tipo + '\''
-                + ", precio=" + precio + "}";
+                + ", precio=" + precio
+                + ", disponible=" + disponible
+                + "}";
     }
 }

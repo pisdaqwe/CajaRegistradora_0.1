@@ -1,9 +1,10 @@
-
 package dao;
 
 import config.DbPool;
 import dtoS.ProductoBusquedaRowDTO;
+import dtoS.ProductoCatalogoDTO;
 import dtoS.ProductoDTO;
+import enums.ModoDisponibilidadProducto;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,15 +21,18 @@ import java.util.Optional;
  * - cargar top productos por subcategoría
  * - buscar producto por SKU
  * - cargar filas para el buscador de productos
+ * - cargar catálogo operativo por sucursal
  *
  * IMPORTANTE:
  * Esta versión ya trae también:
  * - iva_porcentaje
+ * - permite_stock_cantidad
+ * - lectura de stock_producto para catálogo operativo
  */
 public class ProductoDao {
 
     // =====================================================
-    // CONSULTAS DE PRODUCTOS POR SUBCATEGORÍA
+    // CONSULTAS DE PRODUCTOS POR SUBCATEGORÍA (BASE)
     // =====================================================
 
     public List<ProductoDTO> findBySubcategoriaOrdenados(int idSubcategoria) {
@@ -40,7 +44,8 @@ public class ProductoDao {
                 orden,
                 permite_extras,
                 permite_personalizacion,
-                iva_porcentaje
+                iva_porcentaje,
+                permite_stock_cantidad
             FROM producto
             WHERE activo = 1
               AND visible_tpv = 1
@@ -80,7 +85,8 @@ public class ProductoDao {
                 orden,
                 permite_extras,
                 permite_personalizacion,
-                iva_porcentaje
+                iva_porcentaje,
+                permite_stock_cantidad
             FROM producto
             WHERE activo = 1
               AND visible_tpv = 1
@@ -114,27 +120,131 @@ public class ProductoDao {
     }
 
     // =====================================================
-    // BÚSQUEDA POR SKU
+    // CATÁLOGO OPERATIVO POR SUCURSAL
     // =====================================================
 
-    public Optional<ProductoDTO> findBySku(String sku) {
+    public List<ProductoCatalogoDTO> findCatalogoBySubcategoriaYSucursal(int idSubcategoria, int idSucursal) {
+        String sql = """
+            SELECT
+                p.id_producto,
+                p.id_subcategoria,
+                p.nombre,
+                p.orden,
+                p.permite_extras,
+                p.permite_personalizacion,
+                p.iva_porcentaje,
+                p.permite_stock_cantidad,
+                sp.modo_disponibilidad,
+                sp.stock
+            FROM producto p
+            JOIN stock_producto sp
+                ON sp.id_producto = p.id_producto
+            WHERE p.activo = 1
+              AND p.visible_tpv = 1
+              AND p.id_subcategoria = ?
+              AND sp.id_sucursal = ?
+            ORDER BY p.orden ASC, p.id_producto ASC
+        """;
+
+        List<ProductoCatalogoDTO> out = new ArrayList<>();
+
+        try (Connection con = DbPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idSubcategoria);
+            ps.setInt(2, idSucursal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(mapProductoCatalogoDTO(rs));
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Error cargando catálogo operativo para subcategoría " + idSubcategoria
+                            + " y sucursal " + idSucursal,
+                    e
+            );
+        }
+
+        return out;
+    }
+
+    public List<ProductoCatalogoDTO> findTopCatalogoBySubcategoriaYSucursal(int idSubcategoria, int idSucursal, int limit) {
+        String sql = """
+            SELECT
+                p.id_producto,
+                p.id_subcategoria,
+                p.nombre,
+                p.orden,
+                p.permite_extras,
+                p.permite_personalizacion,
+                p.iva_porcentaje,
+                p.permite_stock_cantidad,
+                sp.modo_disponibilidad,
+                sp.stock
+            FROM producto p
+            JOIN stock_producto sp
+                ON sp.id_producto = p.id_producto
+            WHERE p.activo = 1
+              AND p.visible_tpv = 1
+              AND p.id_subcategoria = ?
+              AND sp.id_sucursal = ?
+            ORDER BY p.orden ASC, p.id_producto ASC
+            LIMIT ?
+        """;
+
+        List<ProductoCatalogoDTO> out = new ArrayList<>();
+
+        try (Connection con = DbPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idSubcategoria);
+            ps.setInt(2, idSucursal);
+            ps.setInt(3, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(mapProductoCatalogoDTO(rs));
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Error cargando TOP catálogo operativo para subcategoría " + idSubcategoria
+                            + " y sucursal " + idSucursal,
+                    e
+            );
+        }
+
+        return out;
+    }
+
+    public Optional<ProductoCatalogoDTO> findCatalogoBySkuYSucursal(String sku, int idSucursal) {
         if (sku == null || sku.isBlank()) {
             return Optional.empty();
         }
 
         String sql = """
             SELECT
-                id_producto,
-                id_subcategoria,
-                nombre,
-                orden,
-                permite_extras,
-                permite_personalizacion,
-                iva_porcentaje
-            FROM producto
-            WHERE activo = 1
-              AND visible_tpv = 1
-              AND sku = ?
+                p.id_producto,
+                p.id_subcategoria,
+                p.nombre,
+                p.orden,
+                p.permite_extras,
+                p.permite_personalizacion,
+                p.iva_porcentaje,
+                p.permite_stock_cantidad,
+                sp.modo_disponibilidad,
+                sp.stock
+            FROM producto p
+            JOIN stock_producto sp
+                ON sp.id_producto = p.id_producto
+            WHERE p.activo = 1
+              AND p.visible_tpv = 1
+              AND p.sku = ?
+              AND sp.id_sucursal = ?
             LIMIT 1
         """;
 
@@ -142,25 +252,25 @@ public class ProductoDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, sku.trim());
+            ps.setInt(2, idSucursal);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapProductoDTO(rs));
+                    return Optional.of(mapProductoCatalogoDTO(rs));
                 }
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Error buscando producto por SKU: " + sku, e);
+            throw new RuntimeException(
+                    "Error buscando producto operativo por SKU: " + sku + " en sucursal " + idSucursal,
+                    e
+            );
         }
 
         return Optional.empty();
     }
 
-    // =====================================================
-    // BÚSQUEDA GENERAL DE PRODUCTOS
-    // =====================================================
-
-    public List<ProductoBusquedaRowDTO> findFilasBusquedaProducto() {
+    public List<ProductoBusquedaRowDTO> findFilasBusquedaProductoBySucursal(int idSucursal) {
         String sql = """
             SELECT
                 p.id_producto,
@@ -168,32 +278,44 @@ public class ProductoDao {
                 p.nombre AS nombre_producto,
                 p.permite_extras,
                 p.permite_personalizacion,
+                p.permite_stock_cantidad,
                 p.iva_porcentaje,
                 t.id_tamano,
                 t.nombre AS nombre_tamano,
-                pt.precio
+                pt.precio,
+                sp.modo_disponibilidad,
+                sp.stock
             FROM producto p
+            JOIN stock_producto sp
+                ON sp.id_producto = p.id_producto
             JOIN producto_tamano pt
                 ON pt.id_producto = p.id_producto
             JOIN tamano t
                 ON t.id_tamano = pt.id_tamano
             WHERE p.activo = 1
               AND p.visible_tpv = 1
+              AND sp.id_sucursal = ?
             ORDER BY p.nombre ASC, t.orden ASC, t.id_tamano ASC
         """;
 
         List<ProductoBusquedaRowDTO> out = new ArrayList<>();
 
         try (Connection con = DbPool.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            while (rs.next()) {
-                out.add(mapProductoBusquedaRowDTO(rs));
+            ps.setInt(1, idSucursal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(mapProductoBusquedaRowDTOOperativo(rs));
+                }
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Error cargando filas de búsqueda de productos", e);
+            throw new RuntimeException(
+                    "Error cargando filas operativas de búsqueda para sucursal " + idSucursal,
+                    e
+            );
         }
 
         return out;
@@ -203,17 +325,20 @@ public class ProductoDao {
     // MAPEOS
     // =====================================================
 
-    private ProductoBusquedaRowDTO mapProductoBusquedaRowDTO(ResultSet rs) throws Exception {
+    private ProductoBusquedaRowDTO mapProductoBusquedaRowDTOOperativo(ResultSet rs) throws Exception {
         return new ProductoBusquedaRowDTO(
                 rs.getInt("id_producto"),
                 rs.getInt("id_subcategoria"),
                 rs.getString("nombre_producto"),
                 rs.getBoolean("permite_extras"),
                 rs.getBoolean("permite_personalizacion"),
+                rs.getBoolean("permite_stock_cantidad"),
                 rs.getInt("id_tamano"),
                 rs.getString("nombre_tamano"),
                 rs.getBigDecimal("precio"),
-                rs.getBigDecimal("iva_porcentaje")
+                rs.getBigDecimal("iva_porcentaje"),
+                ModoDisponibilidadProducto.valueOf(rs.getString("modo_disponibilidad")),
+                rs.getBigDecimal("stock")
         );
     }
 
@@ -225,7 +350,23 @@ public class ProductoDao {
                 rs.getInt("orden"),
                 rs.getBoolean("permite_extras"),
                 rs.getBoolean("permite_personalizacion"),
-                rs.getBigDecimal("iva_porcentaje")
+                rs.getBigDecimal("iva_porcentaje"),
+                rs.getBoolean("permite_stock_cantidad")
+        );
+    }
+
+    private ProductoCatalogoDTO mapProductoCatalogoDTO(ResultSet rs) throws Exception {
+        return new ProductoCatalogoDTO(
+                rs.getInt("id_producto"),
+                rs.getInt("id_subcategoria"),
+                rs.getString("nombre"),
+                rs.getInt("orden"),
+                rs.getBigDecimal("iva_porcentaje"),
+                rs.getBoolean("permite_extras"),
+                rs.getBoolean("permite_personalizacion"),
+                rs.getBoolean("permite_stock_cantidad"),
+                ModoDisponibilidadProducto.valueOf(rs.getString("modo_disponibilidad")),
+                rs.getBigDecimal("stock")
         );
     }
 }

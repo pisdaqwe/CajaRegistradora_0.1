@@ -1,5 +1,6 @@
 package service;
 
+import app.AppContext;
 import dao.ExtraDao;
 import dao.PersonalizacionDao;
 import dao.ProductoTamanoDao;
@@ -32,7 +33,8 @@ public class ProductoPersonalizacionService {
     }
 
     public List<ExtraDTO> getExtrasByProducto(int idProducto) {
-        return extraDao.findActivosByProducto(idProducto);
+        int idSucursal = AppContext.getSesionCajaActual().getIdSucursal();
+        return extraDao.findActivosByProductoYSucursal(idProducto, idSucursal);
     }
 
     public List<PersonalizacionDTO> getPersonalizacionesByProducto(int idProducto) {

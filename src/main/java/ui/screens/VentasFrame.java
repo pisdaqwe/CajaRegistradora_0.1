@@ -6,6 +6,7 @@ import dtoS.ColaItemDescripcionDTO;
 import dtoS.ExtraDTO;
 import dtoS.PersonalizacionDTO;
 import dtoS.ProductoBusquedaRowDTO;
+import dtoS.ProductoCatalogoDTO;
 import dtoS.ProductoCustomizationDTO;
 import dtoS.ProductoDTO;
 import dtoS.RegistrarVentaExtraRequest;
@@ -31,6 +32,8 @@ import ui.common.BaseTpvFrame;
 import ui.dialog.AskMeDialog;
 import ui.dialog.AskMeDialogResult;
 import ui.dialog.BuscarProductoDialog;
+import ui.dialog.DisponibilidadItemsDialog;
+import ui.dialog.DisponibilidadProductoDialog;
 import ui.dialog.SkuDialog;
 import ui.dialog.TicketClienteDialog;
 import ui.dialog.TicketsHoyDialog;
@@ -431,27 +434,43 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void onCenterExtraClicked(ExtraDTO extra) {
-		if (extra == null)
-			return;
+	    if (extra == null) {
+	        return;
+	    }
 
-		TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
-		if (selectedRow == null)
-			return;
+	    // Blindaje extra por seguridad:
+	    // aunque el botón ya venga deshabilitado en UI,
+	    // nunca debemos añadir un extra no disponible al ticket.
+	    if (!extra.isDisponible()) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "Ese extra no está disponible en esta sucursal.",
+	                "Extra no disponible",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return;
+	    }
 
-		int itemIndex = selectedRow.getItemIndex();
-		if (itemIndex < 0)
-			return;
+	    TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
+	    if (selectedRow == null) {
+	        return;
+	    }
 
-		String tipo = extra.getTipo() == null ? "" : extra.getTipo().trim().toUpperCase();
+	    int itemIndex = selectedRow.getItemIndex();
+	    if (itemIndex < 0) {
+	        return;
+	    }
 
-		switch (tipo) {
-		case "MILK" -> ticketSession.replaceExtraByTipo(itemIndex, extra);
-		case "SHOT", "SYRUP", "TOPPING", "FOOD_EXTRA" -> ticketSession.addExtra(itemIndex, extra);
-		default -> ticketSession.addExtra(itemIndex, extra);
-		}
+	    String tipo = extra.getTipo() == null ? "" : extra.getTipo().trim().toUpperCase();
 
-		ticketSession.selectItemRow(itemIndex);
-		refreshAll();
+	    switch (tipo) {
+	        case "MILK" -> ticketSession.replaceExtraByTipo(itemIndex, extra);
+	        case "SHOT", "SYRUP", "TOPPING", "FOOD_EXTRA" -> ticketSession.addExtra(itemIndex, extra);
+	        default -> ticketSession.addExtra(itemIndex, extra);
+	    }
+
+	    ticketSession.selectItemRow(itemIndex);
+	    refreshAll();
 	}
 
 	private void onCenterPersonalizacionClicked(PersonalizacionDTO personalizacion) {
@@ -620,6 +639,7 @@ public class VentasFrame extends BaseTpvFrame {
 		request.setTipoServicio(cobroSession.getTipoServicio());
 		request.setMetodoPago(cobroSession.getMetodoPago());
 		request.setMontoPagado(cobroSession.getImporteRecibido());
+		request.setIdSucursal(AppContext.getIdSucursal());
 
 		List<RegistrarVentaItemRequest> items = new ArrayList<>();
 		for (TicketItem item : ticketSession.getItems()) {
@@ -977,7 +997,10 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void onDisponibilidad() {
-		// TODO implementar consulta de disponibilidad / stock
+	    DisponibilidadItemsDialog dialog = new DisponibilidadItemsDialog(this, services);
+	    dialog.showDialog();
+	    refreshAll();
+	    loadCustomizationForSelectedItem();
 	}
 
 	private void onStock() {
@@ -1084,66 +1107,101 @@ public class VentasFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private void onSku() {
-		SkuDialog dialog = new SkuDialog(this);
-		String sku = dialog.showDialog();
+	    SkuDialog dialog = new SkuDialog(this);
+	    String sku = dialog.showDialog();
 
-		if (sku == null || sku.isBlank()) {
-			return;
-		}
+	    if (sku == null || sku.isBlank()) {
+	        return;
+	    }
 
-		Optional<ProductoDTO> productoOpt = services.catalogoService.buscarProductoPorSku(sku);
-		if (productoOpt.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "No existe ningún producto con ese SKU.", "SKU no encontrado",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
+	    Optional<ProductoCatalogoDTO> productoOpt = services.catalogoService.buscarProductoCatalogoPorSku(sku);
+	    if (productoOpt.isEmpty()) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "No existe ningún producto con ese SKU en esta sucursal.",
+	                "SKU no encontrado",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return;
+	    }
 
-		ProductoDTO producto = productoOpt.get();
-		TamanoPrecioDTO def = services.catalogoService.getTamanoDefaultYPrecio(producto.getIdProducto());
+	    ProductoCatalogoDTO productoCatalogo = productoOpt.get();
 
-		ticketSession.addItem(producto, def.getTamanoDTO(), def.getPrecio());
+	    if (!productoCatalogo.isBotonHabilitado()) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "Ese producto no se puede vender ahora.\n\nEstado: " + buildEstadoProducto(productoCatalogo),
+	                "Producto no disponible",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return;
+	    }
 
-		int newItemIndex = ticketSession.getItems().size() - 1;
-		ticketSession.selectItemRow(newItemIndex);
+	    ProductoDTO producto = toProductoDTO(productoCatalogo);
+	    TamanoPrecioDTO def = services.catalogoService.getTamanoDefaultYPrecio(producto.getIdProducto());
 
-		refreshAll();
-		loadCustomizationForSelectedItem();
-		centerPanel.showCatalogo();
+	    ticketSession.addItem(producto, def.getTamanoDTO(), def.getPrecio());
+
+	    int newItemIndex = ticketSession.getItems().size() - 1;
+	    ticketSession.selectItemRow(newItemIndex);
+
+	    refreshAll();
+	    loadCustomizationForSelectedItem();
+	    centerPanel.showCatalogo();
 	}
-
+	
 	private void onBuscarProducto() {
-		List<ProductoBusquedaRowDTO> rows = services.catalogoService.getFilasBusquedaProducto();
+	    List<ProductoBusquedaRowDTO> rows = services.catalogoService.getFilasBusquedaProductoOperativa();
 
-		if (rows == null || rows.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "No hay productos disponibles para mostrar.", "Búsqueda de productos",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
+	    if (rows == null || rows.isEmpty()) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "No hay productos disponibles para mostrar.",
+	                "Búsqueda de productos",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return;
+	    }
 
-		BuscarProductoDialog dialog = new BuscarProductoDialog(this, rows);
-		ProductoBusquedaRowDTO selectedRow = dialog.showDialog();
+	    BuscarProductoDialog dialog = new BuscarProductoDialog(this, rows);
+	    ProductoBusquedaRowDTO selectedRow = dialog.showDialog();
 
-		if (selectedRow == null) {
-			return;
-		}
+	    if (selectedRow == null) {
+	        return;
+	    }
 
-		ProductoDTO producto = new ProductoDTO(selectedRow.getIdProducto(), selectedRow.getIdSubcategoria(),
-				selectedRow.getNombreProducto(), 0, selectedRow.isPermiteExtras(),
-				selectedRow.isPermitePersonalizacion(), selectedRow.getIva_porcentaje()
+	    if (!selectedRow.isBotonHabilitado()) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "Ese producto no se puede vender ahora.\n\nEstado: " + selectedRow.getTextoEstado(),
+	                "Producto no disponible",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return;
+	    }
 
-		);
+	    ProductoDTO producto = new ProductoDTO(
+	            selectedRow.getIdProducto(),
+	            selectedRow.getIdSubcategoria(),
+	            selectedRow.getNombreProducto(),
+	            0,
+	            selectedRow.isPermiteExtras(),
+	            selectedRow.isPermitePersonalizacion(),
+	            selectedRow.getIvaPorcentaje(),
+	            selectedRow.isPermiteStockCantidad()
+	    );
 
-		TamanoPrecioDTO tamanoPrecio = services.productoPersonalizacionService
-				.getPrecioByProductoYTamano(selectedRow.getIdProducto(), selectedRow.getIdTamano());
+	    TamanoPrecioDTO tamanoPrecio = services.productoPersonalizacionService
+	            .getPrecioByProductoYTamano(selectedRow.getIdProducto(), selectedRow.getIdTamano());
 
-		ticketSession.addItem(producto, tamanoPrecio.getTamanoDTO(), tamanoPrecio.getPrecio());
+	    ticketSession.addItem(producto, tamanoPrecio.getTamanoDTO(), tamanoPrecio.getPrecio());
 
-		int newItemIndex = ticketSession.getItems().size() - 1;
-		ticketSession.selectItemRow(newItemIndex);
+	    int newItemIndex = ticketSession.getItems().size() - 1;
+	    ticketSession.selectItemRow(newItemIndex);
 
-		refreshAll();
-		loadCustomizationForSelectedItem();
-		centerPanel.showCatalogo();
+	    refreshAll();
+	    loadCustomizationForSelectedItem();
+	    centerPanel.showCatalogo();
 	}
 
 	// =====================================================
@@ -1186,5 +1244,30 @@ public class VentasFrame extends BaseTpvFrame {
 		}
 
 		return enums.CustomizationMode.VACIO;
+	}
+	private ProductoDTO toProductoDTO(ProductoCatalogoDTO p) {
+	    return new ProductoDTO(
+	            p.getIdProducto(),
+	            p.getIdSubcategoria(),
+	            p.getNombre(),
+	            p.getOrden(),
+	            p.isPermiteExtras(),
+	            p.isPermitePersonalizacion(),
+	            p.getIvaPorcentaje(),
+	            p.isPermiteStockCantidad()
+	    );
+	}
+
+	private String buildEstadoProducto(ProductoCatalogoDTO producto) {
+	    if (!producto.isDisponible()) {
+	        return "No disponible";
+	    }
+	    if (producto.isAgotado()) {
+	        return "Agotado";
+	    }
+	    if (producto.muestraContador()) {
+	        return "Stock: " + producto.getStockActual().stripTrailingZeros().toPlainString();
+	    }
+	    return "Disponible";
 	}
 }

@@ -160,7 +160,7 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	}
 
 	private void onGestionCaja() {
-		GestionCajaFrame frame = new GestionCajaFrame(onLogoutNavigate, () -> this.setVisible(true), services);
+		GestionCajaFrame frame = new GestionCajaFrame(onLogoutNavigate, () -> this.setVisible(true), services,()->refreshNuevoPedidoVisibility());
 		frame.setVisible(true);
 		this.setVisible(false);
 

@@ -1,5 +1,6 @@
 package ui.ventas;
 
+import dtoS.ProductoCatalogoDTO;
 import dtoS.ProductoDTO;
 import dtoS.SubCategoriaDTO;
 import service.AppServices;
@@ -7,6 +8,7 @@ import service.AppServices;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -18,10 +20,14 @@ public class ResumenCategoriaPanel extends JPanel {
 
     private final JPanel content = new JPanel();
     private final JScrollPane scroll;
-    private final Consumer<SubCategoriaDTO>onHeaderClick;
+    private final Consumer<SubCategoriaDTO> onHeaderClick;
     private final Consumer<ProductoDTO> onProductoClicked;
 
-    public ResumenCategoriaPanel(AppServices services,Consumer<SubCategoriaDTO> onHeaderClick,Consumer<ProductoDTO> onProductoClicked) {
+    public ResumenCategoriaPanel(
+            AppServices services,
+            Consumer<SubCategoriaDTO> onHeaderClick,
+            Consumer<ProductoDTO> onProductoClicked
+    ) {
         this.services = services;
         this.onHeaderClick = onHeaderClick;
         this.onProductoClicked = onProductoClicked;
@@ -57,7 +63,6 @@ public class ResumenCategoriaPanel extends JPanel {
     }
 
     private JComponent buildSubcategoriaSection(SubCategoriaDTO sub) {
-
         JPanel section = new JPanel(new BorderLayout(10, 10));
         section.setOpaque(false);
 
@@ -70,16 +75,22 @@ public class ResumenCategoriaPanel extends JPanel {
 
         section.add(header, BorderLayout.NORTH);
 
-        List<ProductoDTO> top = services.catalogoService.getTopProductosBySubcategoria(sub.getIdSubcategoria(), 6);
+        List<ProductoCatalogoDTO> top =
+                services.catalogoService.getTopProductosCatalogoBySubcategoria(sub.getIdSubcategoria(), 6);
 
         JPanel grid = new JPanel(new GridLayout(2, 3, 12, 12));
         grid.setOpaque(false);
 
-        for (ProductoDTO p : top) {
-            JButton b = createProductoButton(p.getNombre());
-            // AÚN NO AÑADIMOS AL TICKET
+        for (ProductoCatalogoDTO p : top) {
+            JButton b = createProductoButton(p);
             b.addActionListener(e -> {
-                if (onProductoClicked != null) onProductoClicked.accept(p);
+                if (!p.isBotonHabilitado()) {
+                    return;
+                }
+
+                if (onProductoClicked != null) {
+                    onProductoClicked.accept(toProductoDTO(p));
+                }
             });
             grid.add(b);
         }
@@ -99,13 +110,64 @@ public class ResumenCategoriaPanel extends JPanel {
         return b;
     }
 
-    private JButton createProductoButton(String text) {
-        JButton b = new JButton(text);
+    private JButton createProductoButton(ProductoCatalogoDTO producto) {
+        JButton b = new JButton(buildButtonText(producto));
         b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 16));
-        b.setBackground(new Color(255, 210, 0));
-        b.setForeground(Color.BLACK);
+        b.setFont(new Font("Monospaced", Font.BOLD, 15));
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        if (!producto.isBotonHabilitado()) {
+            b.setEnabled(false);
+            b.setBackground(new Color(120, 120, 120));
+            b.setForeground(Color.WHITE);
+            return b;
+        }
+
+        if (producto.muestraContador()) {
+            b.setBackground(new Color(255, 230, 120));
+            b.setForeground(Color.BLACK);
+        } else {
+            b.setBackground(new Color(255, 210, 0));
+            b.setForeground(Color.BLACK);
+        }
+
         return b;
+    }
+
+    private String buildButtonText(ProductoCatalogoDTO producto) {
+        if (!producto.isDisponible()) {
+            return "<html><center>" + producto.getNombre() + "<br><b>NO DISP.</b></center></html>";
+        }
+
+        if (producto.isAgotado()) {
+            return "<html><center>" + producto.getNombre() + "<br><b>AGOTADO</b></center></html>";
+        }
+
+        if (producto.muestraContador()) {
+            return "<html><center>" + producto.getNombre() + "<br><b>("
+                    + formatStock(producto.getStockActual()) + ")</b></center></html>";
+        }
+
+        return producto.getNombre();
+    }
+
+    private String formatStock(BigDecimal stock) {
+        if (stock == null) {
+            return "0";
+        }
+        return stock.stripTrailingZeros().toPlainString();
+    }
+
+    private ProductoDTO toProductoDTO(ProductoCatalogoDTO p) {
+        return new ProductoDTO(
+                p.getIdProducto(),
+                p.getIdSubcategoria(),
+                p.getNombre(),
+                p.getOrden(),
+                p.isPermiteExtras(),
+                p.isPermitePersonalizacion(),
+                p.getIvaPorcentaje(),
+                p.isPermiteStockCantidad()
+        );
     }
 }

@@ -15,6 +15,7 @@ import dao.ProductoDao;
 import dao.ProductoEstacionDao;
 import dao.ProductoTamanoDao;
 import dao.SesionCajaDao;
+import dao.StockProductoDao;
 import dao.SubcategoriaDao;
 import dao.TicketJsonDao;
 import dao.UsuarioDao;
@@ -28,6 +29,8 @@ import service.AppServices;
 import service.AuthService;
 import service.CatalogoService;
 import service.ColaImpresionService;
+import service.DisponibilidadExtraService;
+import service.DisponibilidadProductoService;
 import service.FichajeService;
 import service.PersonalizacionService;
 import service.ProductoPersonalizacionService;
@@ -63,6 +66,7 @@ public class MainApp {
 		ColaImpresionDAO colaImpresionDAO = new ColaImpresionDAO();
 		ProductoEstacionDao productoEstacionDao = new ProductoEstacionDao();
 		TicketJsonDao jsonDao = new TicketJsonDao();
+		StockProductoDao stockProductoDao = new StockProductoDao();
 
 		// =========================
 		// SERVICES
@@ -80,6 +84,8 @@ public class MainApp {
 		VentaService ventaService = new VentaService(ventaRegistroDao);
 		ColaImpresionService colaImpresionService = new ColaImpresionService(colaImpresionDAO,productoEstacionDao);
 		TicketClienteService ticketClienteService = new TicketClienteService(jsonDao);
+		DisponibilidadProductoService disponibilidadProductoService = new DisponibilidadProductoService(stockProductoDao);
+		DisponibilidadExtraService disponibilidadExtraService = new DisponibilidadExtraService(extraDao);
 		// =========================
 		// FACADES
 		// =========================
@@ -93,9 +99,10 @@ public class MainApp {
 		// =========================
 		AppServices appServices = new AppServices(authService, fichajeService, sesionCajaService,
 				usuarioRecordadoService, fichajeFacade, cajaFacade, usuarioService, catalogoService,
-				productoPersonalizacionService, ventaFacade, colaImpresionService,ticketClienteService);
+				productoPersonalizacionService, ventaFacade, colaImpresionService,ticketClienteService,disponibilidadProductoService,disponibilidadExtraService);
 
 		int id_caja = 1;
+		AppContext.setIdSucursal(1);
 
 		// =========================
 		// UI

@@ -80,8 +80,9 @@ public class CustomizationCenterPanel extends JPanel {
         add(buildEmptyDynamicCard("TOPPINGS", CustomizationCard.TOPPINGS), CustomizationCard.TOPPINGS.name());
         add(buildEmptyDynamicCard("MILK", CustomizationCard.MILK), CustomizationCard.MILK.name());
         add(buildEmptyDynamicCard("PREP", CustomizationCard.PREP), CustomizationCard.PREP.name());
-        add(buildEmptyDynamicCard("PREP_FOOD", CustomizationCard.PREP_FOOD),CustomizationCard.PREP_FOOD.name());
-        add(buildEmptyDynamicCard("OPCIONES_FOOD", CustomizationCard.OPCIONES_FOOD),CustomizationCard.OPCIONES_FOOD.name());
+        add(buildEmptyDynamicCard("PREP_FOOD", CustomizationCard.PREP_FOOD), CustomizationCard.PREP_FOOD.name());
+        add(buildEmptyDynamicCard("OPCIONES_FOOD", CustomizationCard.OPCIONES_FOOD), CustomizationCard.OPCIONES_FOOD.name());
+
         showCard(CustomizationCard.MILK);
         clearCustomizationData();
     }
@@ -95,7 +96,9 @@ public class CustomizationCenterPanel extends JPanel {
     }
 
     public void showCard(CustomizationCard card) {
-        if (card == null) return;
+        if (card == null) {
+            return;
+        }
         this.currentCard = card;
         cardLayout.show(this, card.name());
     }
@@ -174,7 +177,9 @@ public class CustomizationCenterPanel extends JPanel {
 
     private void rebuildExtrasCard(CustomizationCard card, List<ExtraDTO> extras) {
         JPanel grid = gridByCard.get(card);
-        if (grid == null) return;
+        if (grid == null) {
+            return;
+        }
 
         grid.removeAll();
 
@@ -192,7 +197,9 @@ public class CustomizationCenterPanel extends JPanel {
 
     private void rebuildPrepCard(CustomizationCard card, List<PersonalizacionDTO> preps) {
         JPanel grid = gridByCard.get(card);
-        if (grid == null) return;
+        if (grid == null) {
+            return;
+        }
 
         grid.removeAll();
 
@@ -219,7 +226,9 @@ public class CustomizationCenterPanel extends JPanel {
         List<ExtraDTO> result = new ArrayList<>();
 
         for (ExtraDTO extra : currentData.getExtras()) {
-            if (extra == null || extra.getTipo() == null) continue;
+            if (extra == null || extra.getTipo() == null) {
+                continue;
+            }
 
             String tipo = normalize(extra.getTipo());
 
@@ -235,7 +244,9 @@ public class CustomizationCenterPanel extends JPanel {
         List<PersonalizacionDTO> result = new ArrayList<>();
 
         for (PersonalizacionDTO p : currentData.getPersonalizaciones()) {
-            if (p == null || p.getTipo() == null) continue;
+            if (p == null || p.getTipo() == null) {
+                continue;
+            }
 
             String tipo = normalize(p.getTipo());
             if ("PREP".equals(tipo)) {
@@ -245,11 +256,14 @@ public class CustomizationCenterPanel extends JPanel {
 
         return result;
     }
+
     private List<ExtraDTO> filterFoodExtras() {
         List<ExtraDTO> result = new ArrayList<>();
 
         for (ExtraDTO extra : currentData.getExtras()) {
-            if (extra == null || extra.getTipo() == null) continue;
+            if (extra == null || extra.getTipo() == null) {
+                continue;
+            }
 
             String tipo = normalize(extra.getTipo());
             if ("FOOD_EXTRA".equals(tipo)) {
@@ -267,8 +281,8 @@ public class CustomizationCenterPanel extends JPanel {
             case TOPPINGS -> "TOPPING".equals(tipo) || "TOPPINGS".equals(tipo);
             case MILK -> "MILK".equals(tipo);
             case PREP -> false;
-            case PREP_FOOD ->false;
-            case OPCIONES_FOOD ->false;
+            case PREP_FOOD -> false;
+            case OPCIONES_FOOD -> false;
         };
     }
 
@@ -279,30 +293,31 @@ public class CustomizationCenterPanel extends JPanel {
     // =========================================================
     // BOTONES DINÁMICOS
     // =========================================================
-   
+
     private void fireAskMeClicked() {
         if (actionListener != null) {
             actionListener.onAskMeClicked();
         }
     }
+
     private JButton createAskMeButton() {
         JButton b = new JButton("ASK ME");
         styleOptionButton(b);
-
         b.addActionListener(e -> fireAskMeClicked());
-
         return b;
     }
 
     private JButton createExtraButton(ExtraDTO extra) {
         JButton b = new JButton(buildButtonText(extra.getNombre(), extra.getPrecio()));
-        styleOptionButton(b);
+        styleExtraButton(b, extra);
 
-        b.addActionListener(e -> {
-            if (actionListener != null) {
-                actionListener.onExtraClicked(extra);
-            }
-        });
+        if (extra.isDisponible()) {
+            b.addActionListener(e -> {
+                if (actionListener != null) {
+                    actionListener.onExtraClicked(extra);
+                }
+            });
+        }
 
         return b;
     }
@@ -328,6 +343,22 @@ public class CustomizationCenterPanel extends JPanel {
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
     }
 
+    private void styleExtraButton(JButton b, ExtraDTO extra) {
+        b.setFocusPainted(false);
+        b.setFont(new Font("Monospaced", Font.BOLD, 15));
+        b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        if (!extra.isDisponible()) {
+            b.setEnabled(false);
+            b.setBackground(new Color(120, 120, 120));
+            b.setForeground(Color.WHITE);
+            return;
+        }
+
+        b.setBackground(new Color(255, 210, 0));
+        b.setForeground(Color.BLACK);
+    }
+
     private String buildButtonText(String nombre, BigDecimal precio) {
         if (precio != null && precio.compareTo(BigDecimal.ZERO) > 0) {
             return nombre + " (+" + moneyFormat.format(precio) + ")";
@@ -345,8 +376,11 @@ public class CustomizationCenterPanel extends JPanel {
         wrapper.add(lbl, BorderLayout.CENTER);
         return wrapper;
     }
+
     public void ensureValidCurrentCardForMode(enums.CustomizationMode mode) {
-        if (mode == null) return;
+        if (mode == null) {
+            return;
+        }
 
         switch (mode) {
             case BEBIDA -> {

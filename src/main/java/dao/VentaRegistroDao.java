@@ -9,7 +9,9 @@ import dtoS.RegistrarVentaItemResultDTO;
 import dtoS.RegistrarVentaRequest;
 import dtoS.RegistrarVentaResultDTO;
 import enums.MetodoPago;
+import enums.ModoDisponibilidadProducto;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,6 +31,7 @@ import java.util.Map;
  * - VENTA_ITEM_EXTRA
  * - PAGO
  * - TICKET_JSON
+ * - DESCUENTO DE STOCK_PRODUCTO (si aplica)
  *
  * IMPORTANTE:
  * - la conexión se abre aquí dentro con DbPool
@@ -60,6 +63,9 @@ public class VentaRegistroDao {
                 List<RegistrarVentaItemResultDTO> itemsPersistidos =
                         insertVentaItemsYExtras(con, idVenta, request.getItems());
 
+                // NUEVO: descontar stock de productos si aplica
+                descontarStockProductos(con, request);
+
                 int idPago = insertPago(con, idVenta, request);
 
                 int idTicketJson = insertTicketJson(con, idVenta, request);
@@ -90,11 +96,6 @@ public class VentaRegistroDao {
     // INSERT VENTA
     // =====================================================
 
-    /**
-     * Inserta la cabecera de la venta.
-     *
-     * Tabla: venta
-     */
     private int insertVenta(Connection con, RegistrarVentaRequest request) throws SQLException {
         String sql = """
             INSERT INTO venta (
@@ -122,12 +123,6 @@ public class VentaRegistroDao {
     // INSERT ITEMS + EXTRAS
     // =====================================================
 
-    /**
-     * Inserta todos los items de la venta y sus extras.
-     *
-     * Además devuelve la lista de items ya guardados en BD
-     * con sus ids reales de venta_item.
-     */
     private List<RegistrarVentaItemResultDTO> insertVentaItemsYExtras(
             Connection con,
             int idVenta,
@@ -159,9 +154,6 @@ public class VentaRegistroDao {
         return itemsPersistidos;
     }
 
-    /**
-     * Inserta un item en venta_item.
-     */
     private int insertVentaItem(
             Connection con,
             int idVenta,
@@ -195,9 +187,6 @@ public class VentaRegistroDao {
         }
     }
 
-    /**
-     * Inserta un extra en venta_item_extra.
-     */
     private void insertVentaItemExtra(
             Connection con,
             int idItem,
@@ -224,14 +213,133 @@ public class VentaRegistroDao {
     }
 
     // =====================================================
+    // DESCUENTO DE STOCK PRODUCTO
+    // =====================================================
+
+    private void descontarStockProductos(Connection con, RegistrarVentaRequest request) throws SQLException {
+        Map<Integer, Integer> cantidadesPorProducto = agruparCantidadesPorProducto(request.getItems());
+
+        for (Map.Entry<Integer, Integer> entry : cantidadesPorProducto.entrySet()) {
+            int idProducto = entry.getKey();
+            int cantidadVendida = entry.getValue();
+
+            StockProductoEstado estado = lockStockProducto(con, request.getIdSucursal(), idProducto);
+
+            if (estado == null) {
+                throw new IllegalStateException(
+                        "No existe configuración de stock para el producto " + idProducto
+                                + " en la sucursal " + request.getIdSucursal() + "."
+                );
+            }
+
+            switch (estado.modoDisponibilidad()) {
+                case NO_DISPONIBLE -> throw new IllegalStateException(
+                        "El producto '" + estado.nombreProducto() + "' está marcado como NO DISPONIBLE."
+                );
+
+                case DISPONIBLE_SIN_CONTROL -> {
+                    // No se descuenta stock. Se considera venta válida.
+                }
+
+                case DISPONIBLE_CON_CANTIDAD -> {
+                    BigDecimal cantidad = BigDecimal.valueOf(cantidadVendida);
+
+                    if (estado.stockActual().compareTo(cantidad) < 0) {
+                        throw new IllegalStateException(
+                                "No hay stock suficiente para '" + estado.nombreProducto()
+                                        + "'. Disponible: " + estado.stockActual().stripTrailingZeros().toPlainString()
+                                        + ", requerido: " + cantidadVendida
+                        );
+                    }
+
+                    descontarStockProducto(con, request.getIdSucursal(), idProducto, cantidad);
+                }
+            }
+        }
+    }
+
+    private Map<Integer, Integer> agruparCantidadesPorProducto(List<RegistrarVentaItemRequest> items) {
+        Map<Integer, Integer> cantidades = new LinkedHashMap<>();
+
+        if (items == null || items.isEmpty()) {
+            return cantidades;
+        }
+
+        for (RegistrarVentaItemRequest item : items) {
+            int idProducto = item.getIdProducto();
+            int cantidad = item.getCantidad() > 0 ? item.getCantidad() : 0;
+
+            cantidades.merge(idProducto, cantidad, Integer::sum);
+        }
+
+        return cantidades;
+    }
+
+    private StockProductoEstado lockStockProducto(Connection con, int idSucursal, int idProducto) throws SQLException {
+        String sql = """
+            SELECT
+                p.nombre AS nombre_producto,
+                sp.modo_disponibilidad,
+                sp.stock
+            FROM stock_producto sp
+            JOIN producto p
+                ON p.id_producto = sp.id_producto
+            WHERE sp.id_sucursal = ?
+              AND sp.id_producto = ?
+            FOR UPDATE
+        """;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idSucursal);
+            ps.setInt(2, idProducto);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new StockProductoEstado(
+                            rs.getString("nombre_producto"),
+                            ModoDisponibilidadProducto.valueOf(rs.getString("modo_disponibilidad")),
+                            rs.getBigDecimal("stock")
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void descontarStockProducto(
+            Connection con,
+            int idSucursal,
+            int idProducto,
+            BigDecimal cantidad
+    ) throws SQLException {
+
+        String sql = """
+            UPDATE stock_producto
+               SET stock = stock - ?
+             WHERE id_sucursal = ?
+               AND id_producto = ?
+        """;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setBigDecimal(1, cantidad);
+            ps.setInt(2, idSucursal);
+            ps.setInt(3, idProducto);
+
+            int updated = ps.executeUpdate();
+            if (updated == 0) {
+                throw new SQLException(
+                        "No se pudo descontar stock para producto=" + idProducto
+                                + " en sucursal=" + idSucursal
+                );
+            }
+        }
+    }
+
+    // =====================================================
     // INSERT PAGO
     // =====================================================
 
-    /**
-     * Inserta el pago de la venta.
-     *
-     * Tabla: pago
-     */
     private int insertPago(
             Connection con,
             int idVenta,
@@ -262,15 +370,6 @@ public class VentaRegistroDao {
     // INSERT TICKET_JSON
     // =====================================================
 
-    /**
-     * Inserta el json del ticket.
-     *
-     * Aquí guardamos también:
-     * - nombrePedido
-     * - tipoServicio
-     *
-     * porque todavía no están como columnas propias en la tabla venta.
-     */
     private int insertTicketJson(
             Connection con,
             int idVenta,
@@ -291,7 +390,7 @@ public class VentaRegistroDao {
         try (PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, idVenta);
             ps.setString(2, jsonData);
-            ps.setString(3, null); // de momento no generamos PDF aquí
+            ps.setString(3, null);
 
             ps.executeUpdate();
 
@@ -303,21 +402,11 @@ public class VentaRegistroDao {
     // HELPERS
     // =====================================================
 
-    /**
-     * Construye el JSON del ticket completo.
-     *
-     * Guardamos aquí:
-     * - cabecera de la venta
-     * - nombrePedido
-     * - tipoServicio
-     * - método de pago
-     * - monto pagado
-     * - items
-     */
     private String buildTicketJson(RegistrarVentaRequest request) throws JsonProcessingException {
         Map<String, Object> root = new LinkedHashMap<>();
 
         root.put("idSesion", request.getIdSesion());
+        root.put("idSucursal", request.getIdSucursal());
         root.put("idUsuario", request.getIdUsuario());
         root.put("nombrePedido", request.getNombrePedido());
         root.put("tipoServicio", request.getTipoServicio() != null ? request.getTipoServicio().name() : null);
@@ -329,9 +418,6 @@ public class VentaRegistroDao {
         return objectMapper.writeValueAsString(root);
     }
 
-    /**
-     * Mapea el enum Java al valor esperado por la BD.
-     */
     private String mapMetodoPago(MetodoPago metodoPago) {
         if (metodoPago == MetodoPago.TARJETA) {
             return "TARJETA";
@@ -339,9 +425,6 @@ public class VentaRegistroDao {
         return "EFECTIVO";
     }
 
-    /**
-     * Devuelve el id autogenerado de un INSERT.
-     */
     private int getGeneratedId(PreparedStatement ps, String errorMessage) throws SQLException {
         try (ResultSet rs = ps.getGeneratedKeys()) {
             if (rs.next()) {
@@ -349,5 +432,16 @@ public class VentaRegistroDao {
             }
         }
         throw new SQLException(errorMessage);
+    }
+
+    // =====================================================
+    // DTO INTERNO PARA LOCK DE STOCK
+    // =====================================================
+
+    private record StockProductoEstado(
+            String nombreProducto,
+            ModoDisponibilidadProducto modoDisponibilidad,
+            BigDecimal stockActual
+    ) {
     }
 }

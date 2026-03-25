@@ -4,48 +4,31 @@ import enums.ModoDisponibilidadProducto;
 
 import java.math.BigDecimal;
 
-public final class ProductoBusquedaRowDTO {
+public final class StockProductoDisponibilidadDTO {
 
     private final int idProducto;
     private final int idSubcategoria;
     private final String nombreProducto;
+    private final String nombreSubcategoria;
 
-    private final boolean permiteExtras;
-    private final boolean permitePersonalizacion;
     private final boolean permiteStockCantidad;
-
-    private final int idTamano;
-    private final String nombreTamano;
-    private final BigDecimal precio;
-    private final BigDecimal ivaPorcentaje;
-
     private final ModoDisponibilidadProducto modoDisponibilidad;
     private final BigDecimal stockActual;
 
-    public ProductoBusquedaRowDTO(
+    public StockProductoDisponibilidadDTO(
             int idProducto,
             int idSubcategoria,
             String nombreProducto,
-            boolean permiteExtras,
-            boolean permitePersonalizacion,
+            String nombreSubcategoria,
             boolean permiteStockCantidad,
-            int idTamano,
-            String nombreTamano,
-            BigDecimal precio,
-            BigDecimal ivaPorcentaje,
             ModoDisponibilidadProducto modoDisponibilidad,
             BigDecimal stockActual
     ) {
         this.idProducto = idProducto;
         this.idSubcategoria = idSubcategoria;
         this.nombreProducto = nombreProducto;
-        this.permiteExtras = permiteExtras;
-        this.permitePersonalizacion = permitePersonalizacion;
+        this.nombreSubcategoria = nombreSubcategoria;
         this.permiteStockCantidad = permiteStockCantidad;
-        this.idTamano = idTamano;
-        this.nombreTamano = nombreTamano;
-        this.precio = precio;
-        this.ivaPorcentaje = ivaPorcentaje;
         this.modoDisponibilidad = modoDisponibilidad;
         this.stockActual = stockActual != null ? stockActual : BigDecimal.ZERO;
     }
@@ -62,32 +45,12 @@ public final class ProductoBusquedaRowDTO {
         return nombreProducto;
     }
 
-    public boolean isPermiteExtras() {
-        return permiteExtras;
-    }
-
-    public boolean isPermitePersonalizacion() {
-        return permitePersonalizacion;
+    public String getNombreSubcategoria() {
+        return nombreSubcategoria;
     }
 
     public boolean isPermiteStockCantidad() {
         return permiteStockCantidad;
-    }
-
-    public int getIdTamano() {
-        return idTamano;
-    }
-
-    public String getNombreTamano() {
-        return nombreTamano;
-    }
-
-    public BigDecimal getPrecio() {
-        return precio;
-    }
-
-    public BigDecimal getIvaPorcentaje() {
-        return ivaPorcentaje;
     }
 
     public ModoDisponibilidadProducto getModoDisponibilidad() {
@@ -110,26 +73,19 @@ public final class ProductoBusquedaRowDTO {
         return isConControlCantidad() && stockActual.compareTo(BigDecimal.ZERO) <= 0;
     }
 
-    public boolean isBotonHabilitado() {
-        if (modoDisponibilidad == ModoDisponibilidadProducto.NO_DISPONIBLE) {
-            return false;
-        }
-        if (modoDisponibilidad == ModoDisponibilidadProducto.DISPONIBLE_CON_CANTIDAD) {
-            return stockActual.compareTo(BigDecimal.ZERO) > 0;
-        }
-        return true;
-    }
-
     public String getTextoEstado() {
         if (modoDisponibilidad == ModoDisponibilidadProducto.NO_DISPONIBLE) {
             return "No disponible";
         }
+
         if (isAgotado()) {
             return "Agotado";
         }
+
         if (isConControlCantidad()) {
             return "Stock: " + formatStock(stockActual);
         }
+
         return "Disponible";
     }
 

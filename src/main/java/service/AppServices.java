@@ -18,6 +18,8 @@ public class AppServices {
     public final VentaFacade ventaFacade;
     public final ColaImpresionService colaImpresionService;
     public final TicketClienteService ticketClienteService;
+    public final DisponibilidadProductoService disponibilidadProductoService;
+    public final DisponibilidadExtraService disponibilidadExtraService;
     public AppServices(
     		
             AuthService authService,
@@ -31,7 +33,9 @@ public class AppServices {
             ProductoPersonalizacionService productoPersonalizacionService,
             VentaFacade ventaFacade,
             ColaImpresionService colaImpresionService,
-            TicketClienteService ticketClienteService
+            TicketClienteService ticketClienteService,
+            DisponibilidadProductoService disponibilidadProductoService,
+            DisponibilidadExtraService disponibilidadExtraService
     ) {
         this.authService = authService;
         this.fichajeFacade = fichajeFacade;
@@ -45,5 +49,7 @@ public class AppServices {
         this.ventaFacade = ventaFacade;
         this.colaImpresionService = colaImpresionService;
         this.ticketClienteService = ticketClienteService;
+        this.disponibilidadProductoService = disponibilidadProductoService;
+        this.disponibilidadExtraService = disponibilidadExtraService;
     }
 }

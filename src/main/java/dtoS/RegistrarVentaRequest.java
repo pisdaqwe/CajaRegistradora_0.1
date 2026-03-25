@@ -29,6 +29,8 @@ public class RegistrarVentaRequest {
      * ID de la sesión de caja abierta.
      */
     private int idSesion;
+    
+    private int idSucursal;
 
     /**
      * ID del usuario que realiza la venta.
@@ -143,5 +145,12 @@ public class RegistrarVentaRequest {
 
     public void setItems(List<RegistrarVentaItemRequest> items) {
         this.items = items;
+    }
+    public int getIdSucursal() {
+        return idSucursal;
+    }
+
+    public void setIdSucursal(int idSucursal) {
+        this.idSucursal = idSucursal;
     }
 }

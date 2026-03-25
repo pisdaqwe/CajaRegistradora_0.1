@@ -1,5 +1,6 @@
 package ui.ventas;
 
+import dtoS.ProductoCatalogoDTO;
 import dtoS.ProductoDTO;
 import dtoS.SubCategoriaDTO;
 import service.AppServices;
@@ -7,6 +8,7 @@ import service.AppServices;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -21,7 +23,11 @@ public class SubcategoriaDetallePanel extends JPanel {
     private final JLabel lblTitle = new JLabel("", SwingConstants.LEFT);
     private final JPanel grid = new JPanel();
 
-    public SubcategoriaDetallePanel(AppServices services, Runnable onBack,Consumer<ProductoDTO> onProductoClicked) {
+    public SubcategoriaDetallePanel(
+            AppServices services,
+            Runnable onBack,
+            Consumer<ProductoDTO> onProductoClicked
+    ) {
         this.services = services;
         this.onBack = onBack;
         this.onProductoClicked = onProductoClicked;
@@ -40,7 +46,9 @@ public class SubcategoriaDetallePanel extends JPanel {
 
         JButton btnBack = createDarkButton("← VOLVER");
         btnBack.addActionListener(e -> {
-            if (onBack != null) onBack.run();
+            if (onBack != null) {
+                onBack.run();
+            }
         });
 
         lblTitle.setFont(new Font("Monospaced", Font.BOLD, 20));
@@ -53,7 +61,7 @@ public class SubcategoriaDetallePanel extends JPanel {
     }
 
     private JComponent buildGridScroll() {
-        grid.setLayout(new GridLayout(0, 3, 12, 12)); // 3 columnas, filas dinámicas
+        grid.setLayout(new GridLayout(0, 3, 12, 12));
         grid.setOpaque(false);
 
         JScrollPane sp = new JScrollPane(grid);
@@ -69,13 +77,19 @@ public class SubcategoriaDetallePanel extends JPanel {
 
         grid.removeAll();
 
-        List<ProductoDTO> productos = services.catalogoService.getProductosBySubcategoria(sub.getIdSubcategoria());
+        List<ProductoCatalogoDTO> productos =
+                services.catalogoService.getProductosCatalogoBySubcategoria(sub.getIdSubcategoria());
 
-        for (ProductoDTO p : productos) {
-            JButton b = createYellowButton(p.getNombre());
-           
+        for (ProductoCatalogoDTO p : productos) {
+            JButton b = createProductoButton(p);
             b.addActionListener(e -> {
-                if (onProductoClicked != null) onProductoClicked.accept(p);
+                if (!p.isBotonHabilitado()) {
+                    return;
+                }
+
+                if (onProductoClicked != null) {
+                    onProductoClicked.accept(toProductoDTO(p));
+                }
             });
             grid.add(b);
         }
@@ -84,14 +98,65 @@ public class SubcategoriaDetallePanel extends JPanel {
         repaint();
     }
 
-    private JButton createYellowButton(String text) {
-        JButton b = new JButton(text);
+    private JButton createProductoButton(ProductoCatalogoDTO producto) {
+        JButton b = new JButton(buildButtonText(producto));
         b.setFocusPainted(false);
         b.setFont(new Font("Monospaced", Font.BOLD, 16));
-        b.setBackground(new Color(255, 210, 0));
-        b.setForeground(Color.BLACK);
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        if (!producto.isBotonHabilitado()) {
+            b.setEnabled(false);
+            b.setBackground(new Color(120, 120, 120));
+            b.setForeground(Color.WHITE);
+            return b;
+        }
+
+        if (producto.muestraContador()) {
+            b.setBackground(new Color(255, 230, 120));
+            b.setForeground(Color.BLACK);
+        } else {
+            b.setBackground(new Color(255, 210, 0));
+            b.setForeground(Color.BLACK);
+        }
+
         return b;
+    }
+
+    private String buildButtonText(ProductoCatalogoDTO producto) {
+        if (!producto.isDisponible()) {
+            return "<html><center>" + producto.getNombre() + "<br><b>NO DISP.</b></center></html>";
+        }
+
+        if (producto.isAgotado()) {
+            return "<html><center>" + producto.getNombre() + "<br><b>AGOTADO</b></center></html>";
+        }
+
+        if (producto.muestraContador()) {
+            return "<html><center>" + producto.getNombre() + "<br><b>("
+                    + formatStock(producto.getStockActual()) + ")</b></center></html>";
+        }
+
+        return producto.getNombre();
+    }
+
+    private String formatStock(BigDecimal stock) {
+        if (stock == null) {
+            return "0";
+        }
+        return stock.stripTrailingZeros().toPlainString();
+    }
+
+    private ProductoDTO toProductoDTO(ProductoCatalogoDTO p) {
+        return new ProductoDTO(
+                p.getIdProducto(),
+                p.getIdSubcategoria(),
+                p.getNombre(),
+                p.getOrden(),
+                p.isPermiteExtras(),
+                p.isPermitePersonalizacion(),
+                p.getIvaPorcentaje(),
+                p.isPermiteStockCantidad()
+        );
     }
 
     private JButton createDarkButton(String text) {

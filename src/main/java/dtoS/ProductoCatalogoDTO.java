@@ -4,48 +4,42 @@ import enums.ModoDisponibilidadProducto;
 
 import java.math.BigDecimal;
 
-public final class ProductoBusquedaRowDTO {
+public final class ProductoCatalogoDTO {
 
     private final int idProducto;
     private final int idSubcategoria;
-    private final String nombreProducto;
+    private final String nombre;
+    private final int orden;
+
+    private final BigDecimal ivaPorcentaje;
 
     private final boolean permiteExtras;
     private final boolean permitePersonalizacion;
     private final boolean permiteStockCantidad;
 
-    private final int idTamano;
-    private final String nombreTamano;
-    private final BigDecimal precio;
-    private final BigDecimal ivaPorcentaje;
-
     private final ModoDisponibilidadProducto modoDisponibilidad;
     private final BigDecimal stockActual;
 
-    public ProductoBusquedaRowDTO(
+    public ProductoCatalogoDTO(
             int idProducto,
             int idSubcategoria,
-            String nombreProducto,
+            String nombre,
+            int orden,
+            BigDecimal ivaPorcentaje,
             boolean permiteExtras,
             boolean permitePersonalizacion,
             boolean permiteStockCantidad,
-            int idTamano,
-            String nombreTamano,
-            BigDecimal precio,
-            BigDecimal ivaPorcentaje,
             ModoDisponibilidadProducto modoDisponibilidad,
             BigDecimal stockActual
     ) {
         this.idProducto = idProducto;
         this.idSubcategoria = idSubcategoria;
-        this.nombreProducto = nombreProducto;
+        this.nombre = nombre;
+        this.orden = orden;
+        this.ivaPorcentaje = ivaPorcentaje;
         this.permiteExtras = permiteExtras;
         this.permitePersonalizacion = permitePersonalizacion;
         this.permiteStockCantidad = permiteStockCantidad;
-        this.idTamano = idTamano;
-        this.nombreTamano = nombreTamano;
-        this.precio = precio;
-        this.ivaPorcentaje = ivaPorcentaje;
         this.modoDisponibilidad = modoDisponibilidad;
         this.stockActual = stockActual != null ? stockActual : BigDecimal.ZERO;
     }
@@ -58,8 +52,16 @@ public final class ProductoBusquedaRowDTO {
         return idSubcategoria;
     }
 
-    public String getNombreProducto() {
-        return nombreProducto;
+    public String getNombre() {
+        return nombre;
+    }
+
+    public int getOrden() {
+        return orden;
+    }
+
+    public BigDecimal getIvaPorcentaje() {
+        return ivaPorcentaje;
     }
 
     public boolean isPermiteExtras() {
@@ -72,22 +74,6 @@ public final class ProductoBusquedaRowDTO {
 
     public boolean isPermiteStockCantidad() {
         return permiteStockCantidad;
-    }
-
-    public int getIdTamano() {
-        return idTamano;
-    }
-
-    public String getNombreTamano() {
-        return nombreTamano;
-    }
-
-    public BigDecimal getPrecio() {
-        return precio;
-    }
-
-    public BigDecimal getIvaPorcentaje() {
-        return ivaPorcentaje;
     }
 
     public ModoDisponibilidadProducto getModoDisponibilidad() {
@@ -110,33 +96,19 @@ public final class ProductoBusquedaRowDTO {
         return isConControlCantidad() && stockActual.compareTo(BigDecimal.ZERO) <= 0;
     }
 
+    public boolean muestraContador() {
+        return isConControlCantidad();
+    }
+
     public boolean isBotonHabilitado() {
         if (modoDisponibilidad == ModoDisponibilidadProducto.NO_DISPONIBLE) {
             return false;
         }
+
         if (modoDisponibilidad == ModoDisponibilidadProducto.DISPONIBLE_CON_CANTIDAD) {
             return stockActual.compareTo(BigDecimal.ZERO) > 0;
         }
+
         return true;
-    }
-
-    public String getTextoEstado() {
-        if (modoDisponibilidad == ModoDisponibilidadProducto.NO_DISPONIBLE) {
-            return "No disponible";
-        }
-        if (isAgotado()) {
-            return "Agotado";
-        }
-        if (isConControlCantidad()) {
-            return "Stock: " + formatStock(stockActual);
-        }
-        return "Disponible";
-    }
-
-    private String formatStock(BigDecimal stock) {
-        if (stock == null) {
-            return "0";
-        }
-        return stock.stripTrailingZeros().toPlainString();
     }
 }

@@ -1,6 +1,9 @@
 package ui.dialog;
 
-import dtoS.ProductoBusquedaRowDTO;
+import dtoS.DisponibilidadItemRowDTO;
+import dtoS.StockExtraDisponibilidadDTO;
+import dtoS.StockProductoDisponibilidadDTO;
+import service.AppServices;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,13 +15,12 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class BuscarProductoDialog extends JDialog {
+public class DisponibilidadItemsDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,26 +36,25 @@ public class BuscarProductoDialog extends JDialog {
     private static final Color ROW_DISABLED_BG = new Color(228, 228, 228);
     private static final Color ROW_DISABLED_FG = new Color(130, 130, 130);
 
-    private static final int WIDTH = 980;
-    private static final int HEIGHT = 680;
+    private static final int WIDTH = 1180;
+    private static final int HEIGHT = 760;
 
-    private final List<ProductoBusquedaRowDTO> rows;
+    private final AppServices services;
 
     private JTextField txtBuscar;
     private JTable table;
-    private ProductoBusquedaTableModel tableModel;
-    private TableRowSorter<ProductoBusquedaTableModel> sorter;
+    private DisponibilidadItemsTableModel tableModel;
+    private TableRowSorter<DisponibilidadItemsTableModel> sorter;
 
-    private ProductoBusquedaRowDTO result;
-
-    public BuscarProductoDialog(JFrame owner, List<ProductoBusquedaRowDTO> rows) {
-        super(owner, "Buscar producto", true);
-        this.rows = rows != null ? rows : new ArrayList<>();
+    public DisponibilidadItemsDialog(JFrame owner, AppServices services) {
+        super(owner, "Disponibilidad catálogo", true);
+        this.services = services;
 
         initDialog();
         initComponents();
         buildLayout();
         bindEvents();
+        reloadData();
     }
 
     private void initDialog() {
@@ -74,7 +75,7 @@ public class BuscarProductoDialog extends JDialog {
         txtBuscar.setForeground(TEXT_DARK);
         txtBuscar.setCaretColor(TEXT_DARK);
 
-        tableModel = new ProductoBusquedaTableModel(this.rows);
+        tableModel = new DisponibilidadItemsTableModel();
 
         table = new JTable(tableModel) {
             @Override
@@ -82,7 +83,7 @@ public class BuscarProductoDialog extends JDialog {
                 Component c = super.prepareRenderer(renderer, row, column);
 
                 int modelRow = convertRowIndexToModel(row);
-                ProductoBusquedaRowDTO dto = tableModel.getRow(modelRow);
+                DisponibilidadItemRowDTO dto = tableModel.getRow(modelRow);
 
                 if (isRowSelected(row)) {
                     c.setBackground(BG_SELECTION);
@@ -90,7 +91,8 @@ public class BuscarProductoDialog extends JDialog {
                     return c;
                 }
 
-                if (!dto.isBotonHabilitado()) {
+                boolean disabled = !dto.isDisponible() || dto.isAgotado();
+                if (disabled) {
                     c.setBackground(ROW_DISABLED_BG);
                     c.setForeground(ROW_DISABLED_FG);
                 } else {
@@ -145,12 +147,12 @@ public class BuscarProductoDialog extends JDialog {
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
 
-        JLabel lblTitle = new JLabel("BUSCAR PRODUCTO");
+        JLabel lblTitle = new JLabel("DISPONIBILIDAD DEL CATÁLOGO");
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
         lblTitle.setForeground(TEXT_MAIN);
 
-        JLabel lblSubtitle = new JLabel("Busca por nombre y añade solo productos vendibles");
+        JLabel lblSubtitle = new JLabel("Gestiona productos y extras de la sucursal actual");
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lblSubtitle.setForeground(TEXT_SOFT);
@@ -199,14 +201,14 @@ public class BuscarProductoDialog extends JDialog {
         JPanel panel = new JPanel(new GridLayout(1, 2, 12, 12));
         panel.setOpaque(false);
 
-        JButton btnCancelar = createActionButton("CANCELAR");
-        JButton btnAceptar = createActionButton("AÑADIR");
+        JButton btnCerrar = createActionButton("CERRAR");
+        JButton btnEditar = createActionButton("EDITAR");
 
-        btnCancelar.addActionListener(e -> cancel());
-        btnAceptar.addActionListener(e -> acceptSelected());
+        btnCerrar.addActionListener(e -> dispose());
+        btnEditar.addActionListener(e -> editSelected());
 
-        panel.add(btnCancelar);
-        panel.add(btnAceptar);
+        panel.add(btnCerrar);
+        panel.add(btnEditar);
 
         return panel;
     }
@@ -248,12 +250,49 @@ public class BuscarProductoDialog extends JDialog {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
-                    acceptSelected();
+                    editSelected();
                 }
             }
         });
 
         SwingUtilities.invokeLater(() -> txtBuscar.requestFocusInWindow());
+    }
+
+    private void reloadData() {
+        List<DisponibilidadItemRowDTO> rows = new ArrayList<>();
+
+        List<StockProductoDisponibilidadDTO> productos =
+                services.disponibilidadProductoService.getDisponibilidadProductosSucursalActual();
+
+        for (StockProductoDisponibilidadDTO p : productos) {
+            rows.add(DisponibilidadItemRowDTO.producto(
+                    p.getIdProducto(),
+                    p.getNombreProducto(),
+                    p.getNombreSubcategoria(),
+                    p.isPermiteStockCantidad(),
+                    p.getModoDisponibilidad(),
+                    p.getStockActual()
+            ));
+        }
+
+        List<StockExtraDisponibilidadDTO> extras =
+                services.disponibilidadExtraService.getDisponibilidadExtrasSucursalActual();
+
+        for (StockExtraDisponibilidadDTO e : extras) {
+            rows.add(DisponibilidadItemRowDTO.extra(
+                    e.getIdExtra(),
+                    e.getNombreExtra(),
+                    e.getTipoExtra(),
+                    e.isDisponible()
+            ));
+        }
+
+        rows.sort(Comparator
+                .comparing(DisponibilidadItemRowDTO::getTipoItem)
+                .thenComparing(DisponibilidadItemRowDTO::getGrupo)
+                .thenComparing(DisponibilidadItemRowDTO::getNombre));
+
+        tableModel.setRows(rows);
     }
 
     private void aplicarFiltro() {
@@ -265,7 +304,7 @@ public class BuscarProductoDialog extends JDialog {
 
         sorter.setRowFilter(RowFilter.regexFilter(
                 "(?i)" + Pattern.quote(texto.trim()),
-                0
+                1, 2
         ));
     }
 
@@ -276,82 +315,132 @@ public class BuscarProductoDialog extends JDialog {
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
 
-        DefaultTableCellRenderer priceRenderer = new DefaultTableCellRenderer() {
-            private final DecimalFormat df = new DecimalFormat("#,##0.00 €");
-
-            @Override
-            protected void setValue(Object value) {
-                if (value instanceof BigDecimal bd) {
-                    setText(df.format(bd));
-                } else {
-                    setText("");
-                }
-            }
-        };
-        priceRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        table.getColumnModel().getColumn(0).setCellRenderer(left);
-        table.getColumnModel().getColumn(1).setCellRenderer(center);
-        table.getColumnModel().getColumn(2).setCellRenderer(priceRenderer);
-        table.getColumnModel().getColumn(3).setCellRenderer(center);
+        table.getColumnModel().getColumn(0).setCellRenderer(center); // Tipo
+        table.getColumnModel().getColumn(1).setCellRenderer(left);   // Nombre
+        table.getColumnModel().getColumn(2).setCellRenderer(left);   // Grupo
+        table.getColumnModel().getColumn(3).setCellRenderer(center); // Modo
+        table.getColumnModel().getColumn(4).setCellRenderer(center); // Stock
+        table.getColumnModel().getColumn(5).setCellRenderer(center); // Estado
     }
 
     private void configureColumnWidths() {
-        table.getColumnModel().getColumn(0).setPreferredWidth(420);
-        table.getColumnModel().getColumn(1).setPreferredWidth(150);
-        table.getColumnModel().getColumn(2).setPreferredWidth(140);
-        table.getColumnModel().getColumn(3).setPreferredWidth(180);
+        table.getColumnModel().getColumn(0).setPreferredWidth(120);
+        table.getColumnModel().getColumn(1).setPreferredWidth(300);
+        table.getColumnModel().getColumn(2).setPreferredWidth(220);
+        table.getColumnModel().getColumn(3).setPreferredWidth(240);
+        table.getColumnModel().getColumn(4).setPreferredWidth(120);
+        table.getColumnModel().getColumn(5).setPreferredWidth(180);
     }
 
-    private void acceptSelected() {
+    private void editSelected() {
         int viewRow = table.getSelectedRow();
         if (viewRow < 0) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Selecciona un producto de la tabla.",
-                    "Búsqueda de productos",
+                    "Selecciona un elemento de la tabla.",
+                    "Disponibilidad",
                     JOptionPane.WARNING_MESSAGE
             );
             return;
         }
 
         int modelRow = table.convertRowIndexToModel(viewRow);
-        ProductoBusquedaRowDTO selected = tableModel.getRow(modelRow);
+        DisponibilidadItemRowDTO selected = tableModel.getRow(modelRow);
 
-        if (!selected.isBotonHabilitado()) {
+        try {
+            if (selected.isProducto()) {
+                editarProducto(selected);
+            } else if (selected.isExtra()) {
+                editarExtra(selected);
+            }
+
+            reloadData();
+            reselectItem(selected.getTipoItem(), selected.getIdItem());
+
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Ese producto no se puede vender ahora.\n\nEstado: " + selected.getTextoEstado(),
-                    "Producto no disponible",
-                    JOptionPane.WARNING_MESSAGE
+                    "No se pudo guardar el cambio.\n\n" + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
             );
+        }
+    }
+
+    private void editarProducto(DisponibilidadItemRowDTO selected) {
+        StockProductoDisponibilidadDTO dto =
+                services.disponibilidadProductoService.getDisponibilidadProductoSucursalActual(selected.getIdItem());
+
+        EditarDisponibilidadProductoDialog dialog =
+                new EditarDisponibilidadProductoDialog((JFrame) getOwner(), dto);
+
+        EditarDisponibilidadProductoDialogResult result = dialog.showDialog();
+        if (!result.isConfirmed()) {
             return;
         }
 
-        result = selected;
-        dispose();
+        services.disponibilidadProductoService.guardarDisponibilidadProductoSucursalActual(
+                dto.getIdProducto(),
+                result.getModoDisponibilidad(),
+                result.getStock()
+        );
     }
 
-    private void cancel() {
-        result = null;
-        dispose();
-    }
+    private void editarExtra(DisponibilidadItemRowDTO selected) {
+        StockExtraDisponibilidadDTO dto =
+                services.disponibilidadExtraService.getDisponibilidadExtraSucursalActual(selected.getIdItem());
 
-    public ProductoBusquedaRowDTO showDialog() {
-        setVisible(true);
-        return result;
-    }
+        EditarDisponibilidadExtraDialog dialog =
+                new EditarDisponibilidadExtraDialog((JFrame) getOwner(), dto);
 
-    private static final class ProductoBusquedaTableModel extends AbstractTableModel {
-
-        private final String[] columns = {"Producto", "Tamaño", "Precio", "Estado"};
-        private final List<ProductoBusquedaRowDTO> rows;
-
-        private ProductoBusquedaTableModel(List<ProductoBusquedaRowDTO> rows) {
-            this.rows = rows;
+        EditarDisponibilidadExtraDialogResult result = dialog.showDialog();
+        if (!result.isConfirmed()) {
+            return;
         }
 
-        public ProductoBusquedaRowDTO getRow(int rowIndex) {
+        services.disponibilidadExtraService.guardarDisponibilidadExtraSucursalActual(
+                dto.getIdExtra(),
+                result.isDisponible()
+        );
+    }
+
+    private void reselectItem(String tipoItem, int idItem) {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            DisponibilidadItemRowDTO row = tableModel.getRow(i);
+            if (row.getTipoItem().equals(tipoItem) && row.getIdItem() == idItem) {
+                int viewIndex = table.convertRowIndexToView(i);
+                if (viewIndex >= 0) {
+                    table.setRowSelectionInterval(viewIndex, viewIndex);
+                    table.scrollRectToVisible(table.getCellRect(viewIndex, 0, true));
+                }
+                return;
+            }
+        }
+    }
+
+    public void showDialog() {
+        setVisible(true);
+    }
+
+    private static final class DisponibilidadItemsTableModel extends AbstractTableModel {
+
+        private final String[] columns = {
+                "Tipo",
+                "Nombre",
+                "Grupo",
+                "Modo",
+                "Stock",
+                "Estado"
+        };
+
+        private List<DisponibilidadItemRowDTO> rows = new ArrayList<>();
+
+        public void setRows(List<DisponibilidadItemRowDTO> rows) {
+            this.rows = rows != null ? rows : new ArrayList<>();
+            fireTableDataChanged();
+        }
+
+        public DisponibilidadItemRowDTO getRow(int rowIndex) {
             return rows.get(rowIndex);
         }
 
@@ -372,23 +461,22 @@ public class BuscarProductoDialog extends JDialog {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            ProductoBusquedaRowDTO row = rows.get(rowIndex);
+            DisponibilidadItemRowDTO row = rows.get(rowIndex);
 
             return switch (columnIndex) {
-                case 0 -> row.getNombreProducto();
-                case 1 -> row.getNombreTamano();
-                case 2 -> row.getPrecio();
-                case 3 -> row.getTextoEstado();
+                case 0 -> row.getTipoItem();
+                case 1 -> row.getNombre();
+                case 2 -> row.getGrupo();
+                case 3 -> row.getTextoModo();
+                case 4 -> row.getTextoStock();
+                case 5 -> row.getTextoEstado();
                 default -> "";
             };
         }
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            return switch (columnIndex) {
-                case 2 -> BigDecimal.class;
-                default -> String.class;
-            };
+            return String.class;
         }
 
         @Override

@@ -20,6 +20,7 @@ public class GestionCajaFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
     private final AppServices services;
+    private final Runnable refreshNuevoPedidoVisibility;
 
     // Empleados fichados (informativo)
     private JTable tablaEmpleados;
@@ -31,11 +32,14 @@ public class GestionCajaFrame extends BaseTpvFrame {
     public GestionCajaFrame(
             Runnable onLogoutNavigate,
             Runnable onBack,
-            AppServices services
+            AppServices services,
+            Runnable refreshNuevoPedidoVisivilit
     ) {
         super("Gestión de Caja", onLogoutNavigate,services);
         this.onBack = onBack;
         this.services = services;
+        this.refreshNuevoPedidoVisibility = refreshNuevoPedidoVisivilit;
+        
 
         requireAuthenticatedOrExit();
         buildUI();
@@ -70,6 +74,7 @@ public class GestionCajaFrame extends BaseTpvFrame {
         JButton btnVolver = createSecondaryButton("Volver");
         btnVolver.addActionListener(e -> {
             dispose();
+            refreshNuevoPedidoVisibility.run();
             onBack.run();
         });
 
@@ -298,12 +303,15 @@ public class GestionCajaFrame extends BaseTpvFrame {
         // 👇 cuando se cierra el diálogo, refrescamos TODO
         refreshEmpleadosFichados();
         refreshCajasDisponibles();
+        
+        
     }
     private void abrirDialogoCerrarCaja() {
     	CerrarSesionCajaDialog dialog = new CerrarSesionCajaDialog(this, services);
     	dialog.setVisible(true);
     	refreshCajasDisponibles();
     	refreshEmpleadosFichados();
+    	
     	
     }
     

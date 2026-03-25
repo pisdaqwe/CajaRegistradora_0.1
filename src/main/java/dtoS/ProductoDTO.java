@@ -11,9 +11,16 @@ public final class ProductoDTO {
 	private BigDecimal ivaPorcentaje;
 	private final boolean permiteExtras;
 	private final boolean permitePersonalizacion;
+	private final boolean permiteStockCantidad;
 
-	public ProductoDTO(int idProducto, int idSubcategoria, String nombre, int orden, boolean permiteExtras,
-			boolean permitePersonalizacion,BigDecimal ivaPorcentaje) {
+	public ProductoDTO(int idProducto,
+			int idSubcategoria,
+			String nombre,
+			int orden,
+			boolean permiteExtras,
+			boolean permitePersonalizacion,
+			BigDecimal ivaPorcentaje,
+			boolean permiteStockCantidad) {
 		this.idProducto = idProducto;
 		this.idSubcategoria = idSubcategoria;
 		this.nombre = nombre;
@@ -21,15 +28,9 @@ public final class ProductoDTO {
 		this.permiteExtras = permiteExtras;
 		this.permitePersonalizacion = permitePersonalizacion;
 		this.ivaPorcentaje = ivaPorcentaje;
+		this.permiteStockCantidad = permiteStockCantidad;
 	}
 
-	public BigDecimal getIvaPorcentaje() {
-		return ivaPorcentaje;
-	}
-
-	public void setIvaPorcentaje(BigDecimal ivaPorcentaje) {
-		this.ivaPorcentaje = ivaPorcentaje;
-	}
 	public int getIdProducto() {
 		return idProducto;
 	}
@@ -46,11 +47,23 @@ public final class ProductoDTO {
 		return orden;
 	}
 
+	public BigDecimal getIvaPorcentaje() {
+		return ivaPorcentaje;
+	}
+
+	public void setIvaPorcentaje(BigDecimal ivaPorcentaje) {
+		this.ivaPorcentaje = ivaPorcentaje;
+	}
+
 	public boolean isPermiteExtras() {
 		return permiteExtras;
 	}
 
 	public boolean isPermitePersonalizacion() {
 		return permitePersonalizacion;
+	}
+
+	public boolean isPermiteStockCantidad() {
+		return permiteStockCantidad;
 	}
 }

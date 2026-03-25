@@ -2,11 +2,13 @@ package app;
 
 import dtoS.SesionCajaRefDTO;
 import model.Usuario;
+import net.bytebuddy.asm.Advice.This;
 
 public final class AppContext {
 
     private static Usuario usuarioActual;
     private static SesionCajaRefDTO sesionCajaActual;
+    private static int idSucursalActual;
 
     private AppContext() {
         // Evita instanciación
@@ -27,6 +29,7 @@ public final class AppContext {
         usuarioActual = usuario;
     }
 
+ 
     public static Usuario getUsuario() {
         if (usuarioActual == null) {
             throw new IllegalStateException(
@@ -39,6 +42,8 @@ public final class AppContext {
     public static int getUsuarioId() {
         return getUsuario().getIdUsuario();
     }
+    
+
 
     public static boolean isAuthenticated() {
         return usuarioActual != null;
@@ -51,7 +56,7 @@ public final class AppContext {
         if (ref == null) {
             throw new IllegalArgumentException("SesionCajaRefDTO no puede ser null");
         }
-        if (sesionCajaActual != null) {
+        if (sesionCajaActual != null && ref.getIdSesion()!=sesionCajaActual.getIdSesion()) {
             throw new IllegalStateException(
                 "Ya existe una sesión de caja en AppContext. Debe limpiarse antes."
             );
@@ -75,7 +80,23 @@ public final class AppContext {
     public static void clearSesionCajaActual() {
         sesionCajaActual = null;
     }
+    //==============================================
+    //SUCURSAL
+    //==============================================
+    
+    public static void  setIdSucursal (int idSucursal) {
+ 	   if (idSucursal <=0) {
+            throw new IllegalArgumentException("IdSucursal no puede ser 0");
+        }
+       idSucursalActual = idSucursal;
+		
+	}
 
+    public static int  getIdSucursal() {
+    	return idSucursalActual;
+    }
+    
+    
     // =========================
     // LOGOUT
     // =========================
