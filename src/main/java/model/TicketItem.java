@@ -13,207 +13,338 @@ import dtoS.ProductoDTO;
 import dtoS.TamanoDTO;
 
 /**
- * Un item del ticket: producto + tamaño + precio base + extras +
- * personalizaciones. - Extras: repetibles (lista), salvo cuando la lógica use
- * replace por tipo - Personalizaciones: no repetibles (LinkedHashMap por id
- * para toggle)
+ * Representa un item real dentro del ticket.
+ *
+ * Un TicketItem contiene:
+ * - producto base
+ * - tamaño seleccionado
+ * - precio base del tamaño
+ * - extras aplicados
+ * - personalizaciones activas
+ * - notas Ask Me
+ *
+ * Reglas actuales:
+ * - los extras son repetibles salvo que desde fuera se use replace por tipo
+ * - las personalizaciones se guardan por id y funcionan con toggle
+ * - Ask Me es solo texto informativo y no afecta al precio
  */
 public final class TicketItem {
 
-	private final ProductoDTO producto;
+    // =====================================================
+    // 1) ESTADO INTERNO DEL ITEM
+    // =====================================================
 
-	private TamanoDTO tamano;
-	private BigDecimal precioBase; // precio del tamaño
+    /**
+     * Producto base del item.
+     * No cambia durante la vida del TicketItem.
+     */
+    private final ProductoDTO producto;
 
-	private final List<TicketExtra> extras = new ArrayList<>();
-	private final LinkedHashMap<Integer, TicketPersonalizacion> personalizaciones = new LinkedHashMap<>();
-	private final List<String> askMes = new ArrayList<>();
+    /**
+     * Tamaño actual seleccionado para el producto.
+     */
+    private TamanoDTO tamano;
 
-	public TicketItem(ProductoDTO producto, TamanoDTO tamano, BigDecimal precioBase) {
-		this.producto = Objects.requireNonNull(producto, "producto no puede ser null");
-		this.tamano = Objects.requireNonNull(tamano, "tamano no puede ser null");
+    /**
+     * Precio base actual del item según el tamaño seleccionado.
+     * No incluye extras ni personalizaciones.
+     */
+    private BigDecimal precioBase;
 
-		this.precioBase = Objects.requireNonNull(precioBase, "precioBase no puede ser null");
-		if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("precioBase no puede ser negativo");
-		}
-	}
+    /**
+     * Lista de extras añadidos al item.
+     * Puede contener repetidos en tipos como SHOT o SYRUP.
+     */
+    private final List<TicketExtra> extras = new ArrayList<>();
 
-	// =========================
-	// GETTERS
-	// =========================
+    /**
+     * Personalizaciones activas del item.
+     * Se guardan por id para poder hacer toggle fácilmente
+     * y mantener orden de inserción.
+     */
+    private final LinkedHashMap<Integer, TicketPersonalizacion> personalizaciones = new LinkedHashMap<>();
 
-	public ProductoDTO getProducto() {
-		return producto;
-	}
+    /**
+     * Lista de textos Ask Me asociados al item.
+     */
+    private final List<String> askMes = new ArrayList<>();
 
-	public TamanoDTO getTamano() {
-		return tamano;
-	}
+    // =====================================================
+    // 2) CONSTRUCTOR
+    // =====================================================
 
-	public BigDecimal getPrecioBase() {
-		return precioBase;
-	}
+    public TicketItem(ProductoDTO producto, TamanoDTO tamano, BigDecimal precioBase) {
+        this.producto = Objects.requireNonNull(producto, "producto no puede ser null");
+        this.tamano = Objects.requireNonNull(tamano, "tamano no puede ser null");
 
-	public List<TicketExtra> getExtras() {
-		return extras;
-	}
+        this.precioBase = Objects.requireNonNull(precioBase, "precioBase no puede ser null");
+        if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("precioBase no puede ser negativo");
+        }
+    }
 
-	public Map<Integer, TicketPersonalizacion> getPersonalizaciones() {
-		return personalizaciones;
-	}
+    // =====================================================
+    // 3) GETTERS BÁSICOS
+    // =====================================================
 
-	public List<String> getAskMes() {
-		return askMes;
-	}
+    public ProductoDTO getProducto() {
+        return producto;
+    }
 
-	// =========================
-	// OPERACIONES
-	// =========================
-	
-	public TicketItem duplicate() {
-	    TicketItem copy = new TicketItem(this.producto, this.tamano, this.precioBase);
+    public TamanoDTO getTamano() {
+        return tamano;
+    }
 
-	    // Copiar extras
-	    for (TicketExtra extra : this.extras) {
-	        copy.extras.add(new TicketExtra(
-	                extra.getIdExtra(),
-	                extra.getNombre(),
-	                extra.getTipo(),
-	                extra.getPrecio()
-	        ));
-	    }
+    /**
+     * Devuelve el precio base del item.
+     * No incluye extras ni personalizaciones.
+     */
+    public BigDecimal getPrecioBase() {
+        return precioBase;
+    }
 
-	    // Copiar personalizaciones
-	    for (TicketPersonalizacion p : this.personalizaciones.values()) {
-	        TicketPersonalizacion copyP = new TicketPersonalizacion(
-	                p.getIdPersonalizacion(),
-	                p.getNombre(),
-	                p.getTipo(),
-	                p.getPrecio()
-	        );
-	        copy.personalizaciones.put(copyP.getIdPersonalizacion(), copyP);
-	    }
+    public List<TicketExtra> getExtras() {
+        return extras;
+    }
 
-	    // Copiar Ask Me
-	    copy.askMes.addAll(this.askMes);
+    public Map<Integer, TicketPersonalizacion> getPersonalizaciones() {
+        return personalizaciones;
+    }
 
-	    return copy;
-	}
+    public List<String> getAskMes() {
+        return askMes;
+    }
 
-	public void setTamano(TamanoDTO nuevoTamano, BigDecimal nuevoPrecioBase) {
-		this.tamano = Objects.requireNonNull(nuevoTamano, "nuevoTamano no puede ser null");
+    // =====================================================
+    // 4) DUPLICADO DEL ITEM
+    // =====================================================
 
-		this.precioBase = Objects.requireNonNull(nuevoPrecioBase, "nuevoPrecioBase no puede ser null");
-		if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("nuevoPrecioBase no puede ser negativo");
-		}
-	}
+    /**
+     * Crea una copia completa del item actual:
+     * - mismo producto
+     * - mismo tamaño
+     * - mismo precio base
+     * - copia de extras
+     * - copia de personalizaciones
+     * - copia de Ask Me
+     */
+    public TicketItem duplicate() {
+        TicketItem copy = new TicketItem(this.producto, this.tamano, this.precioBase);
 
-	/**
-	 * Añade un extra al item. Para tipos repetibles (SHOT, SYRUP, TOPPING) esta
-	 * operación vale directamente. Para tipos exclusivos como MILK, se usará
-	 * replaceExtraByTipo(...) desde fuera.
-	 */
-	public void addExtra(ExtraDTO extraDto) {
-		Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+        // Copiar extras
+        for (TicketExtra extra : this.extras) {
+            copy.extras.add(new TicketExtra(
+                    extra.getIdExtra(),
+                    extra.getNombre(),
+                    extra.getTipo(),
+                    extra.getPrecio()
+            ));
+        }
 
-		extras.add(
-				new TicketExtra(extraDto.getIdExtra(), extraDto.getNombre(), extraDto.getTipo(), extraDto.getPrecio()));
-	}
+        // Copiar personalizaciones
+        for (TicketPersonalizacion p : this.personalizaciones.values()) {
+            TicketPersonalizacion copyP = new TicketPersonalizacion(
+                    p.getIdPersonalizacion(),
+                    p.getNombre(),
+                    p.getTipo(),
+                    p.getPrecio()
+            );
+            copy.personalizaciones.put(copyP.getIdPersonalizacion(), copyP);
+        }
 
-	public void addAskMe(String text) {
-		if (text == null) {
-			return;
-		}
+        // Copiar Ask Me
+        copy.askMes.addAll(this.askMes);
 
-		String normalized = text.trim();
-		if (normalized.isEmpty()) {
-			return;
-		}
+        return copy;
+    }
 
-		askMes.add(normalized);
-	}
+    // =====================================================
+    // 5) CAMBIOS SOBRE EL PRODUCTO BASE
+    // =====================================================
 
-	public void removeAskMeByIndex(int askMeIndex) {
-		if (askMeIndex < 0 || askMeIndex >= askMes.size()) {
-			throw new IndexOutOfBoundsException("askMeIndex fuera de rango: " + askMeIndex);
-		}
-		askMes.remove(askMeIndex);
-	}
+    /**
+     * Cambia el tamaño del item y actualiza su nuevo precio base.
+     */
+    public void setTamano(TamanoDTO nuevoTamano, BigDecimal nuevoPrecioBase) {
+        this.tamano = Objects.requireNonNull(nuevoTamano, "nuevoTamano no puede ser null");
 
-	public void clearAskMes() {
-		askMes.clear();
-	}
+        this.precioBase = Objects.requireNonNull(nuevoPrecioBase, "nuevoPrecioBase no puede ser null");
+        if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("nuevoPrecioBase no puede ser negativo");
+        }
+    }
 
-	public boolean hasAskMes() {
-		return !askMes.isEmpty();
-	}
+    // =====================================================
+    // 6) GESTIÓN DE EXTRAS
+    // =====================================================
 
-	public void removeExtraByIndex(int extraIndex) {
-		if (extraIndex < 0 || extraIndex >= extras.size()) {
-			throw new IndexOutOfBoundsException("extraIndex fuera de rango: " + extraIndex);
-		}
-		extras.remove(extraIndex);
-	}
+    /**
+     * Añade un extra al item.
+     *
+     * Para tipos repetibles como SHOT, SYRUP o TOPPING:
+     * este método vale directamente.
+     *
+     * Para tipos exclusivos como MILK:
+     * normalmente desde fuera se usará replaceExtraByTipo(...).
+     */
+    public void addExtra(ExtraDTO extraDto) {
+        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
 
-	/**
-	 * Elimina todos los extras de un tipo concreto. Ejemplo típico: borrar la leche
-	 * actual antes de poner otra.
-	 */
-	public void removeExtrasByTipo(String tipo) {
-		Objects.requireNonNull(tipo, "tipo no puede ser null");
-		extras.removeIf(e -> tipo.equalsIgnoreCase(e.getTipo()));
-	}
+        extras.add(new TicketExtra(
+                extraDto.getIdExtra(),
+                extraDto.getNombre(),
+                extraDto.getTipo(),
+                extraDto.getPrecio()
+        ));
+    }
 
-	/**
-	 * Reemplaza el extra de un tipo por el nuevo. Muy útil para MILK: solo debe
-	 * haber una leche activa por item.
-	 */
-	public void replaceExtraByTipo(ExtraDTO extraDto) {
-		Objects.requireNonNull(extraDto, "extraDto no puede ser null");
-		removeExtrasByTipo(extraDto.getTipo());
-		addExtra(extraDto);
-	}
+    /**
+     * Elimina un extra por posición dentro de la lista.
+     */
+    public void removeExtraByIndex(int extraIndex) {
+        if (extraIndex < 0 || extraIndex >= extras.size()) {
+            throw new IndexOutOfBoundsException("extraIndex fuera de rango: " + extraIndex);
+        }
+        extras.remove(extraIndex);
+    }
 
-	/**
-	 * Permite saber si un extra concreto ya está aplicado. Puede servir para evitar
-	 * duplicados en algunos casos.
-	 */
-	public boolean hasExtraById(int idExtra) {
-		return extras.stream().anyMatch(e -> e.getIdExtra() == idExtra);
-	}
+    /**
+     * Elimina todos los extras de un tipo concreto.
+     *
+     * Ejemplo típico:
+     * quitar la leche actual antes de poner una nueva.
+     */
+    public void removeExtrasByTipo(String tipo) {
+        Objects.requireNonNull(tipo, "tipo no puede ser null");
+        extras.removeIf(e -> tipo.equalsIgnoreCase(e.getTipo()));
+    }
 
-	public boolean togglePersonalizacion(PersonalizacionDTO pDto) {
-		Objects.requireNonNull(pDto, "pDto no puede ser null");
-		int id = pDto.getIdPersonalizacion();
+    /**
+     * Reemplaza el extra de un tipo por el nuevo.
+     *
+     * Ejemplo típico:
+     * MILK, donde solo debe existir una leche activa.
+     */
+    public void replaceExtraByTipo(ExtraDTO extraDto) {
+        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+        removeExtrasByTipo(extraDto.getTipo());
+        addExtra(extraDto);
+    }
 
-		if (personalizaciones.containsKey(id)) {
-			personalizaciones.remove(id);
-			return false; // desactivada
-		}
+    /**
+     * Comprueba si el item ya tiene aplicado un extra concreto.
+     */
+    public boolean hasExtraById(int idExtra) {
+        return extras.stream().anyMatch(e -> e.getIdExtra() == idExtra);
+    }
 
-		personalizaciones.put(id, new TicketPersonalizacion(pDto.getIdPersonalizacion(), pDto.getNombre(),
-				pDto.getTipo(), pDto.getPrecio()));
+    // =====================================================
+    // 7) GESTIÓN DE PERSONALIZACIONES
+    // =====================================================
 
-		return true; // activada
-	}
+    /**
+     * Activa o desactiva una personalización.
+     *
+     * Si ya existe, la elimina.
+     * Si no existe, la añade.
+     *
+     * @return true si se ha activado, false si se ha desactivado
+     */
+    public boolean togglePersonalizacion(PersonalizacionDTO pDto) {
+        Objects.requireNonNull(pDto, "pDto no puede ser null");
+        int id = pDto.getIdPersonalizacion();
 
-	// =========================
-	// TOTALES
-	// =========================
+        if (personalizaciones.containsKey(id)) {
+            personalizaciones.remove(id);
+            return false;
+        }
 
-	public BigDecimal getSubtotal() {
-		BigDecimal total = precioBase;
+        personalizaciones.put(
+                id,
+                new TicketPersonalizacion(
+                        pDto.getIdPersonalizacion(),
+                        pDto.getNombre(),
+                        pDto.getTipo(),
+                        pDto.getPrecio()
+                )
+        );
 
-		for (TicketExtra e : extras) {
-			total = total.add(e.getPrecio());
-		}
+        return true;
+    }
 
-		for (TicketPersonalizacion p : personalizaciones.values()) {
-			total = total.add(p.getPrecio());
-		}
+    // =====================================================
+    // 8) GESTIÓN DE ASK ME
+    // =====================================================
 
-		return total;
-	}
+    /**
+     * Añade una nota Ask Me si el texto es válido.
+     */
+    public void addAskMe(String text) {
+        if (text == null) {
+            return;
+        }
+
+        String normalized = text.trim();
+        if (normalized.isEmpty()) {
+            return;
+        }
+
+        askMes.add(normalized);
+    }
+
+    /**
+     * Elimina una nota Ask Me por índice.
+     */
+    public void removeAskMeByIndex(int askMeIndex) {
+        if (askMeIndex < 0 || askMeIndex >= askMes.size()) {
+            throw new IndexOutOfBoundsException("askMeIndex fuera de rango: " + askMeIndex);
+        }
+        askMes.remove(askMeIndex);
+    }
+
+    /**
+     * Borra todas las notas Ask Me del item.
+     */
+    public void clearAskMes() {
+        askMes.clear();
+    }
+
+    /**
+     * Indica si el item tiene notas Ask Me.
+     */
+    public boolean hasAskMes() {
+        return !askMes.isEmpty();
+    }
+
+    // =====================================================
+    // 9) CÁLCULOS ECONÓMICOS DEL ITEM
+    // =====================================================
+
+    /**
+     * Devuelve la suma de extras y personalizaciones.
+     *
+     * Sirve para combos, donde el precio base puede quedar cubierto
+     * por el combo pero los añadidos deben cobrarse aparte.
+     */
+    public BigDecimal getTotalExtrasYPersonalizaciones() {
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (TicketExtra e : extras) {
+            total = total.add(e.getPrecio());
+        }
+
+        for (TicketPersonalizacion p : personalizaciones.values()) {
+            total = total.add(p.getPrecio());
+        }
+
+        return total;
+    }
+
+    /**
+     * Devuelve el subtotal completo del item:
+     * precio base + extras + personalizaciones.
+     */
+    public BigDecimal getSubtotal() {
+        return precioBase.add(getTotalExtrasYPersonalizaciones());
+    }
 }

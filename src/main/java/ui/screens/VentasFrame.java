@@ -20,6 +20,7 @@ import dtoS.TicketClienteDTO;
 import enums.MetodoPago;
 import enums.TipoServicio;
 import model.CobroSession;
+import model.TicketCombo;
 import model.TicketExtra;
 import model.TicketItem;
 import model.TicketPersonalizacion;
@@ -315,6 +316,9 @@ public class VentasFrame extends BaseTpvFrame {
 		int newItemIndex = ticketSession.getItems().size() - 1;
 		ticketSession.selectItemRow(newItemIndex);
 
+		  // Recalcular combos automáticamente tras añadir producto
+	    recalcularCombosAutomaticos();
+	    
 		refreshAll();
 		loadCustomizationForSelectedItem();
 	}
@@ -370,6 +374,7 @@ public class VentasFrame extends BaseTpvFrame {
 			}
 			}
 		}
+		recalcularCombosAutomaticos();
 
 		refreshAll();
 		loadCustomizationForSelectedItem();
@@ -388,7 +393,9 @@ public class VentasFrame extends BaseTpvFrame {
 
 		int duplicatedItemIndex = ticketSession.duplicateItem(itemIndex);
 		ticketSession.selectItemRow(duplicatedItemIndex);
-
+		
+		recalcularCombosAutomaticos();
+		
 		refreshAll();
 		loadCustomizationForSelectedItem();
 		centerPanel.showCatalogo();
@@ -512,7 +519,8 @@ public class VentasFrame extends BaseTpvFrame {
 
 		ticketSession.changeSize(itemIndex, tamanoPrecio.getTamanoDTO(), tamanoPrecio.getPrecio());
 		ticketSession.selectItemRow(itemIndex);
-
+		
+		recalcularCombosAutomaticos();
 		refreshAll();
 	}
 
@@ -546,7 +554,7 @@ public class VentasFrame extends BaseTpvFrame {
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
-
+		recalcularCombosAutomaticos();
 		prepararCobroSession();
 
 		centerPanel.getNombrePedidoPanel().setNombrePedido(cobroSession.getNombrePedido());
@@ -1145,6 +1153,8 @@ public class VentasFrame extends BaseTpvFrame {
 	    int newItemIndex = ticketSession.getItems().size() - 1;
 	    ticketSession.selectItemRow(newItemIndex);
 
+	    recalcularCombosAutomaticos();
+	    
 	    refreshAll();
 	    loadCustomizationForSelectedItem();
 	    centerPanel.showCatalogo();
@@ -1198,7 +1208,9 @@ public class VentasFrame extends BaseTpvFrame {
 
 	    int newItemIndex = ticketSession.getItems().size() - 1;
 	    ticketSession.selectItemRow(newItemIndex);
-
+	    
+	    recalcularCombosAutomaticos();
+	    
 	    refreshAll();
 	    loadCustomizationForSelectedItem();
 	    centerPanel.showCatalogo();
@@ -1269,5 +1281,32 @@ public class VentasFrame extends BaseTpvFrame {
 	        return "Stock: " + producto.getStockActual().stripTrailingZeros().toPlainString();
 	    }
 	    return "Disponible";
+	}
+	/**
+	 * Recalcula automáticamente los combos del ticket actual.
+	 *
+	 * Este método:
+	 * - mira los combos activos cargados en memoria
+	 * - analiza el ticket actual
+	 * - detecta los combos válidos
+	 * - sustituye la lista de combos aplicados en TicketSession
+	 *
+	 * Si hay un error, deja el ticket sin combos aplicados
+	 * para evitar estados inconsistentes.
+	 */
+	private void recalcularCombosAutomaticos() {
+	    try {
+	        List<TicketCombo> combos = services.comboMatcherService.detectAppliedCombos(
+	                services.getCombosActivosCache(),
+	                ticketSession,
+	                java.time.LocalDateTime.now()
+	        );
+
+	        ticketSession.replaceAppliedCombos(combos);
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        ticketSession.clearAppliedCombos();
+	    }
 	}
 }
