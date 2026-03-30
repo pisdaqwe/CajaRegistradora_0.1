@@ -22,6 +22,8 @@ import enums.TipoServicio;
  * - método de pago
  * - monto pagado
  * - lista de items vendidos
+ * - combos aplicados
+ * - descuento aplicado
  */
 public class RegistrarVentaRequest {
 
@@ -29,7 +31,10 @@ public class RegistrarVentaRequest {
      * ID de la sesión de caja abierta.
      */
     private int idSesion;
-    
+
+    /**
+     * ID de la sucursal actual.
+     */
     private int idSucursal;
 
     /**
@@ -44,11 +49,6 @@ public class RegistrarVentaRequest {
 
     /**
      * Nombre del pedido o cliente.
-     *
-     * Ejemplos:
-     * - Carlos
-     * - Mesa 2
-     * - Pedido Glovo
      */
     private String nombrePedido;
 
@@ -68,9 +68,6 @@ public class RegistrarVentaRequest {
 
     /**
      * Importe recibido o pagado.
-     *
-     * En efectivo puede ser mayor que el total.
-     * En tarjeta normalmente coincidirá con el total.
      */
     private BigDecimal montoPagado;
 
@@ -78,6 +75,18 @@ public class RegistrarVentaRequest {
      * Items que componen la venta.
      */
     private List<RegistrarVentaItemRequest> items = new ArrayList<>();
+
+    /**
+     * Combos aplicados en el ticket al momento del cobro.
+     */
+    private List<RegistrarVentaComboRequest> combos = new ArrayList<>();
+
+    /**
+     * Descuento aplicado en el ticket al momento del cobro.
+     *
+     * Será null si la venta no tiene descuento.
+     */
+    private RegistrarVentaDescuentoRequest descuento;
 
     // =====================================================
     // GETTERS Y SETTERS
@@ -89,6 +98,14 @@ public class RegistrarVentaRequest {
 
     public void setIdSesion(int idSesion) {
         this.idSesion = idSesion;
+    }
+
+    public int getIdSucursal() {
+        return idSucursal;
+    }
+
+    public void setIdSucursal(int idSucursal) {
+        this.idSucursal = idSucursal;
     }
 
     public int getIdUsuario() {
@@ -146,11 +163,20 @@ public class RegistrarVentaRequest {
     public void setItems(List<RegistrarVentaItemRequest> items) {
         this.items = items;
     }
-    public int getIdSucursal() {
-        return idSucursal;
+
+    public List<RegistrarVentaComboRequest> getCombos() {
+        return combos;
     }
 
-    public void setIdSucursal(int idSucursal) {
-        this.idSucursal = idSucursal;
+    public void setCombos(List<RegistrarVentaComboRequest> combos) {
+        this.combos = combos != null ? combos : new ArrayList<>();
+    }
+
+    public RegistrarVentaDescuentoRequest getDescuento() {
+        return descuento;
+    }
+
+    public void setDescuento(RegistrarVentaDescuentoRequest descuento) {
+        this.descuento = descuento;
     }
 }

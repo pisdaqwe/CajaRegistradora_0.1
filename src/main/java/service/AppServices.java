@@ -44,7 +44,7 @@ public class AppServices {
     public final VentaFacade ventaFacade;
     public final ColaImpresionService colaImpresionService;
     public final TicketClienteService ticketClienteService;
-
+    
     // =====================================================
     // 3) SERVICIOS DE DISPONIBILIDAD / STOCK
     // =====================================================
@@ -73,9 +73,14 @@ public class AppServices {
      * para no consultar la BD en cada cambio del ticket.
      */
     private final List<ComboDefinition> combosActivosCache = new ArrayList<>();
+    
+    // =====================================================
+    // 5) SERVICIOS DE COMBOS
+    // =====================================================
+    public DescuentoService descuentoService;
 
     // =====================================================
-    // 5) CONSTRUCTOR
+    // 6) CONSTRUCTOR
     // =====================================================
 
     public AppServices(
@@ -94,7 +99,8 @@ public class AppServices {
             DisponibilidadProductoService disponibilidadProductoService,
             DisponibilidadExtraService disponibilidadExtraService,
             ComboService comboService,
-            ComboMatcherService comboMatcherService
+            ComboMatcherService comboMatcherService,
+            DescuentoService descuentoService
     ) {
         // -----------------------------
         // Servicios generales
@@ -130,6 +136,8 @@ public class AppServices {
 
         // Cargar combos activos al crear AppServices
         reloadCombosActivosCache();
+        
+        this.descuentoService = descuentoService;
     }
 
     // =====================================================

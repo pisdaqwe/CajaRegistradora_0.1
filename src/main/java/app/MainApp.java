@@ -10,6 +10,7 @@ import dao.CategoriaDao;
 import dao.ColaImpresionDAO;
 import dao.ComboDao;
 import dao.ComboItemDao;
+import dao.DescuentoDao;
 import dao.ExtraDao;
 import dao.FichajeDao;
 import dao.PersonalizacionDao;
@@ -32,6 +33,7 @@ import service.CatalogoService;
 import service.ColaImpresionService;
 import service.ComboMatcherService;
 import service.ComboService;
+import service.DescuentoService;
 import service.DisponibilidadExtraService;
 import service.DisponibilidadProductoService;
 import service.FichajeService;
@@ -79,6 +81,8 @@ public class MainApp {
         // --- DAOs de combos ---
         ComboDao comboDao = new ComboDao();
         ComboItemDao comboItemDao = new ComboItemDao();
+        
+        DescuentoDao descuentoDao = new DescuentoDao();
 
         // =====================================================
         // 3) SERVICES
@@ -115,6 +119,8 @@ public class MainApp {
         // --- Servicios de combos ---
         ComboService comboService = new ComboService(comboDao, comboItemDao);
         ComboMatcherService comboMatcherService = new ComboMatcherService();
+        
+        DescuentoService descuentoService = new DescuentoService(descuentoDao);
 
         // =====================================================
         // 4) FACADES
@@ -142,7 +148,8 @@ public class MainApp {
                 disponibilidadProductoService,
                 disponibilidadExtraService,
                 comboService,
-                comboMatcherService
+                comboMatcherService,
+                descuentoService
         );
 
         // =====================================================

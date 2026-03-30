@@ -27,10 +27,47 @@ public class TicketClienteDTO {
     private BigDecimal montoPagado;
     private BigDecimal total;
     private BigDecimal cambio;
+    private String origenDescuento;
 
     private List<TicketClienteItemDTO> items = new ArrayList<>();
 
+    /**
+     * Combos aplicados guardados en ticket_json.
+     */
+    private List<TicketClienteComboDTO> combos = new ArrayList<>();
+
+    /**
+     * NUEVO: nombre visible del descuento aplicado.
+     *
+     * Ejemplo:
+     * - Promo 10%
+     * - Descuento empleado 20%
+     */
+    private String nombreDescuento;
+
+    /**
+     * NUEVO: código introducido al aplicar el descuento.
+     *
+     * Ejemplo:
+     * - PROMO10
+     * - EMP20
+     */
+    private String codigoDescuento;
+
+    /**
+     * NUEVO: importe total descontado en euros.
+     */
+    private BigDecimal importeDescuento;
+
     public TicketClienteDTO() {
+    }
+    
+    public String getOrigenDescuento() {
+        return origenDescuento;
+    }
+
+    public void setOrigenDescuento(String origenDescuento) {
+        this.origenDescuento = origenDescuento;
     }
 
     public int getIdVenta() {
@@ -107,5 +144,65 @@ public class TicketClienteDTO {
 
     public boolean hasItems() {
         return items != null && !items.isEmpty();
+    }
+
+    public List<TicketClienteComboDTO> getCombos() {
+        return combos;
+    }
+
+    public void setCombos(List<TicketClienteComboDTO> combos) {
+        this.combos = combos != null ? combos : new ArrayList<>();
+    }
+
+    public boolean hasCombos() {
+        return combos != null && !combos.isEmpty();
+    }
+
+    public BigDecimal getTotalAhorroCombos() {
+        BigDecimal totalAhorro = BigDecimal.ZERO;
+
+        if (combos != null) {
+            for (TicketClienteComboDTO combo : combos) {
+                if (combo != null && combo.getAhorroTotal() != null) {
+                    totalAhorro = totalAhorro.add(combo.getAhorroTotal());
+                }
+            }
+        }
+
+        return totalAhorro;
+    }
+
+    public String getNombreDescuento() {
+        return nombreDescuento;
+    }
+
+    public void setNombreDescuento(String nombreDescuento) {
+        this.nombreDescuento = nombreDescuento;
+    }
+
+    public String getCodigoDescuento() {
+        return codigoDescuento;
+    }
+
+    public void setCodigoDescuento(String codigoDescuento) {
+        this.codigoDescuento = codigoDescuento;
+    }
+
+    public BigDecimal getImporteDescuento() {
+        return importeDescuento;
+    }
+
+    public void setImporteDescuento(BigDecimal importeDescuento) {
+        this.importeDescuento = importeDescuento;
+    }
+
+    public boolean hasDescuento() {
+        return importeDescuento != null && importeDescuento.compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    public BigDecimal getTotalAhorroGlobal() {
+        return getTotalAhorroCombos().add(
+                importeDescuento != null ? importeDescuento : BigDecimal.ZERO
+        );
     }
 }

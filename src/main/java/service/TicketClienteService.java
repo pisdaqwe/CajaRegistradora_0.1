@@ -3,6 +3,7 @@ package service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dao.TicketJsonDao;
+import dtoS.TicketClienteComboDTO;
 import dtoS.TicketClienteDTO;
 import dtoS.TicketClienteItemDTO;
 import dtoS.TicketHoyRowDTO;
@@ -106,6 +107,9 @@ public class TicketClienteService {
             dto.setTotal(total);
             dto.setCambio(cambio);
 
+            // =====================================================
+            // ITEMS
+            // =====================================================
             List<TicketClienteItemDTO> items = new ArrayList<>();
             JsonNode itemsNode = root.get("items");
 
@@ -114,8 +118,29 @@ public class TicketClienteService {
                     items.add(parseItemNode(itemNode));
                 }
             }
-
             dto.setItems(items);
+
+            // =====================================================
+            // COMBOS
+            // =====================================================
+            List<TicketClienteComboDTO> combos = new ArrayList<>();
+            JsonNode combosNode = root.get("combos");
+
+            if (combosNode != null && combosNode.isArray()) {
+                for (JsonNode comboNode : combosNode) {
+                    combos.add(parseComboNode(comboNode));
+                }
+            }
+            dto.setCombos(combos);
+
+            // =====================================================
+            // DESCUENTO
+            // =====================================================
+            JsonNode descuentoNode = root.get("descuento");
+            if (descuentoNode != null && !descuentoNode.isNull()) {
+                parseDescuentoNode(dto, descuentoNode);
+            }
+
             return dto;
 
         } catch (Exception e) {
@@ -125,7 +150,9 @@ public class TicketClienteService {
         }
     }
 
-    // =====================================================
+
+
+	// =====================================================
     // 6. PARSE DE CADA ITEM DEL TICKET
     // =====================================================
 
@@ -218,6 +245,47 @@ public class TicketClienteService {
             item.setPersonalizaciones(new ArrayList<>());
             item.setAskMe(new ArrayList<>());
         }
+    }
+    
+    private TicketClienteComboDTO parseComboNode(JsonNode comboNode) {
+        TicketClienteComboDTO combo = new TicketClienteComboDTO();
+
+        combo.setIdCombo(intOrZero(comboNode, "idCombo"));
+        combo.setNombreCombo(textOrNull(comboNode, "nombreCombo"));
+        combo.setTipoCombo(textOrNull(comboNode, "tipoCombo"));
+        combo.setValorCombo(decimalOrZero(comboNode, "valorCombo"));
+        combo.setPrecioOriginal(decimalOrZero(comboNode, "precioOriginal"));
+        combo.setPrecioFinal(decimalOrZero(comboNode, "precioFinal"));
+        combo.setAhorroTotal(decimalOrZero(comboNode, "ahorroTotal"));
+
+        return combo;
+    }
+    
+    private void parseDescuentoNode(TicketClienteDTO dto, JsonNode descuentoNode) {
+        if (dto == null || descuentoNode == null || descuentoNode.isNull()) {
+            return;
+        }
+
+        String nombreDescuento = textOrNull(descuentoNode, "nombreDescuento");
+        if (nombreDescuento == null) {
+            nombreDescuento = textOrNull(descuentoNode, "nombre");
+        }
+        if (nombreDescuento == null || nombreDescuento.isBlank()) {
+            nombreDescuento = "Descuento";
+        }
+
+        String origenDescuento = textOrNull(descuentoNode, "origenDescuento");
+        if (origenDescuento == null) {
+            origenDescuento = textOrNull(descuentoNode, "origen");
+        }
+
+        String codigoDescuento = textOrNull(descuentoNode, "codigoIntroducido");
+        BigDecimal importeDescuento = decimalOrZero(descuentoNode, "importeDescuento");
+
+        dto.setNombreDescuento(nombreDescuento);
+        dto.setOrigenDescuento(origenDescuento);
+        dto.setCodigoDescuento(codigoDescuento);
+        dto.setImporteDescuento(importeDescuento);
     }
 
     // =====================================================

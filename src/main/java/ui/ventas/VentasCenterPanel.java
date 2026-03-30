@@ -5,10 +5,10 @@ import dtoS.ProductoDTO;
 import enums.CustomizationCard;
 import enums.CustomizationMode;
 import enums.TipoServicio;
+import model.TicketSession;
 import service.AppServices;
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.util.function.Consumer;
 
@@ -19,10 +19,11 @@ public class VentasCenterPanel extends JPanel {
     // =========================================================
     // CARDS PRINCIPALES
     // =========================================================
-    private static final String CARD_CATALOGO = "CATALOGO";
-    private static final String CARD_CUSTOM   = "CUSTOM";
-    private static final String CARD_PAGO     = "PAGO";
-    private static final String CARD_OPCIONES = "OPCIONES";
+    private static final String CARD_CATALOGO   = "CATALOGO";
+    private static final String CARD_CUSTOM     = "CUSTOM";
+    private static final String CARD_PAGO       = "PAGO";
+    private static final String CARD_OPCIONES   = "OPCIONES";
+    private static final String CARD_DESCUENTOS = "DESCUENTOS";
 
     // =========================================================
     // SUBCARDS INTERNAS DEL FLUJO DE PAGO
@@ -47,12 +48,10 @@ public class VentasCenterPanel extends JPanel {
     private final CatalogoCenterPanel catalogoPanel;
     private final CustomizationCenterPanel customizationCenterPanel;
     private final OpcionesPanel opcionesPanel;
+    private final DescuentoPanel descuentoPanel;
 
     /**
      * Contenedor principal de la card PAGO.
-     * Dentro de este panel hay un CardLayout secundario:
-     * - SUBCARD_NOMBRE_PEDIDO
-     * - SUBCARD_PAGO_IMPORTE
      */
     private final JPanel pagoFlowPanel;
 
@@ -62,15 +61,9 @@ public class VentasCenterPanel extends JPanel {
     private final NombrePedidoPanel nombrePedidoPanel;
     private final PagoPanel pagoPanel;
 
-    /**
-     * Constructor NUEVO recomendado.
-     *
-     * Este es el que debería usar VentasFrame a partir de ahora,
-     * porque permite conectar correctamente el flujo:
-     * Cobrar -> Nombre pedido -> Pago
-     */
     public VentasCenterPanel(
             AppServices services,
+            TicketSession ticketSession,
             Consumer<ProductoDTO> onProductoClicked,
             NombrePedidoPanel.NombrePedidoListener nombrePedidoListener,
             PagoPanel.PagoPanelListener pagoPanelListener
@@ -80,56 +73,37 @@ public class VentasCenterPanel extends JPanel {
         setLayout(cardLayout);
         setOpaque(false);
 
-        // -----------------------------------------------------
-        // Card catálogo
-        // -----------------------------------------------------
         this.catalogoPanel = new CatalogoCenterPanel(services, onProductoClicked);
-
-        // -----------------------------------------------------
-        // Card customización
-        // -----------------------------------------------------
         this.customizationCenterPanel = new CustomizationCenterPanel();
-
-        // -----------------------------------------------------
-        // Card opciones
-        // -----------------------------------------------------
         this.opcionesPanel = new OpcionesPanel();
+        this.descuentoPanel = new DescuentoPanel(ticketSession);
 
-        // -----------------------------------------------------
-        // Panels reales del flujo de pago
-        // -----------------------------------------------------
         this.nombrePedidoPanel = new NombrePedidoPanel(nombrePedidoListener);
         this.pagoPanel = new PagoPanel(pagoPanelListener);
 
-        // -----------------------------------------------------
-        // Contenedor de subcards del flujo de pago
-        // -----------------------------------------------------
         this.pagoFlowPanel = buildPagoFlowPanel();
 
-        // -----------------------------------------------------
-        // Registro de cards principales
-        // -----------------------------------------------------
         add(catalogoPanel, CARD_CATALOGO);
         add(customizationCenterPanel, CARD_CUSTOM);
         add(pagoFlowPanel, CARD_PAGO);
         add(opcionesPanel, CARD_OPCIONES);
+        add(descuentoPanel, CARD_DESCUENTOS);
 
         showCatalogo();
     }
 
-    /**
-     * Constructor compatible con el código anterior.
-     *
-     * Lo dejo para no romper de golpe todas las llamadas existentes,
-     * pero lo ideal es migrar cuanto antes al constructor completo.
-     */
-    public VentasCenterPanel(AppServices services, Consumer<ProductoDTO> onProductoClicked) {
+    public VentasCenterPanel(
+            AppServices services,
+            TicketSession ticketSession,
+            Consumer<ProductoDTO> onProductoClicked
+    ) {
         this(
                 services,
+                ticketSession,
                 onProductoClicked,
                 new NombrePedidoPanel.NombrePedidoListener() {
                     @Override
-                    public void onContinuar(String nombrePedido,TipoServicio tipoServicio) {
+                    public void onContinuar(String nombrePedido, TipoServicio tipoServicio) {
                         // no-op
                     }
 
@@ -157,9 +131,6 @@ public class VentasCenterPanel extends JPanel {
         );
     }
 
-    /**
-     * Construye la card principal de pago con subnavegación interna.
-     */
     private JPanel buildPagoFlowPanel() {
         JPanel panel = new JPanel(pagoCardLayout);
         panel.setOpaque(false);
@@ -182,16 +153,17 @@ public class VentasCenterPanel extends JPanel {
         cardLayout.show(this, CARD_CUSTOM);
     }
 
-    /**
-     * Mantengo este método por compatibilidad.
-     * Por defecto, entrar en pago abrirá la subcard de nombre del pedido.
-     */
     public void showPago() {
         showPagoNombre();
     }
 
     public void showOpciones() {
         cardLayout.show(this, CARD_OPCIONES);
+    }
+
+    public void showDescuentos() {
+        descuentoPanel.refresh();
+        cardLayout.show(this, CARD_DESCUENTOS);
     }
 
     public void showCustomCard(CustomizationCard card) {
@@ -203,19 +175,11 @@ public class VentasCenterPanel extends JPanel {
     // NAVEGACIÓN DEL FLUJO DE PAGO
     // =========================================================
 
-    /**
-     * Muestra la card principal de pago y dentro de ella
-     * la subpantalla de nombre del pedido.
-     */
     public void showPagoNombre() {
         cardLayout.show(this, CARD_PAGO);
         pagoCardLayout.show(pagoFlowPanel, SUBCARD_NOMBRE_PEDIDO);
     }
 
-    /**
-     * Muestra la card principal de pago y dentro de ella
-     * la subpantalla de introducción de importe / métodos de pago.
-     */
     public void showPagoImporte() {
         cardLayout.show(this, CARD_PAGO);
         pagoCardLayout.show(pagoFlowPanel, SUBCARD_PAGO_IMPORTE);
@@ -244,7 +208,7 @@ public class VentasCenterPanel extends JPanel {
     }
 
     // =========================================================
-    // OPCIONES DATA
+    // OPCIONES / DESCUENTOS DATA
     // =========================================================
 
     public void setOpcionesActionListener(OpcionesPanel.OpcionesActionListener listener) {
@@ -253,6 +217,10 @@ public class VentasCenterPanel extends JPanel {
 
     public void setOpcionesAdminMode(boolean adminMode) {
         opcionesPanel.setAdminMode(adminMode);
+    }
+
+    public void setDescuentoActionListener(DescuentoPanel.DescuentoActionListener listener) {
+        descuentoPanel.setActionListener(listener);
     }
 
     // =========================================================
@@ -269,6 +237,10 @@ public class VentasCenterPanel extends JPanel {
 
     public OpcionesPanel getOpcionesPanel() {
         return opcionesPanel;
+    }
+
+    public DescuentoPanel getDescuentoPanel() {
+        return descuentoPanel;
     }
 
     public NombrePedidoPanel getNombrePedidoPanel() {

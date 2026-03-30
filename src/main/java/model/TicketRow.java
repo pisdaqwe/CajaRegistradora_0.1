@@ -8,10 +8,23 @@ import enums.TicketRowType;
 /**
  * Fila plana del ticket para pintar en JList y mapear selección → acción.
  *
- * type:
- *  - ITEM: itemIndex válido, subIndex = -1, idExtra/idPersonalizacion = null
- *  - EXTRA: itemIndex válido, subIndex = index del extra, idExtra != null
- *  - PERSONALIZACION: itemIndex válido, subIndex puede ser -1, idPersonalizacion != null
+ * Tipos posibles:
+ *
+ * - ITEM:
+ *   itemIndex válido, subIndex = -1, idExtra/idPersonalizacion = null
+ *
+ * - EXTRA:
+ *   itemIndex válido, subIndex = index del extra, idExtra != null
+ *
+ * - PERSONALIZACION:
+ *   itemIndex válido, subIndex puede ser -1, idPersonalizacion != null
+ *
+ * - ASK_ME:
+ *   itemIndex válido, subIndex = index del ask me, sin ids extra/personalización
+ *
+ * - COMBO / AHORRO / DESCUENTO / AHORRO_DESCUENTO:
+ *   filas informativas, no asociadas directamente a un item real
+ *   => itemIndex = -1, subIndex = -1, ids null
  */
 public final class TicketRow {
 
