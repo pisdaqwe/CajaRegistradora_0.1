@@ -11,7 +11,12 @@ import java.util.List;
  * incluyendo:
  * - nombre del producto
  * - tamaño
- * - precio
+ * - café seleccionado
+ * - precio base
+ * - subtotal bruto
+ * - descuento imputado a la línea
+ * - subtotal final
+ * - subtotal visual
  * - extras
  * - personalizaciones
  * - ask me
@@ -22,8 +27,45 @@ public class TicketClienteItemDTO {
     private String nombreProducto;
     private int cantidad;
     private String tamano;
+
+    /**
+     * NUEVO:
+     * nombre del café seleccionado para este item.
+     *
+     * Ejemplo:
+     * - Espresso
+     * - Espresso Decaf
+     * - Espresso Colombia Campaña
+     */
+    private String tipoCafe;
+
     private BigDecimal precioUnitario;
+
+    /**
+     * Valor bruto de la línea antes del descuento.
+     */
+    private BigDecimal subtotalBruto;
+
+    /**
+     * Descuento imputado a esta línea.
+     */
+    private BigDecimal importeDescuentoLinea;
+
+    /**
+     * Valor final realmente cobrado por la línea.
+     */
+    private BigDecimal subtotalFinal;
+
+    /**
+     * Campo visual/transicional.
+     *
+     * Mientras el diálogo siga usando getSubtotal(),
+     * aquí meteremos el valor que queremos pintar.
+     *
+     * En ticket cliente lo normal será mostrar subtotalBruto.
+     */
     private BigDecimal subtotal;
+
     private BigDecimal iva;
 
     private List<String> extras = new ArrayList<>();
@@ -65,12 +107,44 @@ public class TicketClienteItemDTO {
         this.tamano = tamano;
     }
 
+    public String getTipoCafe() {
+        return tipoCafe;
+    }
+
+    public void setTipoCafe(String tipoCafe) {
+        this.tipoCafe = tipoCafe;
+    }
+
     public BigDecimal getPrecioUnitario() {
         return precioUnitario;
     }
 
     public void setPrecioUnitario(BigDecimal precioUnitario) {
         this.precioUnitario = precioUnitario;
+    }
+
+    public BigDecimal getSubtotalBruto() {
+        return subtotalBruto;
+    }
+
+    public void setSubtotalBruto(BigDecimal subtotalBruto) {
+        this.subtotalBruto = subtotalBruto;
+    }
+
+    public BigDecimal getImporteDescuentoLinea() {
+        return importeDescuentoLinea;
+    }
+
+    public void setImporteDescuentoLinea(BigDecimal importeDescuentoLinea) {
+        this.importeDescuentoLinea = importeDescuentoLinea;
+    }
+
+    public BigDecimal getSubtotalFinal() {
+        return subtotalFinal;
+    }
+
+    public void setSubtotalFinal(BigDecimal subtotalFinal) {
+        this.subtotalFinal = subtotalFinal;
     }
 
     public BigDecimal getSubtotal() {
@@ -123,5 +197,9 @@ public class TicketClienteItemDTO {
 
     public boolean hasAskMe() {
         return askMe != null && !askMe.isEmpty();
+    }
+
+    public boolean hasTipoCafe() {
+        return tipoCafe != null && !tipoCafe.isBlank();
     }
 }

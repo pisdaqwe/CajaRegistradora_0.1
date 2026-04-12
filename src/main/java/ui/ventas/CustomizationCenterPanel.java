@@ -3,6 +3,7 @@ package ui.ventas;
 import dtoS.ExtraDTO;
 import dtoS.PersonalizacionDTO;
 import dtoS.ProductoCustomizationDTO;
+import dtoS.TipoCafeDTO;
 import enums.CustomizationCard;
 
 import javax.swing.BorderFactory;
@@ -32,19 +33,39 @@ import java.util.Map;
  * RESPONSABILIDAD:
  * - Vive dentro de CARD_CUSTOM de VentasCenterPanel.
  * - Contiene un CardLayout interno.
- * - Cada card representa una categoría de customización:
- *   SHOTS, SYRUPS, TOPPINGS, MILK, PREP.
+ * - Cada card representa una categoría de customización.
+ *
+ * ESTADO ANTERIOR:
+ * - SHOTS
+ * - SYRUPS
+ * - TOPPINGS
+ * - MILK
+ * - PREP
+ * - PREP_FOOD
+ * - OPCIONES_FOOD
+ *
+ * AÑADIDO AHORA:
+ * - CAFE
  *
  * IMPORTANTE:
  * - NO toca TicketSession directamente.
  * - Recibe ProductoCustomizationDTO desde fuera.
  * - Emite callbacks al pulsar opciones.
+ *
+ * Base actual tomada de tu clase real: :contentReference[oaicite:1]{index=1}
  */
 public class CustomizationCenterPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
     private final CardLayout cardLayout = new CardLayout();
+
+    /**
+     * Card actualmente visible.
+     *
+     * Se mantiene para no perder la pestaña elegida por el usuario
+     * al recargar la customización del producto seleccionado.
+     */
     private CustomizationCard currentCard = CustomizationCard.MILK;
 
     /**
@@ -54,9 +75,11 @@ public class CustomizationCenterPanel extends JPanel {
 
     /**
      * Datos actualmente cargados.
+     *
+     * Ahora incluyen también tiposCafe.
      */
     private ProductoCustomizationDTO currentData =
-            new ProductoCustomizationDTO(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+            new ProductoCustomizationDTO(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
     /**
      * Listener hacia fuera.
@@ -68,12 +91,24 @@ public class CustomizationCenterPanel extends JPanel {
     public interface CustomizationActionListener {
         void onExtraClicked(ExtraDTO extra);
         void onPersonalizacionClicked(PersonalizacionDTO personalizacion);
+
+        /**
+         * NUEVO:
+         * callback cuando el usuario pulsa un tipo de café.
+         */
+        void onTipoCafeClicked(TipoCafeDTO tipoCafe);
+
         void onAskMeClicked();
     }
 
     public CustomizationCenterPanel() {
         setLayout(cardLayout);
         setBackground(new Color(20, 20, 20));
+
+        // =====================================================
+        // NUEVA CARD AÑADIDA
+        // =====================================================
+        add(buildEmptyDynamicCard("CAFE", CustomizationCard.CAFE), CustomizationCard.CAFE.name());
 
         add(buildEmptyDynamicCard("SHOTS", CustomizationCard.SHOTS), CustomizationCard.SHOTS.name());
         add(buildEmptyDynamicCard("SYRUPS", CustomizationCard.SYRUPS), CustomizationCard.SYRUPS.name());
@@ -120,6 +155,7 @@ public class CustomizationCenterPanel extends JPanel {
         this.currentData = new ProductoCustomizationDTO(
                 new ArrayList<>(),
                 new ArrayList<>(),
+                new ArrayList<>(),
                 new ArrayList<>()
         );
 
@@ -163,6 +199,12 @@ public class CustomizationCenterPanel extends JPanel {
     // =========================================================
 
     private void rebuildAllCards() {
+        // =====================================================
+        // NUEVO BLOQUE AÑADIDO:
+        // reconstrucción de la card CAFE
+        // =====================================================
+        rebuildCafeCard(filterTiposCafe());
+
         rebuildExtrasCard(CustomizationCard.SHOTS, filterExtrasByCard(CustomizationCard.SHOTS));
         rebuildExtrasCard(CustomizationCard.SYRUPS, filterExtrasByCard(CustomizationCard.SYRUPS));
         rebuildExtrasCard(CustomizationCard.TOPPINGS, filterExtrasByCard(CustomizationCard.TOPPINGS));
@@ -173,6 +215,30 @@ public class CustomizationCenterPanel extends JPanel {
         List<PersonalizacionDTO> preps = filterPreps();
         rebuildPrepCard(CustomizationCard.PREP, preps);
         rebuildPrepCard(CustomizationCard.PREP_FOOD, preps);
+    }
+
+    /**
+     * NUEVO:
+     * reconstruye la card de tipos de café.
+     */
+    private void rebuildCafeCard(List<TipoCafeDTO> tiposCafe) {
+        JPanel grid = gridByCard.get(CustomizationCard.CAFE);
+        if (grid == null) {
+            return;
+        }
+
+        grid.removeAll();
+
+        if (tiposCafe.isEmpty()) {
+            grid.add(createEmptyState("No hay cafés disponibles"));
+        } else {
+            for (TipoCafeDTO tipoCafe : tiposCafe) {
+                grid.add(createTipoCafeButton(tipoCafe));
+            }
+        }
+
+        grid.revalidate();
+        grid.repaint();
     }
 
     private void rebuildExtrasCard(CustomizationCard card, List<ExtraDTO> extras) {
@@ -221,6 +287,32 @@ public class CustomizationCenterPanel extends JPanel {
     // =========================================================
     // FILTRADO DE DATOS
     // =========================================================
+
+    /**
+     * NUEVO:
+     * devuelve los tipos de café disponibles del DTO actual.
+     */
+    private List<TipoCafeDTO> filterTiposCafe() {
+        List<TipoCafeDTO> result = new ArrayList<>();
+
+        if (currentData.getTiposCafe() == null || currentData.getTiposCafe().isEmpty()) {
+            return result;
+        }
+
+        for (TipoCafeDTO tipoCafe : currentData.getTiposCafe()) {
+            if (tipoCafe == null) {
+                continue;
+            }
+
+            if (!tipoCafe.isActivo()) {
+                continue;
+            }
+
+            result.add(tipoCafe);
+        }
+
+        return result;
+    }
 
     private List<ExtraDTO> filterExtrasByCard(CustomizationCard card) {
         List<ExtraDTO> result = new ArrayList<>();
@@ -276,6 +368,7 @@ public class CustomizationCenterPanel extends JPanel {
 
     private boolean matchesExtraCard(CustomizationCard card, String tipo) {
         return switch (card) {
+            case CAFE -> false;
             case SHOTS -> "SHOT".equals(tipo) || "SHOTS".equals(tipo);
             case SYRUPS -> "SYRUP".equals(tipo) || "SYRUPS".equals(tipo);
             case TOPPINGS -> "TOPPING".equals(tipo) || "TOPPINGS".equals(tipo);
@@ -304,6 +397,30 @@ public class CustomizationCenterPanel extends JPanel {
         JButton b = new JButton("ASK ME");
         styleOptionButton(b);
         b.addActionListener(e -> fireAskMeClicked());
+        return b;
+    }
+
+    /**
+     * NUEVO:
+     * botón visual para un tipo de café.
+     *
+     * Muestra:
+     * - nombre
+     * - suplemento si lo tiene
+     * - marca "(DEFAULT)" si viene como café por defecto del producto
+     */
+    private JButton createTipoCafeButton(TipoCafeDTO tipoCafe) {
+        String text = buildTipoCafeButtonText(tipoCafe);
+
+        JButton b = new JButton(text);
+        styleOptionButton(b);
+
+        b.addActionListener(e -> {
+            if (actionListener != null) {
+                actionListener.onTipoCafeClicked(tipoCafe);
+            }
+        });
+
         return b;
     }
 
@@ -366,6 +483,26 @@ public class CustomizationCenterPanel extends JPanel {
         return nombre;
     }
 
+    /**
+     * NUEVO:
+     * construye el texto del botón de café, mostrando suplemento
+     * y marcando el default si aplica.
+     */
+    private String buildTipoCafeButtonText(TipoCafeDTO tipoCafe) {
+        String nombre = tipoCafe.getNombre() != null ? tipoCafe.getNombre() : "CAFÉ";
+
+        if (tipoCafe.getSuplementoPrecio() != null
+                && tipoCafe.getSuplementoPrecio().compareTo(BigDecimal.ZERO) > 0) {
+            nombre += " (+" + moneyFormat.format(tipoCafe.getSuplementoPrecio()) + ")";
+        }
+
+        if (tipoCafe.isPorDefecto()) {
+            nombre += " [DEFAULT]";
+        }
+
+        return nombre;
+    }
+
     private JComponent createEmptyState(String text) {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setForeground(new Color(210, 210, 210));
@@ -385,6 +522,7 @@ public class CustomizationCenterPanel extends JPanel {
         switch (mode) {
             case BEBIDA -> {
                 boolean valid =
+                        currentCard == CustomizationCard.CAFE ||
                         currentCard == CustomizationCard.SHOTS ||
                         currentCard == CustomizationCard.SYRUPS ||
                         currentCard == CustomizationCard.TOPPINGS ||
@@ -392,7 +530,7 @@ public class CustomizationCenterPanel extends JPanel {
                         currentCard == CustomizationCard.PREP;
 
                 if (!valid) {
-                    currentCard = CustomizationCard.MILK;
+                    currentCard = CustomizationCard.CAFE;
                 }
             }
 

@@ -7,121 +7,222 @@ import java.util.List;
 /**
  * DTO que representa un item individual dentro de una venta.
  *
- * Ejemplos: - Latte grande - Croissant - Cappuccino mediano
+ * Esta versión transporta:
+ * - producto
+ * - tamaño
+ * - desglose económico
+ * - extras
+ * - personalizaciones
+ * - snapshot del café seleccionado
  *
- * Este objeto agrupa: - producto vendido - precios - IVA - personalización -
- * extras asociados
+ * Así luego podremos resolver la receta real
+ * incluso cuando ya no tengamos el TicketItem original.
  */
 public class RegistrarVentaItemRequest {
 
-	/**
-	 * ID del producto vendido.
-	 */
-	private int idProducto;
+    private int idProducto;
+    private String nombreProducto;
 
-	private String nombreProducto;
+    /**
+     * NUEVO:
+     * tamaño real del item.
+     */
+    private int idTamano;
+    private String nombreTamano;
 
-	/**
-	 * Cantidad vendida.
-	 *
-	 * En tu TPV actual normalmente será 1 por item, pero lo dejamos preparado por
-	 * si en el futuro quieres agrupar cantidades.
-	 */
-	private int cantidad;
+    private int cantidad;
 
-	/**
-	 * Precio unitario base del item.
-	 */
-	private BigDecimal precioUnitario;
+    /**
+     * Precio base del producto+tamaño sin descuento de línea.
+     */
+    private BigDecimal precioUnitario;
 
-	/**
-	 * Subtotal final del item. Puede incluir tamaño, extras, etc.
-	 */
-	private BigDecimal subtotal;
+    /**
+     * Incluye:
+     * - precio base
+     * - suplemento café
+     * - extras
+     * - personalizaciones con precio
+     */
+    private BigDecimal subtotalBruto;
 
-	/**
-	 * IVA calculado para este item.
-	 */
-	private BigDecimal iva;
+    private BigDecimal importeDescuentoLinea;
+    private BigDecimal subtotalFinal;
+    private BigDecimal iva;
 
-	/**
-	 * Texto o JSON simplificado con la personalización del item.
-	 *
-	 * Ejemplo: "Sin espuma, extra caliente" o más adelante un JSON si prefieres
-	 * guardar estructura.
-	 */
-	private String descripcionPersonalizacion;
+    /**
+     * JSON lógico para ticket/reimpresión.
+     */
+    private String descripcionPersonalizacion;
 
-	/**
-	 * Extras asociados a este item.
-	 */
-	private List<RegistrarVentaExtraRequest> extras = new ArrayList<>();
+    private List<RegistrarVentaExtraRequest> extras = new ArrayList<>();
 
-	// =====================================================
-	// GETTERS Y SETTERS
-	// =====================================================
+    /**
+     * NUEVO:
+     * personalizaciones reales seleccionadas.
+     */
+    private List<RegistrarVentaPersonalizacionRequest> personalizaciones = new ArrayList<>();
 
-	public int getIdProducto() {
-		return idProducto;
-	}
+    // =====================================================
+    // BLOQUE CAFÉ
+    // =====================================================
 
-	public void setIdProducto(int idProducto) {
-		this.idProducto = idProducto;
-	}
+    private Integer idTipoCafeSeleccionado;
+    private String nombreTipoCafeSnapshot;
+    private BigDecimal suplementoTipoCafe;
 
-	public String getNombreProducto() {
-		return nombreProducto;
-	}
+    /**
+     * NUEVO:
+     * ingrediente real del café seleccionado.
+     *
+     * Esto es clave para receta/stock.
+     */
+    private Integer idIngredienteTipoCafeSeleccionado;
 
-	public void setNombreProducto(String nombreProducto) {
-		this.nombreProducto = nombreProducto;
-	}
+    public RegistrarVentaItemRequest() {
+        this.precioUnitario = BigDecimal.ZERO;
+        this.subtotalBruto = BigDecimal.ZERO;
+        this.importeDescuentoLinea = BigDecimal.ZERO;
+        this.subtotalFinal = BigDecimal.ZERO;
+        this.iva = BigDecimal.ZERO;
+        this.suplementoTipoCafe = BigDecimal.ZERO;
+        this.extras = new ArrayList<>();
+        this.personalizaciones = new ArrayList<>();
+    }
 
-	public int getCantidad() {
-		return cantidad;
-	}
+    public int getIdProducto() {
+        return idProducto;
+    }
 
-	public void setCantidad(int cantidad) {
-		this.cantidad = cantidad;
-	}
+    public void setIdProducto(int idProducto) {
+        this.idProducto = idProducto;
+    }
 
-	public BigDecimal getPrecioUnitario() {
-		return precioUnitario;
-	}
+    public String getNombreProducto() {
+        return nombreProducto;
+    }
 
-	public void setPrecioUnitario(BigDecimal precioUnitario) {
-		this.precioUnitario = precioUnitario;
-	}
+    public void setNombreProducto(String nombreProducto) {
+        this.nombreProducto = nombreProducto;
+    }
 
-	public BigDecimal getSubtotal() {
-		return subtotal;
-	}
+    public int getIdTamano() {
+        return idTamano;
+    }
 
-	public void setSubtotal(BigDecimal subtotal) {
-		this.subtotal = subtotal;
-	}
+    public void setIdTamano(int idTamano) {
+        this.idTamano = idTamano;
+    }
 
-	public BigDecimal getIva() {
-		return iva;
-	}
+    public String getNombreTamano() {
+        return nombreTamano;
+    }
 
-	public void setIva(BigDecimal iva) {
-		this.iva = iva;
-	}
+    public void setNombreTamano(String nombreTamano) {
+        this.nombreTamano = nombreTamano;
+    }
 
-	public String getDescripcionPersonalizacion() {
-		return descripcionPersonalizacion;
-	}
+    public int getCantidad() {
+        return cantidad;
+    }
 
-	public void setDescripcionPersonalizacion(String descripcionPersonalizacion) {
-		this.descripcionPersonalizacion = descripcionPersonalizacion;
-	}
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+    }
 
-	public List<RegistrarVentaExtraRequest> getExtras() {
-		return extras;
-	}
+    public BigDecimal getPrecioUnitario() {
+        return precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
+    }
 
-	public void setExtras(List<RegistrarVentaExtraRequest> extras) {
-		this.extras = extras;
-	}
+    public void setPrecioUnitario(BigDecimal precioUnitario) {
+        this.precioUnitario = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getSubtotalBruto() {
+        return subtotalBruto != null ? subtotalBruto : BigDecimal.ZERO;
+    }
+
+    public void setSubtotalBruto(BigDecimal subtotalBruto) {
+        this.subtotalBruto = subtotalBruto != null ? subtotalBruto : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getImporteDescuentoLinea() {
+        return importeDescuentoLinea != null ? importeDescuentoLinea : BigDecimal.ZERO;
+    }
+
+    public void setImporteDescuentoLinea(BigDecimal importeDescuentoLinea) {
+        this.importeDescuentoLinea = importeDescuentoLinea != null ? importeDescuentoLinea : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getSubtotalFinal() {
+        return subtotalFinal != null ? subtotalFinal : BigDecimal.ZERO;
+    }
+
+    public void setSubtotalFinal(BigDecimal subtotalFinal) {
+        this.subtotalFinal = subtotalFinal != null ? subtotalFinal : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getIva() {
+        return iva != null ? iva : BigDecimal.ZERO;
+    }
+
+    public void setIva(BigDecimal iva) {
+        this.iva = iva != null ? iva : BigDecimal.ZERO;
+    }
+
+    public String getDescripcionPersonalizacion() {
+        return descripcionPersonalizacion;
+    }
+
+    public void setDescripcionPersonalizacion(String descripcionPersonalizacion) {
+        this.descripcionPersonalizacion = descripcionPersonalizacion;
+    }
+
+    public List<RegistrarVentaExtraRequest> getExtras() {
+        return extras;
+    }
+
+    public void setExtras(List<RegistrarVentaExtraRequest> extras) {
+        this.extras = extras != null ? extras : new ArrayList<>();
+    }
+
+    public List<RegistrarVentaPersonalizacionRequest> getPersonalizaciones() {
+        return personalizaciones;
+    }
+
+    public void setPersonalizaciones(List<RegistrarVentaPersonalizacionRequest> personalizaciones) {
+        this.personalizaciones = personalizaciones != null ? personalizaciones : new ArrayList<>();
+    }
+
+    public Integer getIdTipoCafeSeleccionado() {
+        return idTipoCafeSeleccionado;
+    }
+
+    public void setIdTipoCafeSeleccionado(Integer idTipoCafeSeleccionado) {
+        this.idTipoCafeSeleccionado = idTipoCafeSeleccionado;
+    }
+
+    public String getNombreTipoCafeSnapshot() {
+        return nombreTipoCafeSnapshot;
+    }
+
+    public void setNombreTipoCafeSnapshot(String nombreTipoCafeSnapshot) {
+        this.nombreTipoCafeSnapshot = nombreTipoCafeSnapshot;
+    }
+
+    public BigDecimal getSuplementoTipoCafe() {
+        return suplementoTipoCafe != null ? suplementoTipoCafe : BigDecimal.ZERO;
+    }
+
+    public void setSuplementoTipoCafe(BigDecimal suplementoTipoCafe) {
+        this.suplementoTipoCafe = suplementoTipoCafe != null ? suplementoTipoCafe : BigDecimal.ZERO;
+    }
+
+    public Integer getIdIngredienteTipoCafeSeleccionado() {
+        return idIngredienteTipoCafeSeleccionado;
+    }
+
+    public void setIdIngredienteTipoCafeSeleccionado(Integer idIngredienteTipoCafeSeleccionado) {
+        this.idIngredienteTipoCafeSeleccionado = idIngredienteTipoCafeSeleccionado;
+    }
 }

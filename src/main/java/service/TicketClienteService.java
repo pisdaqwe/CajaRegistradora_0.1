@@ -27,6 +27,10 @@ import java.util.List;
  * IMPORTANTE:
  * La UI NO debe parsear JSON.
  * La UI solo recibe DTOs listos para pintar.
+ *
+ * AJUSTE ACTUAL:
+ * - ahora también parsea el café seleccionado desde
+ *   descripcionPersonalizacion.tipoCafe
  */
 public class TicketClienteService {
 
@@ -81,6 +85,10 @@ public class TicketClienteService {
 
     public List<TicketHoyRowDTO> getTicketsByFecha(LocalDate fecha) {
         return ticketJsonDao.findTicketsByFecha(fecha);
+    }
+
+    public List<TicketHoyRowDTO> searchTickets(String query) {
+        return ticketJsonDao.searchTickets(query, 200);
     }
 
     // =====================================================
@@ -150,9 +158,7 @@ public class TicketClienteService {
         }
     }
 
-
-
-	// =====================================================
+    // =====================================================
     // 6. PARSE DE CADA ITEM DEL TICKET
     // =====================================================
 
@@ -164,14 +170,46 @@ public class TicketClienteService {
 
         String nombreProducto = textOrNull(itemNode, "nombreProducto");
         if (nombreProducto == null || nombreProducto.isBlank()) {
-            // Compatibilidad con tickets antiguos que no guardaban nombreProducto
             nombreProducto = "Producto #" + idProducto;
         }
         item.setNombreProducto(nombreProducto);
 
         item.setCantidad(intOrDefault(itemNode, "cantidad", 1));
         item.setPrecioUnitario(decimalOrZero(itemNode, "precioUnitario"));
-        item.setSubtotal(decimalOrZero(itemNode, "subtotal"));
+
+        /*
+         * Compatibilidad con:
+         * - tickets nuevos: subtotalBruto / importeDescuentoLinea / subtotalFinal
+         * - tickets antiguos: subtotal
+         */
+        BigDecimal subtotalBruto = decimalOrZero(itemNode, "subtotalBruto");
+        BigDecimal importeDescuentoLinea = decimalOrZero(itemNode, "importeDescuentoLinea");
+        BigDecimal subtotalFinal = decimalOrZero(itemNode, "subtotalFinal");
+        BigDecimal subtotalLegacy = decimalOrZero(itemNode, "subtotal");
+
+        item.setSubtotalBruto(subtotalBruto);
+        item.setImporteDescuentoLinea(importeDescuentoLinea);
+        item.setSubtotalFinal(subtotalFinal);
+
+        /*
+         * Qué importe pintar en la línea del ticket cliente:
+         *
+         * REGLA:
+         * - si existe subtotalBruto > 0, mostramos el bruto
+         *   porque el descuento ya sale aparte en el ticket
+         * - si no existe, caemos al subtotal legacy
+         * - si tampoco existe, usamos subtotalFinal
+         */
+        BigDecimal subtotalVisual;
+        if (subtotalBruto.compareTo(BigDecimal.ZERO) > 0) {
+            subtotalVisual = subtotalBruto;
+        } else if (subtotalLegacy.compareTo(BigDecimal.ZERO) > 0) {
+            subtotalVisual = subtotalLegacy;
+        } else {
+            subtotalVisual = subtotalFinal;
+        }
+
+        item.setSubtotal(subtotalVisual);
         item.setIva(decimalOrZero(itemNode, "iva"));
 
         // Extras
@@ -198,9 +236,16 @@ public class TicketClienteService {
     // 7. PARSE DE DESCRIPCION_PERSONALIZACION
     // =====================================================
 
+    /**
+     * Parsea el JSON interno descripcionPersonalizacion.
+     *
+     * AJUSTE ACTUAL:
+     * - ahora también lee tipoCafe
+     */
     private void parseDescripcionPersonalizacion(TicketClienteItemDTO item, String descripcionPersonalizacion) {
         if (descripcionPersonalizacion == null || descripcionPersonalizacion.isBlank()) {
             item.setTamano(null);
+            item.setTipoCafe(null);
             item.setPersonalizaciones(new ArrayList<>());
             item.setAskMe(new ArrayList<>());
             return;
@@ -210,6 +255,11 @@ public class TicketClienteService {
             JsonNode root = objectMapper.readTree(descripcionPersonalizacion);
 
             item.setTamano(textOrNull(root, "tamano"));
+
+            // =====================================================
+            // NUEVO BLOQUE: café seleccionado
+            // =====================================================
+            item.setTipoCafe(textOrNull(root, "tipoCafe"));
 
             List<String> personalizaciones = new ArrayList<>();
             JsonNode persNode = root.get("personalizaciones");
@@ -242,11 +292,12 @@ public class TicketClienteService {
         } catch (Exception e) {
             // Si el JSON interno está mal, no rompemos todo el ticket
             item.setTamano(null);
+            item.setTipoCafe(null);
             item.setPersonalizaciones(new ArrayList<>());
             item.setAskMe(new ArrayList<>());
         }
     }
-    
+
     private TicketClienteComboDTO parseComboNode(JsonNode comboNode) {
         TicketClienteComboDTO combo = new TicketClienteComboDTO();
 
@@ -260,7 +311,7 @@ public class TicketClienteService {
 
         return combo;
     }
-    
+
     private void parseDescuentoNode(TicketClienteDTO dto, JsonNode descuentoNode) {
         if (dto == null || descuentoNode == null || descuentoNode.isNull()) {
             return;

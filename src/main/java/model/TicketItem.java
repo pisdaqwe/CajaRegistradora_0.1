@@ -1,16 +1,17 @@
 package model;
 
+import dtoS.ExtraDTO;
+import dtoS.PersonalizacionDTO;
+import dtoS.ProductoDTO;
+import dtoS.TamanoDTO;
+import dtoS.TipoCafeDTO;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import dtoS.ExtraDTO;
-import dtoS.PersonalizacionDTO;
-import dtoS.ProductoDTO;
-import dtoS.TamanoDTO;
 
 /**
  * Representa un item real dentro del ticket.
@@ -19,14 +20,18 @@ import dtoS.TamanoDTO;
  * - producto base
  * - tamaño seleccionado
  * - precio base del tamaño
+ * - tipo de café seleccionado
+ * - suplemento del tipo de café
  * - extras aplicados
  * - personalizaciones activas
  * - notas Ask Me
  *
- * Reglas actuales:
+ * REGLAS ACTUALES:
  * - los extras son repetibles salvo que desde fuera se use replace por tipo
  * - las personalizaciones se guardan por id y funcionan con toggle
  * - Ask Me es solo texto informativo y no afecta al precio
+ * - el tipo de café es una elección única del item
+ * - el suplemento del tipo de café sí afecta al precio
  */
 public final class TicketItem {
 
@@ -47,9 +52,47 @@ public final class TicketItem {
 
     /**
      * Precio base actual del item según el tamaño seleccionado.
-     * No incluye extras ni personalizaciones.
+     * No incluye extras, personalizaciones ni suplemento de café.
      */
     private BigDecimal precioBase;
+
+    /**
+     * NUEVO:
+     * ID del tipo de café seleccionado para el item.
+     *
+     * Puede ser null si el item todavía no tiene café elegido.
+     */
+    private Integer idTipoCafeSeleccionado;
+
+    /**
+     * NUEVO:
+     * Nombre visible del tipo de café seleccionado.
+     *
+     * Ejemplos:
+     * - Espresso
+     * - Espresso Decaf
+     * - Espresso Colombia Campaña
+     */
+    private String nombreTipoCafeSeleccionado;
+
+    /**
+     * NUEVO:
+     * ID del ingrediente real asociado al tipo de café.
+     *
+     * Lo dejamos preparado para la futura fase de recetas/stock.
+     */
+    private Integer idIngredienteTipoCafeSeleccionado;
+
+    /**
+     * NUEVO:
+     * Suplemento económico del café seleccionado.
+     *
+     * Ejemplos:
+     * - 0.00 para Espresso
+     * - 0.30 para Colombia Campaña
+     * - 0.50 para Etiopía Campaña
+     */
+    private BigDecimal suplementoTipoCafe = BigDecimal.ZERO;
 
     /**
      * Lista de extras añadidos al item.
@@ -97,7 +140,7 @@ public final class TicketItem {
 
     /**
      * Devuelve el precio base del item.
-     * No incluye extras ni personalizaciones.
+     * No incluye extras, personalizaciones ni suplemento de café.
      */
     public BigDecimal getPrecioBase() {
         return precioBase;
@@ -116,7 +159,41 @@ public final class TicketItem {
     }
 
     // =====================================================
-    // 4) DUPLICADO DEL ITEM
+    // 4) GETTERS DEL BLOQUE CAFÉ
+    // =====================================================
+
+    public Integer getIdTipoCafeSeleccionado() {
+        return idTipoCafeSeleccionado;
+    }
+
+    public String getNombreTipoCafeSeleccionado() {
+        return nombreTipoCafeSeleccionado;
+    }
+
+    public Integer getIdIngredienteTipoCafeSeleccionado() {
+        return idIngredienteTipoCafeSeleccionado;
+    }
+
+    public BigDecimal getSuplementoTipoCafe() {
+        return suplementoTipoCafe;
+    }
+
+    /**
+     * Devuelve el suplemento del tipo de café en modo seguro.
+     */
+    public BigDecimal getSuplementoTipoCafeSafe() {
+        return suplementoTipoCafe != null ? suplementoTipoCafe : BigDecimal.ZERO;
+    }
+
+    /**
+     * Indica si el item tiene un tipo de café seleccionado.
+     */
+    public boolean hasTipoCafeSeleccionado() {
+        return idTipoCafeSeleccionado != null;
+    }
+
+    // =====================================================
+    // 5) DUPLICADO DEL ITEM
     // =====================================================
 
     /**
@@ -124,12 +201,22 @@ public final class TicketItem {
      * - mismo producto
      * - mismo tamaño
      * - mismo precio base
+     * - mismo tipo de café
      * - copia de extras
      * - copia de personalizaciones
      * - copia de Ask Me
      */
     public TicketItem duplicate() {
         TicketItem copy = new TicketItem(this.producto, this.tamano, this.precioBase);
+
+        // =================================================
+        // NUEVO BLOQUE AÑADIDO:
+        // copiar también el café seleccionado
+        // =================================================
+        copy.idTipoCafeSeleccionado = this.idTipoCafeSeleccionado;
+        copy.nombreTipoCafeSeleccionado = this.nombreTipoCafeSeleccionado;
+        copy.idIngredienteTipoCafeSeleccionado = this.idIngredienteTipoCafeSeleccionado;
+        copy.suplementoTipoCafe = this.getSuplementoTipoCafeSafe();
 
         // Copiar extras
         for (TicketExtra extra : this.extras) {
@@ -143,13 +230,15 @@ public final class TicketItem {
 
         // Copiar personalizaciones
         for (TicketPersonalizacion p : this.personalizaciones.values()) {
-            TicketPersonalizacion copyP = new TicketPersonalizacion(
+            copy.personalizaciones.put(
                     p.getIdPersonalizacion(),
-                    p.getNombre(),
-                    p.getTipo(),
-                    p.getPrecio()
+                    new TicketPersonalizacion(
+                            p.getIdPersonalizacion(),
+                            p.getNombre(),
+                            p.getTipo(),
+                            p.getPrecio()
+                    )
             );
-            copy.personalizaciones.put(copyP.getIdPersonalizacion(), copyP);
         }
 
         // Copiar Ask Me
@@ -159,33 +248,71 @@ public final class TicketItem {
     }
 
     // =====================================================
-    // 5) CAMBIOS SOBRE EL PRODUCTO BASE
+    // 6) CAMBIO DE TAMAÑO
     // =====================================================
 
     /**
-     * Cambia el tamaño del item y actualiza su nuevo precio base.
+     * Cambia el tamaño y actualiza el precio base del item.
+     *
+     * IMPORTANTE:
+     * - no toca extras
+     * - no toca personalizaciones
+     * - no toca el tipo de café
      */
     public void setTamano(TamanoDTO nuevoTamano, BigDecimal nuevoPrecioBase) {
         this.tamano = Objects.requireNonNull(nuevoTamano, "nuevoTamano no puede ser null");
-
         this.precioBase = Objects.requireNonNull(nuevoPrecioBase, "nuevoPrecioBase no puede ser null");
+
         if (this.precioBase.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("nuevoPrecioBase no puede ser negativo");
         }
     }
 
     // =====================================================
-    // 6) GESTIÓN DE EXTRAS
+    // 7) GESTIÓN DEL BLOQUE CAFÉ
+    // =====================================================
+
+    /**
+     * NUEVO:
+     * Aplica un tipo de café al item.
+     *
+     * REGLAS:
+     * - el café es único por item
+     * - sustituye cualquier selección anterior
+     * - el suplemento sí afecta al subtotal del item
+     */
+    public void setTipoCafe(TipoCafeDTO tipoCafe) {
+        Objects.requireNonNull(tipoCafe, "tipoCafe no puede ser null");
+
+        if (tipoCafe.getIdTipoCafe() <= 0) {
+            throw new IllegalArgumentException("idTipoCafe debe ser > 0");
+        }
+
+        this.idTipoCafeSeleccionado = tipoCafe.getIdTipoCafe();
+        this.nombreTipoCafeSeleccionado = normalizeText(tipoCafe.getNombre(), "nombreTipoCafe");
+        this.idIngredienteTipoCafeSeleccionado = tipoCafe.getIdIngrediente();
+        this.suplementoTipoCafe = safe(tipoCafe.getSuplementoPrecio());
+    }
+
+    /**
+     * NUEVO:
+     * Limpia el tipo de café seleccionado del item.
+     *
+     * Útil si en algún momento quieres volver al estado sin selección.
+     */
+    public void clearTipoCafe() {
+        this.idTipoCafeSeleccionado = null;
+        this.nombreTipoCafeSeleccionado = null;
+        this.idIngredienteTipoCafeSeleccionado = null;
+        this.suplementoTipoCafe = BigDecimal.ZERO;
+    }
+
+    // =====================================================
+    // 8) GESTIÓN DE EXTRAS
     // =====================================================
 
     /**
      * Añade un extra al item.
-     *
-     * Para tipos repetibles como SHOT, SYRUP o TOPPING:
-     * este método vale directamente.
-     *
-     * Para tipos exclusivos como MILK:
-     * normalmente desde fuera se usará replaceExtraByTipo(...).
      */
     public void addExtra(ExtraDTO extraDto) {
         Objects.requireNonNull(extraDto, "extraDto no puede ser null");
@@ -199,7 +326,47 @@ public final class TicketItem {
     }
 
     /**
-     * Elimina un extra por posición dentro de la lista.
+     * Elimina todos los extras de un tipo concreto.
+     *
+     * Útil para reglas como MILK:
+     * solo puede haber una leche activa a la vez.
+     */
+    public void removeExtrasByTipo(String tipo) {
+        if (tipo == null || tipo.isBlank()) {
+            return;
+        }
+
+        String tipoNormalizado = tipo.trim().toUpperCase();
+        extras.removeIf(e -> tipoNormalizado.equals(e.getTipo().trim().toUpperCase()));
+    }
+
+    /**
+     * Sustituye el extra existente del mismo tipo por otro nuevo.
+     *
+     * Ejemplo:
+     * - cambiar leche entera por avena
+     */
+    public void replaceExtraByTipo(ExtraDTO extraDto) {
+        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
+
+        removeExtrasByTipo(extraDto.getTipo());
+        addExtra(extraDto);
+    }
+
+    /**
+     * Indica si el item ya tiene un extra por id.
+     */
+    public boolean hasExtraById(int idExtra) {
+        for (TicketExtra extra : extras) {
+            if (extra.getIdExtra() == idExtra) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Elimina un extra por índice interno.
      */
     public void removeExtraByIndex(int extraIndex) {
         if (extraIndex < 0 || extraIndex >= extras.size()) {
@@ -208,38 +375,8 @@ public final class TicketItem {
         extras.remove(extraIndex);
     }
 
-    /**
-     * Elimina todos los extras de un tipo concreto.
-     *
-     * Ejemplo típico:
-     * quitar la leche actual antes de poner una nueva.
-     */
-    public void removeExtrasByTipo(String tipo) {
-        Objects.requireNonNull(tipo, "tipo no puede ser null");
-        extras.removeIf(e -> tipo.equalsIgnoreCase(e.getTipo()));
-    }
-
-    /**
-     * Reemplaza el extra de un tipo por el nuevo.
-     *
-     * Ejemplo típico:
-     * MILK, donde solo debe existir una leche activa.
-     */
-    public void replaceExtraByTipo(ExtraDTO extraDto) {
-        Objects.requireNonNull(extraDto, "extraDto no puede ser null");
-        removeExtrasByTipo(extraDto.getTipo());
-        addExtra(extraDto);
-    }
-
-    /**
-     * Comprueba si el item ya tiene aplicado un extra concreto.
-     */
-    public boolean hasExtraById(int idExtra) {
-        return extras.stream().anyMatch(e -> e.getIdExtra() == idExtra);
-    }
-
     // =====================================================
-    // 7) GESTIÓN DE PERSONALIZACIONES
+    // 9) GESTIÓN DE PERSONALIZACIONES
     // =====================================================
 
     /**
@@ -273,7 +410,7 @@ public final class TicketItem {
     }
 
     // =====================================================
-    // 8) GESTIÓN DE ASK ME
+    // 10) GESTIÓN DE ASK ME
     // =====================================================
 
     /**
@@ -317,7 +454,7 @@ public final class TicketItem {
     }
 
     // =====================================================
-    // 9) CÁLCULOS ECONÓMICOS DEL ITEM
+    // 11) CÁLCULOS ECONÓMICOS DEL ITEM
     // =====================================================
 
     /**
@@ -325,6 +462,10 @@ public final class TicketItem {
      *
      * Sirve para combos, donde el precio base puede quedar cubierto
      * por el combo pero los añadidos deben cobrarse aparte.
+     *
+     * IMPORTANTE:
+     * - aquí NO se incluye el suplemento del café
+     * - el suplemento se suma aparte en getSubtotal()
      */
     public BigDecimal getTotalExtrasYPersonalizaciones() {
         BigDecimal total = BigDecimal.ZERO;
@@ -341,10 +482,29 @@ public final class TicketItem {
     }
 
     /**
+     * NUEVO:
      * Devuelve el subtotal completo del item:
-     * precio base + extras + personalizaciones.
+     * precio base + suplemento de café + extras + personalizaciones.
      */
     public BigDecimal getSubtotal() {
-        return precioBase.add(getTotalExtrasYPersonalizaciones());
+        return safe(precioBase)
+                .add(getSuplementoTipoCafeSafe())
+                .add(getTotalExtrasYPersonalizaciones());
+    }
+
+    // =====================================================
+    // 12) HELPERS PRIVADOS
+    // =====================================================
+
+    private BigDecimal safe(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private String normalizeText(String value, String fieldName) {
+        String normalized = Objects.requireNonNull(value, fieldName + " no puede ser null").trim();
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " no puede estar vacío");
+        }
+        return normalized;
     }
 }

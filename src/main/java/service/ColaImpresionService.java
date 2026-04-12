@@ -24,11 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * - consumir el siguiente item pendiente de una estación
  * - transformar el modelo persistente a DTO de UI
  *
- * NOTA:
- * En descripcion guardamos un snapshot estructurado del item.
- * De momento se serializa como texto estructurado simple.
- * Más adelante se puede sustituir por JSON real con Jackson/Gson
- * sin cambiar la lógica general del service.
+ * AJUSTE ACTUAL:
+ * - también muestra el café seleccionado en resumenLista y detalleTexto.
  */
 public class ColaImpresionService {
 
@@ -38,23 +35,14 @@ public class ColaImpresionService {
 
     private final ColaImpresionDAO colaImpresionDAO;
     private final ProductoEstacionDao productoEstacionDao;
-    
     private final ObjectMapper objectMapper;
-    
 
-    /**
-     * Constructor principal.
-     * Usa los DAOs reales del proyecto.
-     */
     public ColaImpresionService() {
         this.colaImpresionDAO = new ColaImpresionDAO();
         this.productoEstacionDao = new ProductoEstacionDao();
         this.objectMapper = new ObjectMapper();
     }
 
-    /**
-     * Constructor opcional para tests o para inyección manual.
-     */
     public ColaImpresionService(ColaImpresionDAO colaImpresionDao,
                                 ProductoEstacionDao productoEstacionDao) {
         this.colaImpresionDAO = colaImpresionDao;
@@ -66,18 +54,6 @@ public class ColaImpresionService {
     // 1. REGISTRO DE COLA DESDE VENTA
     // =========================================================
 
-    /**
-     * Registra en cola un único item persistido de venta.
-     *
-     * Caso típico:
-     * - ya existe idVenta real
-     * - ya existe idItem real
-     * - ya conoces idProducto
-     * - ya puedes construir ColaItemDescripcionDTO
-     *
-     * El service resuelve la/s estación/es del producto
-     * y genera una fila de cola por cada estación.
-     */
     public void registrarItemEnCola(int idVenta,
                                     int idItem,
                                     int idProducto,
@@ -98,9 +74,7 @@ public class ColaImpresionService {
 
         List<Integer> idsEstacion = productoEstacionDao.findIdsEstacionByProducto(idProducto);
 
-        // Regla de negocio:
-        // si un producto no tiene estación asignada, NO rompemos la venta.
-        // simplemente no generamos cola para ese item.
+        // Si un producto no tiene estación asignada, no rompemos la venta.
         if (idsEstacion == null || idsEstacion.isEmpty()) {
             return;
         }
@@ -125,12 +99,6 @@ public class ColaImpresionService {
         }
     }
 
-    /**
-     * Variante cómoda para registrar varios items en cola.
-     *
-     * Te sirve para construir una lista desde el flujo de cobro real
-     * y registrar todos los items de una vez.
-     */
     public void registrarItemsEnCola(List<ColaRegistroItemCommand> items) {
         if (items == null || items.isEmpty()) {
             return;
@@ -150,15 +118,6 @@ public class ColaImpresionService {
     // 2. CONSULTA DE PENDIENTES DEL DÍA
     // =========================================================
 
-    /**
-     * Devuelve los pendientes del día actual para una estación.
-     *
-     * Reglas:
-     * - solo fecha de hoy
-     * - no preparados
-     * - no cancelados
-     * - orden natural de cola (id_cola asc)
-     */
     public List<ColaMonitorItemDTO> getPendientesHoyByEstacion(int idEstacion) {
         validarEstacion(idEstacion);
 
@@ -186,16 +145,6 @@ public class ColaImpresionService {
     // 3. IMPRIMIR SIGUIENTE
     // =========================================================
 
-    /**
-     * Simula "imprimir siguiente" en una estación.
-     *
-     * Flujo MVP:
-     * - busca el primer pendiente del día por id_cola asc
-     * - lo marca como impreso y preparado
-     * - devuelve el DTO listo para mostrar en el JTextArea
-     *
-     * Si no hay pendientes, devuelve null.
-     */
     public ColaMonitorItemDTO imprimirSiguiente(int idEstacion) {
         validarEstacion(idEstacion);
 
@@ -221,7 +170,6 @@ public class ColaImpresionService {
                 ahora
         );
 
-        // Actualizamos también el objeto en memoria
         siguiente.setImpreso(true);
         siguiente.setPreparado(true);
         siguiente.setFechaImpresion(ahora);
@@ -234,9 +182,6 @@ public class ColaImpresionService {
     // 4. CANCELACIÓN
     // =========================================================
 
-    /**
-     * Cancela un item de cola por id.
-     */
     public void cancelar(int idCola) {
         if (idCola <= 0) {
             throw new IllegalArgumentException("idCola inválido");
@@ -268,17 +213,37 @@ public class ColaImpresionService {
         return dto;
     }
 
+    /**
+     * Texto corto de la lista del monitor.
+     *
+     * Ahora también mete el café si existe.
+     */
     private String buildResumenLista(ColaItemDescripcionDTO desc) {
         String producto = safe(desc.getProducto(), "Producto");
         String tamano = safe(desc.getTamano(), "");
+        String tipoCafe = safe(desc.getTipoCafe(), "");
         String nombrePedido = safe(desc.getNombrePedido(), "SIN_NOMBRE");
 
+        StringBuilder sb = new StringBuilder();
+        sb.append(producto);
+
         if (!tamano.isBlank()) {
-            return producto + " - " + tamano + " | " + nombrePedido;
+            sb.append(" - ").append(tamano);
         }
-        return producto + " | " + nombrePedido;
+
+        if (!tipoCafe.isBlank()) {
+            sb.append(" - ").append(tipoCafe);
+        }
+
+        sb.append(" | ").append(nombrePedido);
+        return sb.toString();
     }
 
+    /**
+     * Texto largo del mini-ticket simulado de estación.
+     *
+     * Ahora también mete el café si existe.
+     */
     private String buildDetalleTexto(ColaItemDescripcionDTO desc,
                                      ColaImpresion fila,
                                      String nombreEstacion) {
@@ -300,6 +265,13 @@ public class ColaImpresionService {
             sb.append(" - ").append(desc.getTamano());
         }
         sb.append("\n");
+
+        // =====================================================
+        // NUEVO BLOQUE: café seleccionado
+        // =====================================================
+        if (!safe(desc.getTipoCafe(), "").isBlank()) {
+            sb.append("CAFÉ: ").append(desc.getTipoCafe()).append("\n");
+        }
 
         if (desc.getCantidad() != null) {
             sb.append("CANTIDAD: ").append(desc.getCantidad()).append("\n");
@@ -330,7 +302,7 @@ public class ColaImpresionService {
     }
 
     // =========================================================
-    // 6. SERIALIZACIÓN / DESERIALIZACIÓN SIMPLE
+    // 6. SERIALIZACIÓN / DESERIALIZACIÓN
     // =========================================================
 
     private String serializeDescripcion(ColaItemDescripcionDTO dto) {
@@ -352,7 +324,6 @@ public class ColaImpresionService {
             throw new RuntimeException("Error deserializando descripcion de cola desde JSON.", e);
         }
     }
-
 
     // =========================================================
     // 7. HELPERS
@@ -395,10 +366,6 @@ public class ColaImpresionService {
     // 8. COMMAND AUXILIAR PARA REGISTRO MASIVO
     // =========================================================
 
-    /**
-     * Comando sencillo para registrar varios items en cola
-     * sin depender todavía de tus DTOs concretos de cobro.
-     */
     public static class ColaRegistroItemCommand {
 
         private final int idVenta;

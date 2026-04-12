@@ -25,6 +25,8 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
         lblRight.setFont(new Font("Monospaced", Font.BOLD, 16));
         lblRight.setHorizontalAlignment(SwingConstants.RIGHT);
 
+        lblLeft.setVerticalAlignment(SwingConstants.TOP);
+
         add(lblLeft, BorderLayout.CENTER);
         add(lblRight, BorderLayout.EAST);
 
@@ -63,7 +65,14 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
             prefix = "   ";
         }
 
-        lblLeft.setText(prefix + value.getLabel());
+        String label = value.getLabel();
+        boolean isHtml = label != null && label.trim().startsWith("<html>");
+
+        if (isHtml) {
+            lblLeft.setText(label);
+        } else {
+            lblLeft.setText(prefix + label);
+        }
 
         // =====================================================
         // 2) FUENTES SEGÚN TIPO DE FILA

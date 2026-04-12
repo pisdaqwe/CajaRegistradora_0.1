@@ -1,4 +1,3 @@
-
 package facade;
 
 import java.math.BigDecimal;
@@ -21,24 +20,23 @@ public class CajaFacade {
             BigDecimal importeInicial
     ) {
         sesionCajaService.abrirSesionCaja(
-            caja.getIdCaja(),
-            empleado.getIdUsuario(),
-            importeInicial
+                caja.getIdCaja(),
+                empleado.getIdUsuario(),
+                importeInicial
         );
     }
-    
+
     public void cerrarSesionCaja(
-    	    CajaEstadoDTO caja,
-    	    BigDecimal importeFinal,
-    	    String observaciones,
-    	    int idUsuarioCierre
-    	) {
-    	    sesionCajaService.cerrarSesionCaja(
-    	        caja.getIdCaja(),
-    	        idUsuarioCierre,
-    	        importeFinal,
-    	        observaciones
-    	    );
+            CajaEstadoDTO caja,
+            BigDecimal importeContado,
+            String observaciones,
+            int idUsuarioCierre
+    ) {
+        sesionCajaService.cerrarSesionCaja(
+                caja.getIdCaja(),
+                idUsuarioCierre,
+                importeContado,
+                observaciones
+        );
     }
-    
 }

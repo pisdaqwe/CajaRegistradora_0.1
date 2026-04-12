@@ -23,17 +23,18 @@ import java.util.Optional;
  * - leer un ticket concreto por idVenta
  * - leer el último ticket de una sesión de caja
  * - listar tickets de un día
+ * - buscar tickets por texto
  *
  * IMPORTANTE:
- * Este DAO NO parsea el json_data.
- * Solo lee BD y devuelve:
- * - TicketJson para el ticket completo persistido
- * - TicketHoyRowDTO para la lista resumen del día
+ * - este DAO NO parsea el json_data
+ * - solo lee BD y devuelve:
+ *   - TicketJson para el ticket completo persistido
+ *   - TicketHoyRowDTO para la lista resumen
  */
 public class TicketJsonDao {
 
     // =====================================================
-    // 1. BUSCAR TICKET POR ID DE VENTA
+    // 1) BUSCAR TICKET POR ID DE VENTA
     // =====================================================
 
     public Optional<TicketJson> findByVenta(int idVenta) {
@@ -72,7 +73,7 @@ public class TicketJsonDao {
     }
 
     // =====================================================
-    // 2. BUSCAR ÚLTIMO TICKET DE UNA SESIÓN DE CAJA
+    // 2) BUSCAR ÚLTIMO TICKET DE UNA SESIÓN DE CAJA
     // =====================================================
 
     public Optional<TicketJson> findUltimoTicketDeSesion(int idSesion) {
@@ -114,7 +115,7 @@ public class TicketJsonDao {
     }
 
     // =====================================================
-    // 3. LISTAR TICKETS DE HOY
+    // 3) LISTAR TICKETS DE HOY
     // =====================================================
 
     public List<TicketHoyRowDTO> findTicketsHoy() {
@@ -122,7 +123,7 @@ public class TicketJsonDao {
     }
 
     // =====================================================
-    // 4. LISTAR TICKETS POR FECHA
+    // 4) LISTAR TICKETS POR FECHA
     // =====================================================
 
     public List<TicketHoyRowDTO> findTicketsByFecha(LocalDate fecha) {
@@ -176,7 +177,70 @@ public class TicketJsonDao {
     }
 
     // =====================================================
-    // 5. MAPPERS
+    // 5) BUSCAR TICKETS POR TEXTO
+    // =====================================================
+
+    public List<TicketHoyRowDTO> searchTickets(String query, int limit) {
+        if (query == null || query.isBlank()) {
+            return findTicketsHoy();
+        }
+
+        if (limit <= 0) {
+            limit = 100;
+        }
+
+        final String sql = """
+                SELECT
+                    tj.id_venta,
+                    tj.fecha_generacion,
+                    JSON_UNQUOTE(JSON_EXTRACT(tj.json_data, '$.nombrePedido')) AS nombre_pedido,
+                    p.metodo AS metodo_pago,
+                    v.total,
+                    u.nombre AS nombre_empleado
+                FROM ticket_json tj
+                INNER JOIN venta v
+                    ON v.id_venta = tj.id_venta
+                INNER JOIN usuario u
+                    ON u.id_usuario = v.id_usuario
+                LEFT JOIN pago p
+                    ON p.id_venta = v.id_venta
+                WHERE
+                    CAST(tj.id_venta AS CHAR) LIKE ?
+                    OR JSON_UNQUOTE(JSON_EXTRACT(tj.json_data, '$.nombrePedido')) LIKE ?
+                    OR u.nombre LIKE ?
+                    OR p.metodo LIKE ?
+                ORDER BY tj.fecha_generacion DESC, tj.id_ticket_json DESC
+                LIMIT ?
+                """;
+
+        String like = "%" + query.trim() + "%";
+        List<TicketHoyRowDTO> rows = new ArrayList<>();
+
+        try (
+                Connection conn = DbPool.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ps.setString(3, like);
+            ps.setString(4, like);
+            ps.setInt(5, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rows.add(mapTicketHoyRow(rs));
+                }
+            }
+
+            return rows;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error buscando tickets con query=" + query, e);
+        }
+    }
+
+    // =====================================================
+    // 6) MAPPERS
     // =====================================================
 
     private TicketJson mapTicketJson(ResultSet rs) throws SQLException {
@@ -193,11 +257,27 @@ public class TicketJsonDao {
         return ticket;
     }
 
+    /**
+     * Construye una fila resumen para el listado de tickets.
+     *
+     * Ajuste nuevo:
+     * - deja marcado que esta fila es una VENTA normal
+     * - prepara el DTO para convivir con devoluciones en el listado mixto
+     */
     private TicketHoyRowDTO mapTicketHoyRow(ResultSet rs) throws SQLException {
         TicketHoyRowDTO dto = new TicketHoyRowDTO();
 
+        // ---------------------------------------------
+        // Identificadores
+        // ---------------------------------------------
         dto.setIdVenta(rs.getInt("id_venta"));
+        dto.setIdDevolucion(null);
+        dto.setIdVentaOriginal(null);
+        dto.setTipoRegistro("VENTA");
 
+        // ---------------------------------------------
+        // Datos visibles
+        // ---------------------------------------------
         Timestamp ts = rs.getTimestamp("fecha_generacion");
         dto.setFechaGeneracion(ts != null ? ts.toLocalDateTime() : null);
 

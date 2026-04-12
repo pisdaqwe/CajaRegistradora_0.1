@@ -1,6 +1,7 @@
 package service;
 
 import facade.CajaFacade;
+import facade.DevolucionFacade;
 import facade.FichajeFacade;
 import facade.VentaFacade;
 import model.ComboDefinition;
@@ -13,13 +14,15 @@ import java.util.List;
  * Contenedor central de servicios de la aplicación.
  *
  * Objetivo:
- * - Agrupar todas las dependencias de negocio en un único objeto
- * - Pasarlo fácilmente a pantallas como VentasFrame
- * - Evitar que las pantallas creen servicios o DAOs por su cuenta
+ * - agrupar todas las dependencias de negocio en un único objeto
+ * - pasarlo fácilmente a pantallas como VentasFrame y diálogos
+ * - evitar que las pantallas creen servicios o DAOs por su cuenta
  *
- * Ajuste añadido:
+ * Ajustes incluidos:
  * - soporte para combos automáticos
  * - cache en memoria de combos activos
+ * - soporte para devoluciones
+ * - soporte para lectura de ticket de devolución
  */
 public class AppServices {
 
@@ -44,7 +47,7 @@ public class AppServices {
     public final VentaFacade ventaFacade;
     public final ColaImpresionService colaImpresionService;
     public final TicketClienteService ticketClienteService;
-    
+
     // =====================================================
     // 3) SERVICIOS DE DISPONIBILIDAD / STOCK
     // =====================================================
@@ -73,37 +76,62 @@ public class AppServices {
      * para no consultar la BD en cada cambio del ticket.
      */
     private final List<ComboDefinition> combosActivosCache = new ArrayList<>();
-    
-    // =====================================================
-    // 5) SERVICIOS DE COMBOS
-    // =====================================================
-    public DescuentoService descuentoService;
 
     // =====================================================
-    // 6) CONSTRUCTOR
+    // 5) SERVICIOS DE DESCUENTOS
+    // =====================================================
+
+    public final DescuentoService descuentoService;
+
+    // =====================================================
+    // 6) SERVICIOS DE DEVOLUCIONES
+    // =====================================================
+
+    public final DevolucionService devolucionService;
+    public final DevolucionFacade devolucionFacade;
+
+    /**
+     * Nuevo servicio lector del ticket de devolución.
+     *
+     * Uso previsto:
+     * - abrir vista previa del ticket de devolución
+     * - reutilizar desde diálogos/UI sin parsear JSON en pantalla
+     */
+    public final DevolucionTicketService devolucionTicketService;
+
+    // =====================================================
+    // 7) CONSTRUCTOR
     // =====================================================
 
     public AppServices(
             AuthService authService,
+            FichajeFacade fichajeFacade,
             FichajeService fichajeService,
             SesionCajaService sesionCajaService,
             UsuarioRecordadoService usuarioRecordadoService,
-            FichajeFacade fichajeFacade,
             CajaFacade cajaFacade,
             UsuarioService usuarioService,
+
             CatalogoService catalogoService,
             ProductoPersonalizacionService productoPersonalizacionService,
             VentaFacade ventaFacade,
             ColaImpresionService colaImpresionService,
             TicketClienteService ticketClienteService,
+
             DisponibilidadProductoService disponibilidadProductoService,
             DisponibilidadExtraService disponibilidadExtraService,
+
             ComboService comboService,
             ComboMatcherService comboMatcherService,
-            DescuentoService descuentoService
+
+            DescuentoService descuentoService,
+
+            DevolucionService devolucionService,
+            DevolucionFacade devolucionFacade,
+            DevolucionTicketService devolucionTicketService
     ) {
         // -----------------------------
-        // Servicios generales
+        // 1) Servicios generales
         // -----------------------------
         this.authService = authService;
         this.fichajeFacade = fichajeFacade;
@@ -114,7 +142,7 @@ public class AppServices {
         this.usuarioService = usuarioService;
 
         // -----------------------------
-        // Servicios de ventas
+        // 2) Servicios de ventas
         // -----------------------------
         this.catalogoService = catalogoService;
         this.productoPersonalizacionService = productoPersonalizacionService;
@@ -123,25 +151,35 @@ public class AppServices {
         this.ticketClienteService = ticketClienteService;
 
         // -----------------------------
-        // Servicios de disponibilidad
+        // 3) Servicios de disponibilidad / stock
         // -----------------------------
         this.disponibilidadProductoService = disponibilidadProductoService;
         this.disponibilidadExtraService = disponibilidadExtraService;
 
         // -----------------------------
-        // Servicios de combos
+        // 4) Servicios de combos
         // -----------------------------
         this.comboService = comboService;
         this.comboMatcherService = comboMatcherService;
 
         // Cargar combos activos al crear AppServices
         reloadCombosActivosCache();
-        
+
+        // -----------------------------
+        // 5) Servicios de descuentos
+        // -----------------------------
         this.descuentoService = descuentoService;
+
+        // -----------------------------
+        // 6) Servicios de devoluciones
+        // -----------------------------
+        this.devolucionService = devolucionService;
+        this.devolucionFacade = devolucionFacade;
+        this.devolucionTicketService = devolucionTicketService;
     }
 
     // =====================================================
-    // 6) MÉTODOS DE SOPORTE PARA COMBOS
+    // 8) MÉTODOS DE SOPORTE PARA COMBOS
     // =====================================================
 
     /**

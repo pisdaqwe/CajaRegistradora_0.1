@@ -4,6 +4,7 @@ import dtoS.ExtraDTO;
 import dtoS.PersonalizacionDTO;
 import dtoS.ProductoDTO;
 import dtoS.TamanoDTO;
+import dtoS.TipoCafeDTO;
 import enums.TicketRowType;
 
 import java.math.BigDecimal;
@@ -22,6 +23,11 @@ import java.util.Objects;
  * - Gestionar la selección actual del ticket
  * - Construir filas planas para pintar el ticket visual
  * - Calcular el total final del ticket
+ *
+ * CAMBIOS AÑADIDOS EN ESTA VERSIÓN:
+ * - soporte para cambiar tipo de café en un item
+ * - reflejar el café seleccionado en el ticket visual
+ * - incluir el suplemento de café en los cálculos del ticket
  */
 public final class TicketSession {
 
@@ -39,6 +45,9 @@ public final class TicketSession {
      */
     private DescuentoAplicado descuentoAplicado;
 
+    /**
+     * Índice plano actualmente seleccionado en el ticket visual.
+     */
     private int selectedFlatIndex = -1;
 
     // =====================================================
@@ -117,7 +126,11 @@ public final class TicketSession {
     /**
      * Total base del ticket sin descuento manual/promocional.
      *
-     * Aquí se tienen en cuenta combos, extras y items fuera de combo.
+     * Aquí se tienen en cuenta:
+     * - combos aplicados
+     * - extras / personalizaciones de items en combo
+     * - suplemento del tipo de café de items en combo
+     * - items fuera de combo completos
      */
     public BigDecimal getTotalSinDescuento() {
         return getTotalCombosAplicados()
@@ -152,18 +165,33 @@ public final class TicketSession {
         BigDecimal total = BigDecimal.ZERO;
 
         for (TicketCombo combo : appliedCombos) {
-            total = total.add(combo.getPrecioFinal());
+            if (combo != null && combo.getPrecioFinal() != null) {
+                total = total.add(combo.getPrecioFinal());
+            }
         }
 
         return total;
     }
 
+    /**
+     * Devuelve el total de añadidos de los items que están dentro de combo.
+     *
+     * CAMBIO IMPORTANTE:
+     * - antes solo sumaba extras y personalizaciones
+     * - ahora también suma el suplemento del tipo de café
+     *
+     * Esto evita que el café premium se pierda cuando un item forma parte de un combo.
+     */
     public BigDecimal getTotalExtrasDeItemsEnCombo() {
         BigDecimal total = BigDecimal.ZERO;
 
         for (int i = 0; i < items.size(); i++) {
             if (isItemInAnyCombo(i)) {
-                total = total.add(items.get(i).getTotalExtrasYPersonalizaciones());
+                TicketItem item = items.get(i);
+
+                total = total
+                        .add(item.getTotalExtrasYPersonalizaciones())
+                        .add(item.getSuplementoTipoCafeSafe());
             }
         }
 
@@ -199,10 +227,14 @@ public final class TicketSession {
     }
 
     public TicketRow getSelectedRowOrNull() {
-        if (selectedFlatIndex < 0) return null;
+        if (selectedFlatIndex < 0) {
+            return null;
+        }
 
         List<TicketRow> rows = buildRows();
-        if (selectedFlatIndex >= rows.size()) return null;
+        if (selectedFlatIndex >= rows.size()) {
+            return null;
+        }
 
         return rows.get(selectedFlatIndex);
     }
@@ -237,32 +269,46 @@ public final class TicketSession {
 
         items.add(new TicketItem(producto, tamanoDefault, precioTamano));
         appliedCombos.clear();
-        
     }
 
     public void changeSize(int itemIndex, TamanoDTO nuevoTamano, BigDecimal nuevoPrecioTamano) {
         TicketItem item = getItemOrThrow(itemIndex);
         item.setTamano(nuevoTamano, nuevoPrecioTamano);
         appliedCombos.clear();
-        
+    }
+
+    /**
+     * NUEVO:
+     * Cambia el tipo de café seleccionado de un item.
+     *
+     * REGLAS:
+     * - el café es una elección única del item
+     * - sustituye la selección anterior
+     * - no se modela como extra
+     * - no rompe la selección actual del ticket
+     *
+     * NOTA:
+     * - no limpiamos combos porque el producto sigue siendo el mismo
+     * - el suplemento del café se sumará en el total del ticket
+     */
+    public void changeTipoCafe(int itemIndex, TipoCafeDTO tipoCafe) {
+        TicketItem item = getItemOrThrow(itemIndex);
+        item.setTipoCafe(tipoCafe);
     }
 
     public void addExtra(int itemIndex, ExtraDTO extra) {
         TicketItem item = getItemOrThrow(itemIndex);
         item.addExtra(extra);
-        
     }
 
     public void replaceExtraByTipo(int itemIndex, ExtraDTO extra) {
         TicketItem item = getItemOrThrow(itemIndex);
         item.replaceExtraByTipo(extra);
-        
     }
 
     public void togglePersonalizacion(int itemIndex, PersonalizacionDTO p) {
         TicketItem item = getItemOrThrow(itemIndex);
         item.togglePersonalizacion(p);
-        
     }
 
     public int duplicateItem(int itemIndex) {
@@ -289,15 +335,21 @@ public final class TicketSession {
     // =====================================================
 
     public void removeSelected() {
-        if (selectedFlatIndex < 0) return;
+        if (selectedFlatIndex < 0) {
+            return;
+        }
         removeByFlatIndex(selectedFlatIndex);
     }
 
     public void removeByFlatIndex(int flatIndex) {
-        if (flatIndex < 0) return;
+        if (flatIndex < 0) {
+            return;
+        }
 
         List<TicketRow> rows = buildRows();
-        if (flatIndex >= rows.size()) return;
+        if (flatIndex >= rows.size()) {
+            return;
+        }
 
         TicketRow row = rows.get(flatIndex);
 
@@ -311,7 +363,9 @@ public final class TicketSession {
         }
 
         int itemIndex = row.getItemIndex();
-        if (itemIndex < 0 || itemIndex >= items.size()) return;
+        if (itemIndex < 0 || itemIndex >= items.size()) {
+            return;
+        }
 
         TicketItem item = items.get(itemIndex);
 
@@ -320,20 +374,17 @@ public final class TicketSession {
             case ITEM -> {
                 items.remove(itemIndex);
                 appliedCombos.clear();
-                descuentoAplicado = null;
             }
 
             case EXTRA -> {
                 int extraIndex = row.getSubIndex();
                 item.removeExtraByIndex(extraIndex);
-                descuentoAplicado = null;
             }
 
             case PERSONALIZACION -> {
                 Integer idP = row.getIdPersonalizacion();
                 if (idP != null) {
                     item.getPersonalizaciones().remove(idP);
-                    descuentoAplicado = null;
                 }
             }
 
@@ -374,13 +425,19 @@ public final class TicketSession {
     }
 
     public TicketItem getItemFromFlatIndexOrNull(int flatIndex) {
-        if (flatIndex < 0) return null;
+        if (flatIndex < 0) {
+            return null;
+        }
 
         List<TicketRow> rows = buildRows();
-        if (flatIndex >= rows.size()) return null;
+        if (flatIndex >= rows.size()) {
+            return null;
+        }
 
         int itemIndex = rows.get(flatIndex).getItemIndex();
-        if (itemIndex < 0 || itemIndex >= items.size()) return null;
+        if (itemIndex < 0 || itemIndex >= items.size()) {
+            return null;
+        }
 
         return items.get(itemIndex);
     }
@@ -434,7 +491,18 @@ public final class TicketSession {
             // -------------------------
             // Fila principal del ITEM
             // -------------------------
-            String labelItem = item.getProducto().getNombre() + " " + item.getTamano().getNombre();
+            String labelItem = buildItemLabel(item);
+
+            /**
+             * CAMBIO IMPORTANTE:
+             * la fila principal ahora refleja:
+             * - precio base
+             * - suplemento del café seleccionado
+             *
+             * Los extras y personalizaciones siguen yendo en sus filas propias.
+             */
+            BigDecimal amountItem = item.getPrecioBase().add(item.getSuplementoTipoCafeSafe());
+
             rows.add(new TicketRow(
                     TicketRowType.ITEM,
                     i,
@@ -442,7 +510,7 @@ public final class TicketSession {
                     null,
                     null,
                     labelItem,
-                    item.getPrecioBase()
+                    amountItem
             ));
 
             // -------------------------
@@ -553,8 +621,9 @@ public final class TicketSession {
 
         return rows;
     }
+
     // =====================================================
-    // 11) HELPER PRIVADO INTERNO
+    // 11) HELPERS PRIVADOS
     // =====================================================
 
     private TicketItem getItemOrThrow(int itemIndex) {
@@ -563,6 +632,46 @@ public final class TicketSession {
         }
         return items.get(itemIndex);
     }
+
+    /**
+     * NUEVO:
+     * construye el label principal del item para el ticket visual.
+     *
+     * Si hay café seleccionado, se refleja debajo del nombre del producto
+     * usando HTML para que el renderer lo pinte en dos líneas.
+     */
+    private String buildItemLabel(TicketItem item) {
+        String base = item.getProducto().getNombre() + " " + item.getTamano().getNombre();
+
+        if (item.hasTipoCafeSeleccionado()
+                && item.getNombreTipoCafeSeleccionado() != null
+                && !item.getNombreTipoCafeSeleccionado().isBlank()) {
+
+            return "<html>"
+                    + escapeHtml(base)
+                    + "<br/>"
+                    + "<span style='color:#CFCFCF;'>Café: "
+                    + escapeHtml(item.getNombreTipoCafeSeleccionado())
+                    + "</span>"
+                    + "</html>";
+        }
+
+        return base;
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
     public BigDecimal getAhorroTotalCombos() {
         BigDecimal total = BigDecimal.ZERO;
 

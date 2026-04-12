@@ -9,6 +9,10 @@ import java.util.List;
  *
  * Recomendación:
  * serializar esta clase a JSON String.
+ *
+ * AJUSTE ACTUAL:
+ * - añade tipoCafe para que el monitor/mini-ticket de estación
+ *   pueda mostrar el café seleccionado.
  */
 public class ColaItemDescripcionDTO {
 
@@ -18,6 +22,17 @@ public class ColaItemDescripcionDTO {
     private String producto;
     private String tamano;
     private Integer cantidad;
+
+    /**
+     * NUEVO:
+     * nombre visible del café seleccionado.
+     *
+     * Ejemplo:
+     * - Espresso
+     * - Espresso Decaf
+     * - Espresso Colombia Campaña
+     */
+    private String tipoCafe;
 
     private List<String> extras;
     private List<String> personalizaciones;
@@ -34,6 +49,7 @@ public class ColaItemDescripcionDTO {
                                   String producto,
                                   String tamano,
                                   Integer cantidad,
+                                  String tipoCafe,
                                   List<String> extras,
                                   List<String> personalizaciones,
                                   List<String> askMe) {
@@ -42,6 +58,7 @@ public class ColaItemDescripcionDTO {
         this.producto = producto;
         this.tamano = tamano;
         this.cantidad = cantidad;
+        this.tipoCafe = tipoCafe;
         this.extras = extras != null ? extras : new ArrayList<>();
         this.personalizaciones = personalizaciones != null ? personalizaciones : new ArrayList<>();
         this.askMe = askMe != null ? askMe : new ArrayList<>();
@@ -85,6 +102,14 @@ public class ColaItemDescripcionDTO {
 
     public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
+    }
+
+    public String getTipoCafe() {
+        return tipoCafe;
+    }
+
+    public void setTipoCafe(String tipoCafe) {
+        this.tipoCafe = tipoCafe;
     }
 
     public List<String> getExtras() {
@@ -137,6 +162,7 @@ public class ColaItemDescripcionDTO {
                 ", producto='" + producto + '\'' +
                 ", tamano='" + tamano + '\'' +
                 ", cantidad=" + cantidad +
+                ", tipoCafe='" + tipoCafe + '\'' +
                 ", extras=" + extras +
                 ", personalizaciones=" + personalizaciones +
                 ", askMe=" + askMe +

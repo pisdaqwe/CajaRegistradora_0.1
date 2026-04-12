@@ -8,6 +8,8 @@ import javax.swing.border.EmptyBorder;
 import service.AppServices;
 
 import java.awt.*;
+import enums.TipoInforme;
+import ui.screens.InformesFrame;
 
 /**
  * Placeholder de menú de Informes.
@@ -18,12 +20,15 @@ import java.awt.*;
 public class InformesMenuFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
+    private final Runnable onLogoutNavigate;
     private final AppServices appServices;
 
     public InformesMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
         super("Informes", onLogoutNavigate,services);
         this.onBack = onBack;
         this.appServices = services;
+        this.onLogoutNavigate = onLogoutNavigate;
+        
 
         // Guard: si no hay sesión, sale
         requireAuthenticatedOrExit();
@@ -47,10 +52,10 @@ public class InformesMenuFrame extends BaseTpvFrame {
         JButton btnPagos = createBigButton("Pagos");
         JButton btnResumenArticulos = createBigButton("Resumen Artículos");
 
-        btnInformeCaja.addActionListener(e -> placeholder("Informe Caja"));
-        btnInformeVentas.addActionListener(e -> placeholder("Informe Ventas"));
-        btnPagos.addActionListener(e -> placeholder("Pagos"));
-        btnResumenArticulos.addActionListener(e -> placeholder("Resumen Artículos"));
+        btnInformeCaja.addActionListener(e -> abrirExplorador(TipoInforme.INFORME_CAJA));
+        btnInformeVentas.addActionListener(e -> abrirExplorador(TipoInforme.VENTAS_POR_DIA));
+        btnPagos.addActionListener(e -> abrirExplorador(TipoInforme.PAGOS_POR_METODO));
+        btnResumenArticulos.addActionListener(e -> abrirExplorador(TipoInforme.PRODUCTOS_MAS_VENDIDOS));
 
         grid.add(btnInformeCaja);
         grid.add(btnInformeVentas);
@@ -118,6 +123,18 @@ public class InformesMenuFrame extends BaseTpvFrame {
         b.setForeground(Color.WHITE);
         b.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
         return b;
+    }
+    
+    private void abrirExplorador(TipoInforme tipoInforme) {
+        this.setVisible(false);
+
+        InformesFrame frame = new InformesFrame(
+                onLogoutNavigate,
+                () -> this.setVisible(true),
+                appServices,
+                tipoInforme
+        );
+        frame.setVisible(true);
     }
 }
 

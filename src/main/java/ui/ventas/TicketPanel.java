@@ -56,7 +56,16 @@ public class TicketPanel extends JPanel {
         list.setCellRenderer(new TicketRowRenderer());
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setBackground(new Color(30, 30, 30));
-        list.setFixedCellHeight(40);
+
+        /**
+         * CAMBIO:
+         * subimos la altura fija porque ahora la fila ITEM
+         * puede mostrar dos líneas:
+         * - producto + tamaño
+         * - café seleccionado
+         */
+        list.setFixedCellHeight(58);
+
         list.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60)));
 
         list.addListSelectionListener(e -> {
@@ -217,3 +226,4 @@ public class TicketPanel extends JPanel {
         return list;
     }
 }
+

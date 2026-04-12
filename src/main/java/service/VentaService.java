@@ -1,38 +1,176 @@
 package service;
 
+import config.DbPool;
 import dao.VentaRegistroDao;
+import dao.VentaRegistroDao.VentaItemsPersistidosResult;
 import dtoS.RegistrarVentaComboItemRequest;
 import dtoS.RegistrarVentaComboRequest;
 import dtoS.RegistrarVentaDescuentoRequest;
+import dtoS.RegistrarVentaItemRequest;
 import dtoS.RegistrarVentaRequest;
 import dtoS.RegistrarVentaResultDTO;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Servicio de negocio para registrar una venta.
  *
- * En esta arquitectura:
+ * DISEÑO CORRECTO:
  * - el Service valida reglas de negocio
- * - el DAO se encarga de abrir la conexión y ejecutar toda la transacción completa
+ * - el Service abre/cierra la transacción
+ * - el Service orquesta otros services
+ * - el DAO solo inserta/lee/escribe en BD
+ *
+ * Esta versión ya integra:
+ * - persistencia de venta
+ * - stock de ingredientes
+ * - movimientos de stock
  */
 public class VentaService {
 
     private final VentaRegistroDao ventaRegistroDao;
+    private final VentaStockIngredienteService ventaStockIngredienteService;
 
-    public VentaService(VentaRegistroDao ventaRegistroDao) {
+    public VentaService(VentaRegistroDao ventaRegistroDao,
+                        VentaStockIngredienteService ventaStockIngredienteService) {
+        if (ventaRegistroDao == null) {
+            throw new IllegalArgumentException("ventaRegistroDao no puede ser null");
+        }
+        if (ventaStockIngredienteService == null) {
+            throw new IllegalArgumentException("ventaStockIngredienteService no puede ser null");
+        }
+
         this.ventaRegistroDao = ventaRegistroDao;
+        this.ventaStockIngredienteService = ventaStockIngredienteService;
     }
 
     /**
      * Registra una venta completa.
+     *
+     * Flujo:
+     * 1. validar request
+     * 2. abrir conexión y transacción
+     * 3. insertar venta
+     * 4. insertar items y extras
+     * 5. resolver receta final / validar stock ingredientes / descontar / movimientos
+     * 6. insertar combos
+     * 7. insertar descuento
+     * 8. descontar stock_producto
+     * 9. insertar pago
+     * 10. insertar ticket_json
+     * 11. commit
      */
     public RegistrarVentaResultDTO registrarVenta(RegistrarVentaRequest request) {
         validarRequest(request);
-        return ventaRegistroDao.registrarVentaCompleta(request);
+
+        try (Connection con = DbPool.getConnection()) {
+            con.setAutoCommit(false);
+
+            try {
+                int idVenta = ventaRegistroDao.insertVenta(con, request);
+
+                VentaItemsPersistidosResult itemsResult =
+                        ventaRegistroDao.insertVentaItemsYExtras(con, idVenta, request.getItems());
+
+                // =====================================================
+                // NUEVO BLOQUE: stock de ingredientes
+                // =====================================================
+                procesarStockIngredientesVenta(
+                        con,
+                        idVenta,
+                        request,
+                        itemsResult.ticketIndexToVentaItemId()
+                );
+
+                ventaRegistroDao.insertVentaCombos(
+                        con,
+                        idVenta,
+                        request.getCombos(),
+                        itemsResult.ticketIndexToVentaItemId()
+                );
+
+                ventaRegistroDao.insertVentaDescuento(
+                        con,
+                        idVenta,
+                        request.getDescuento()
+                );
+
+                ventaRegistroDao.descontarStockProductos(con, request);
+
+                int idPago = ventaRegistroDao.insertPago(con, idVenta, request);
+
+                int idTicketJson = ventaRegistroDao.insertTicketJson(
+                        con,
+                        idVenta,
+                        request,
+                        itemsResult.ticketIndexToVentaItemId()
+                );
+
+                con.commit();
+
+                RegistrarVentaResultDTO result = new RegistrarVentaResultDTO();
+                result.setIdVenta(idVenta);
+                result.setIdPago(idPago);
+                result.setIdTicketJson(idTicketJson);
+                result.setItemsPersistidos(itemsResult.itemsPersistidos());
+
+                return result;
+
+            } catch (Exception e) {
+                con.rollback();
+                throw new RuntimeException("Error registrando la venta completa.", e);
+            } finally {
+                con.setAutoCommit(true);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("No se pudo abrir la conexión para registrar la venta.", e);
+        }
+    }
+
+    /**
+     * Procesa el bloque de stock de ingredientes por cada item persistido.
+     *
+     * IMPORTANTE:
+     * - usa el mismo índice del ticket/request
+     * - toma el id_item real ya insertado
+     * - genera referencias de movimiento por item
+     */
+    private void procesarStockIngredientesVenta(Connection con,
+                                                int idVenta,
+                                                RegistrarVentaRequest request,
+                                                Map<Integer, Integer> ticketIndexToVentaItemId) {
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < request.getItems().size(); i++) {
+            RegistrarVentaItemRequest item = request.getItems().get(i);
+            if (item == null) {
+                continue;
+            }
+
+            Integer idItemPersistido = ticketIndexToVentaItemId.get(i);
+
+            String referenciaMovimiento = "VENTA:" + idVenta
+                    + " ITEM:" + (idItemPersistido != null ? idItemPersistido : "SIN_ID");
+
+            String motivoMovimiento = "CONSUMO_VENTA";
+
+            ventaStockIngredienteService.procesarItemVenta(
+                    con,
+                    request.getIdSucursal(),
+                    item,
+                    referenciaMovimiento,
+                    motivoMovimiento
+            );
+        }
     }
 
     // =====================================================
@@ -76,8 +214,86 @@ public class VentaService {
             throw new IllegalArgumentException("El monto pagado no puede ser menor que el total.");
         }
 
+        validarItems(request);
         validarCombos(request);
         validarDescuento(request);
+    }
+
+    private void validarItems(RegistrarVentaRequest request) {
+        List<RegistrarVentaItemRequest> items = request.getItems();
+
+        if (items == null || items.isEmpty()) {
+            throw new IllegalArgumentException("La venta debe tener al menos un item.");
+        }
+
+        BigDecimal sumaSubtotalFinal = BigDecimal.ZERO;
+
+        for (RegistrarVentaItemRequest item : items) {
+            if (item == null) {
+                throw new IllegalArgumentException("La venta contiene un item null.");
+            }
+
+            if (item.getIdProducto() <= 0) {
+                throw new IllegalArgumentException("Todo item debe tener un idProducto válido.");
+            }
+
+            // NUEVO: ahora el tamaño es obligatorio para resolver receta/stock
+            if (item.getIdTamano() <= 0) {
+                throw new IllegalArgumentException("Todo item debe tener un idTamano válido.");
+            }
+
+            if (item.getCantidad() <= 0) {
+                throw new IllegalArgumentException("Todo item debe tener cantidad mayor que 0.");
+            }
+
+            if (item.getPrecioUnitario() == null || item.getPrecioUnitario().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("precioUnitario inválido en item " + item.getNombreProducto());
+            }
+
+            if (item.getSubtotalBruto() == null || item.getSubtotalBruto().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("subtotalBruto inválido en item " + item.getNombreProducto());
+            }
+
+            if (item.getImporteDescuentoLinea() == null
+                    || item.getImporteDescuentoLinea().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("importeDescuentoLinea inválido en item " + item.getNombreProducto());
+            }
+
+            if (item.getSubtotalFinal() == null || item.getSubtotalFinal().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("subtotalFinal inválido en item " + item.getNombreProducto());
+            }
+
+            if (item.getImporteDescuentoLinea().compareTo(item.getSubtotalBruto()) > 0) {
+                throw new IllegalArgumentException(
+                        "El importeDescuentoLinea no puede ser mayor que subtotalBruto en item "
+                                + item.getNombreProducto()
+                );
+            }
+
+            BigDecimal subtotalFinalEsperado = item.getSubtotalBruto()
+                    .subtract(item.getImporteDescuentoLinea());
+
+            if (subtotalFinalEsperado.compareTo(item.getSubtotalFinal()) != 0) {
+                throw new IllegalArgumentException(
+                        "subtotalFinal no cuadra con subtotalBruto - importeDescuentoLinea en item "
+                                + item.getNombreProducto()
+                );
+            }
+
+            if (item.getIva() == null || item.getIva().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("IVA inválido en item " + item.getNombreProducto());
+            }
+
+            sumaSubtotalFinal = sumaSubtotalFinal.add(item.getSubtotalFinal());
+        }
+
+        if (sumaSubtotalFinal.compareTo(request.getTotal()) != 0) {
+            throw new IllegalArgumentException(
+                    "La suma de subtotalFinal de los items no coincide con el total de la venta. "
+                            + "Esperado: " + request.getTotal()
+                            + ", calculado: " + sumaSubtotalFinal
+            );
+        }
     }
 
     private void validarCombos(RegistrarVentaRequest request) {
@@ -185,7 +401,9 @@ public class VentaService {
                     throw new IllegalArgumentException("subtotalFinalItem inválido en combo.");
                 }
 
-                BigDecimal finalEsperado = comboItem.getSubtotalOriginalItem().subtract(comboItem.getDescuentoAsignado());
+                BigDecimal finalEsperado = comboItem.getSubtotalOriginalItem()
+                        .subtract(comboItem.getDescuentoAsignado());
+
                 if (finalEsperado.compareTo(comboItem.getSubtotalFinalItem()) != 0) {
                     throw new IllegalArgumentException(
                             "subtotalFinalItem no cuadra con subtotalOriginalItem - descuentoAsignado."
