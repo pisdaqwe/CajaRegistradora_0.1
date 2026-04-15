@@ -4,6 +4,14 @@ import java.math.BigDecimal;
 
 /**
  * Request para registrar un movimiento de stock.
+ *
+ * Puede representar movimientos de:
+ * - producto
+ * - ingrediente
+ *
+ * Y además puede enlazarse opcionalmente con una merma:
+ * - idMerma
+ * - idMermaItem
  */
 public class RegistrarMovimientoStockRequest {
 
@@ -15,9 +23,28 @@ public class RegistrarMovimientoStockRequest {
     private BigDecimal cantidad;
     private Integer idUnidad;
 
-    private String tipo;       // ENTRADA / SALIDA / AJUSTE
+    /**
+     * Tipos válidos esperados:
+     * - ENTRADA
+     * - SALIDA
+     * - AJUSTE
+     */
+    private String tipo;
+
     private String referencia;
     private String motivo;
+
+    /**
+     * NUEVO:
+     * id de la merma origen, si aplica.
+     */
+    private Integer idMerma;
+
+    /**
+     * NUEVO:
+     * id de la línea de merma origen, si aplica.
+     */
+    private Integer idMermaItem;
 
     public int getIdSucursal() {
         return idSucursal;
@@ -81,5 +108,21 @@ public class RegistrarMovimientoStockRequest {
 
     public void setMotivo(String motivo) {
         this.motivo = motivo;
+    }
+
+    public Integer getIdMerma() {
+        return idMerma;
+    }
+
+    public void setIdMerma(Integer idMerma) {
+        this.idMerma = idMerma;
+    }
+
+    public Integer getIdMermaItem() {
+        return idMermaItem;
+    }
+
+    public void setIdMermaItem(Integer idMermaItem) {
+        this.idMermaItem = idMermaItem;
     }
 }

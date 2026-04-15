@@ -24,29 +24,18 @@ public class OpcionesPanel extends JPanel {
 
 	public interface OpcionesActionListener {
 		void onDuplicarClicked();
-
-		void onSkuClicked();
-
-		void onBuscarProductoClicked();
-
-		void onDisponibilidadClicked();
-
-		void onStockClicked();
-
-		void onDescuentosClicked();
-
 		void onReimprimirClicked();
-
+		void onSkuClicked();
+		void onBuscarProductoClicked();
+		void onDisponibilidadClicked();
+		void onStockClicked();
+		void onDescuentosClicked();
 		void onUltimosTicketsClicked();
-
 		void onDevolucionesClicked();
-
+		void onMermaClicked();
 		void onNuevoPedidoClicked();
-
 		void onCerrarSesionClicked();
-
 		void onVolverAdminClicked();
-
 		void onVolverClicked();
 	}
 
@@ -67,6 +56,7 @@ public class OpcionesPanel extends JPanel {
 	private JButton btnNuevoPedido;
 	private JButton btnCerrarSesion;
 	private JButton btnVolverAdmin;
+	private JButton btnMerma;
 
 	public OpcionesPanel() {
 		setLayout(new BorderLayout());
@@ -99,40 +89,70 @@ public class OpcionesPanel extends JPanel {
 		root.add(buildHeader());
 		root.add(Box.createVerticalStrut(14));
 
-		root.add(createSection("ACCIONES DE TICKET", "Operaciones rápidas sobre el pedido actual",
-				createButtonGrid(btnDuplicar = createPrimaryButton("DUPLICAR", this::fireDuplicarClicked),
-						btnReimprimir = createPrimaryButton("REIMPRIMIR TICKET", this::fireReimprimirClicked))));
+		root.add(createSection(
+				"ACCIONES DE TICKET",
+				"Operaciones rápidas sobre el pedido actual",
+				createButtonGrid(
+						btnDuplicar = createPrimaryButton("DUPLICAR", this::fireDuplicarClicked),
+						btnReimprimir = createPrimaryButton("REIMPRIMIR TICKET", this::fireReimprimirClicked)
+				)
+		));
 
 		root.add(Box.createVerticalStrut(12));
 
-		root.add(createSection("BÚSQUEDA / ENTRADA", "Añadir productos por búsqueda o por código",
-				createButtonGrid(btnSku = createPrimaryButton("SKU", this::fireSkuClicked),
-						btnBuscarProducto = createPrimaryButton("BUSCAR PRODUCTO", this::fireBuscarProductoClicked))));
+		root.add(createSection(
+				"BÚSQUEDA / ENTRADA",
+				"Añadir productos por búsqueda o por código",
+				createButtonGrid(
+						btnSku = createPrimaryButton("SKU", this::fireSkuClicked),
+						btnBuscarProducto = createPrimaryButton("BUSCAR PRODUCTO", this::fireBuscarProductoClicked)
+				)
+		));
 
 		root.add(Box.createVerticalStrut(12));
 
-		root.add(createSection("CONSULTA", "Consulta rápida de disponibilidad y stock",
+		root.add(createSection(
+				"CONSULTA",
+				"Consulta rápida de disponibilidad y stock",
 				createButtonGrid(
 						btnDisponibilidad = createPrimaryButton("DISPONIBILIDAD", this::fireDisponibilidadClicked),
-						btnStock = createPrimaryButton("STOCK", this::fireStockClicked))));
+						btnStock = createPrimaryButton("STOCK", this::fireStockClicked)
+				)
+		));
 
 		root.add(Box.createVerticalStrut(12));
 
-		root.add(createSection("OPERACIONES", "Funciones especiales del TPV",
-				createButtonGrid(btnDescuentos = createPrimaryButton("DESCUENTOS", this::fireDescuentosClicked),
-						btnUltimosTickets = createPrimaryButton("ÚLTIMOS TICKETS", this::fireUltimosTicketsClicked))));
+		root.add(createSection(
+				"OPERACIONES",
+				"Funciones especiales del TPV",
+				createButtonGrid(
+						btnDescuentos = createPrimaryButton("DESCUENTOS", this::fireDescuentosClicked),
+						btnUltimosTickets = createPrimaryButton("ÚLTIMOS TICKETS", this::fireUltimosTicketsClicked)
+				)
+		));
 
 		root.add(Box.createVerticalStrut(12));
 
-		root.add(createSection("FLUJO DE VENTA", "Acciones sobre el pedido actual y la sesión del usuario",
-				createButtonGrid(btnNuevoPedido = createPrimaryButton("NUEVO PEDIDO", this::fireNuevoPedidoClicked),
-						btnCerrarSesion = createPrimaryButton("CERRAR SESIÓN", this::fireCerrarSesionClicked))));
+		root.add(createSection(
+				"FLUJO DE VENTA",
+				"Acciones sobre el pedido actual y la sesión del usuario",
+				createButtonGrid(
+						btnNuevoPedido = createPrimaryButton("NUEVO PEDIDO", this::fireNuevoPedidoClicked),
+						btnCerrarSesion = createPrimaryButton("CERRAR SESIÓN", this::fireCerrarSesionClicked)
+				)
+		));
 
 		root.add(Box.createVerticalStrut(12));
 
-		adminSection = createSection("ADMINISTRACIÓN", "Opciones visibles para encargado / administrador",
-				createButtonGrid(btnDevoluciones = createAdminButton("DEVOLUCIONES", this::fireDevolucionesClicked),
-						btnVolverAdmin = createAdminButton("VOLVER A ADMIN", this::fireVolverAdminClicked)));
+		adminSection = createSection(
+				"ADMINISTRACIÓN",
+				"Opciones visibles para encargado / administrador",
+				createButtonGrid(
+						btnDevoluciones = createAdminButton("DEVOLUCIONES", this::fireDevolucionesClicked),
+						btnMerma = createAdminButton("MERMA", this::fireMermaClicked),
+						btnVolverAdmin = createAdminButton("VOLVER A ADMIN", this::fireVolverAdminClicked)
+				)
+		);
 		root.add(adminSection);
 
 		root.add(Box.createVerticalStrut(18));
@@ -202,8 +222,10 @@ public class OpcionesPanel extends JPanel {
 	}
 
 	private Border createSectionBorder() {
-		return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER, 1, true),
-				new EmptyBorder(12, 12, 12, 12));
+		return BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(BORDER, 1, true),
+				new EmptyBorder(12, 12, 12, 12)
+		);
 	}
 
 	private JComponent createSeparator() {
@@ -257,7 +279,9 @@ public class OpcionesPanel extends JPanel {
 		button.setBackground(BG_BUTTON);
 		button.setOpaque(true);
 		button.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(123, 170, 145), 1, true), new EmptyBorder(18, 12, 18, 12)));
+				BorderFactory.createLineBorder(new Color(123, 170, 145), 1, true),
+				new EmptyBorder(18, 12, 18, 12)
+		));
 		button.setPreferredSize(new Dimension(220, 82));
 		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 	}
@@ -269,7 +293,9 @@ public class OpcionesPanel extends JPanel {
 		button.setBackground(BG_BUTTON_ADMIN);
 		button.setOpaque(true);
 		button.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(146, 183, 161), 1, true), new EmptyBorder(18, 12, 18, 12)));
+				BorderFactory.createLineBorder(new Color(146, 183, 161), 1, true),
+				new EmptyBorder(18, 12, 18, 12)
+		));
 		button.setPreferredSize(new Dimension(220, 82));
 		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 	}
@@ -281,7 +307,9 @@ public class OpcionesPanel extends JPanel {
 		button.setBackground(BG_BUTTON_ALT);
 		button.setOpaque(true);
 		button.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(120, 162, 140), 1, true), new EmptyBorder(14, 12, 14, 12)));
+				BorderFactory.createLineBorder(new Color(120, 162, 140), 1, true),
+				new EmptyBorder(14, 12, 14, 12)
+		));
 		button.setPreferredSize(new Dimension(200, 54));
 		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 	}
@@ -340,6 +368,12 @@ public class OpcionesPanel extends JPanel {
 		}
 	}
 
+	private void fireMermaClicked() {
+		if (actionListener != null) {
+			actionListener.onMermaClicked();
+		}
+	}
+
 	private void fireVolverAdminClicked() {
 		if (actionListener != null) {
 			actionListener.onVolverAdminClicked();
@@ -353,16 +387,14 @@ public class OpcionesPanel extends JPanel {
 	}
 
 	private void fireNuevoPedidoClicked() {
-		if(actionListener!=null) {
+		if (actionListener != null) {
 			actionListener.onNuevoPedidoClicked();
-			
 		}
 	}
 
 	private void fireCerrarSesionClicked() {
-		if(actionListener!=null) {
+		if (actionListener != null) {
 			actionListener.onCerrarSesionClicked();
-			
 		}
 	}
 }

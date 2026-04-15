@@ -16,7 +16,7 @@ import java.awt.*;
  */
 public abstract class BaseTpvFrame extends JFrame {
 
-    private final Runnable onLogoutNavigate;
+    protected final Runnable onLogoutNavigate;
     protected final AppServices appServices;
 
     private final TpvTopBar topBar;

@@ -9,13 +9,16 @@ import java.sql.PreparedStatement;
 /**
  * DAO para registrar movimientos de stock.
  *
+ * RESPONSABILIDAD:
+ * - insertar movimientos en movimiento_stock
+ *
  * IMPORTANTE:
  * - este DAO NO valida el XOR producto/ingrediente
  * - esa validación pertenece al Service
  *
- * AJUSTADO A TU TABLA REAL movimiento_stock:
- * - la columna de fecha se llama "fecha"
- * - id_merma e id_merma_item son opcionales y aquí no se usan
+ * AJUSTADO:
+ * - soporta también id_merma e id_merma_item
+ * - la columna fecha se inserta con NOW()
  */
 public class MovimientoStockDao {
 
@@ -27,12 +30,18 @@ public class MovimientoStockDao {
             tipo,
             cantidad,
             id_unidad,
+            id_merma,
+            id_merma_item,
             fecha,
             referencia,
             motivo
-        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)
         """;
 
+    /**
+     * Inserta un movimiento usando una conexión externa
+     * dentro de una transacción ya abierta.
+     */
     public void insert(Connection con, RegistrarMovimientoStockRequest request) {
         if (con == null) {
             throw new IllegalArgumentException("Connection no puede ser null");
@@ -65,8 +74,20 @@ public class MovimientoStockDao {
                 ps.setNull(6, java.sql.Types.INTEGER);
             }
 
-            ps.setString(7, request.getReferencia());
-            ps.setString(8, request.getMotivo());
+            if (request.getIdMerma() != null) {
+                ps.setInt(7, request.getIdMerma());
+            } else {
+                ps.setNull(7, java.sql.Types.INTEGER);
+            }
+
+            if (request.getIdMermaItem() != null) {
+                ps.setInt(8, request.getIdMermaItem());
+            } else {
+                ps.setNull(8, java.sql.Types.INTEGER);
+            }
+
+            ps.setString(9, request.getReferencia());
+            ps.setString(10, request.getMotivo());
 
             ps.executeUpdate();
 
@@ -76,7 +97,7 @@ public class MovimientoStockDao {
     }
 
     /**
-     * Variante cómoda por si en otro punto quieres insertar
+     * Variante cómoda por si se quiere insertar
      * fuera de una transacción externa.
      */
     public void insert(RegistrarMovimientoStockRequest request) {

@@ -1,5 +1,6 @@
 package ui.ventas;
 
+import enums.ModoOperacion;
 import model.TicketSession;
 
 import javax.swing.*;
@@ -12,6 +13,7 @@ public class BottomBarPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final TicketSession ticketSession;
+    private final ModoOperacion modoOperacion;
 
     private final Runnable onCobrar;
     private final Runnable onCancelar;
@@ -34,13 +36,28 @@ public class BottomBarPanel extends JPanel {
             Runnable onDescuentos,
             Runnable onEliminar
     ) {
+        this(ticketSession, ModoOperacion.VENTA, onCobrar, onCancelar, onOpciones, onDescuentos, onEliminar);
+    }
+
+    public BottomBarPanel(
+            TicketSession ticketSession,
+            ModoOperacion modoOperacion,
+            Runnable onCobrar,
+            Runnable onCancelar,
+            Runnable onOpciones,
+            Runnable onDescuentos,
+            Runnable onEliminar
+    ) {
         this.ticketSession = ticketSession;
+        this.modoOperacion = modoOperacion != null ? modoOperacion : ModoOperacion.VENTA;
         this.onCobrar = onCobrar;
         this.onCancelar = onCancelar;
         this.onOpciones = onOpciones;
         this.onDescuentos = onDescuentos;
         this.onEliminar = onEliminar;
         
+
+
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
         setBorder(new EmptyBorder(8, 8, 8, 8));
@@ -52,21 +69,30 @@ public class BottomBarPanel extends JPanel {
         left.setOpaque(false);
         left.add(lblTotal);
 
-        JPanel right = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel right = new JPanel(new GridLayout(1, 5, 10, 10));
         right.setOpaque(false);
 
         styleBtn(btnDescuentos);
         styleBtn(btnOpciones);
         styleBtn(btnCancelar);
         stylePrimaryBtn(btnCobrar);
-        
-        btnEliminar.setBackground(new Color(255,0,0));
+        styleDangerBtn(btnEliminar);
 
-        btnCobrar.addActionListener(e -> { if (onCobrar != null) onCobrar.run(); });
-        btnCancelar.addActionListener(e -> { if (onCancelar != null) onCancelar.run(); });
-        btnOpciones.addActionListener(e -> { if (onOpciones != null) onOpciones.run(); });
-        btnDescuentos.addActionListener(e -> { if (onDescuentos != null) onDescuentos.run(); });
-        btnEliminar.addActionListener(e->{if(onEliminar!=null) onEliminar.run();});
+        btnCobrar.addActionListener(e -> {
+            if (onCobrar != null) onCobrar.run();
+        });
+        btnCancelar.addActionListener(e -> {
+            if (onCancelar != null) onCancelar.run();
+        });
+        btnOpciones.addActionListener(e -> {
+            if (onOpciones != null) onOpciones.run();
+        });
+        btnDescuentos.addActionListener(e -> {
+            if (onDescuentos != null) onDescuentos.run();
+        });
+        btnEliminar.addActionListener(e -> {
+            if (onEliminar != null) onEliminar.run();
+        });
 
         right.add(btnDescuentos);
         right.add(btnOpciones);
@@ -77,14 +103,35 @@ public class BottomBarPanel extends JPanel {
         add(left, BorderLayout.WEST);
         add(right, BorderLayout.CENTER);
 
+        applyModeVisuals();
         refresh();
+    }
+
+    private void applyModeVisuals() {
+        if (modoOperacion == ModoOperacion.MERMA) {
+            btnCobrar.setText("REGISTRAR MERMA");
+            btnCancelar.setText("CANCELAR MERMA");
+            btnDescuentos.setVisible(false);
+        } else {
+            btnCobrar.setText("COBRAR");
+            btnCancelar.setText("CANCELAR");
+            btnDescuentos.setVisible(true);
+        }
     }
 
     public void refresh() {
         BigDecimal total = ticketSession.getTotal();
         lblTotal.setText("TOTAL: " + total.toPlainString() + "€");
-        btnCobrar.setEnabled(!ticketSession.isEmpty());
-        btnCancelar.setEnabled(!ticketSession.isEmpty());
+
+        boolean hasItems = !ticketSession.isEmpty();
+
+        btnCobrar.setEnabled(hasItems);
+        btnCancelar.setEnabled(hasItems||modoOperacion==ModoOperacion.MERMA);
+        btnEliminar.setEnabled(hasItems);
+        btnDescuentos.setEnabled(hasItems && modoOperacion != ModoOperacion.MERMA);
+
+        revalidate();
+        repaint();
     }
 
     private void styleBtn(JButton b) {
@@ -98,5 +145,13 @@ public class BottomBarPanel extends JPanel {
     private void stylePrimaryBtn(JButton b) {
         styleBtn(b);
         b.setFont(new Font("Monospaced", Font.BOLD, 18));
+    }
+
+    private void styleDangerBtn(JButton b) {
+        b.setFocusPainted(false);
+        b.setFont(new Font("Monospaced", Font.BOLD, 16));
+        b.setBackground(new Color(220, 53, 69));
+        b.setForeground(Color.WHITE);
+        b.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 }

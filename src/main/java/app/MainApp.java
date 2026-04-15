@@ -18,6 +18,8 @@ import dao.DevolucionTicketJsonDao;
 import dao.ExtraDao;
 import dao.ExtraRecetaReglaDao;
 import dao.FichajeDao;
+import dao.MermaDao;
+import dao.MermaItemDao;
 import dao.MovimientoStockDao;
 import dao.PersonalizacionDao;
 import dao.PersonalizacionRecetaReglaDao;
@@ -39,8 +41,8 @@ import dao.VentaRegistroDao;
 import facade.CajaFacade;
 import facade.DevolucionFacade;
 import facade.FichajeFacade;
+import facade.MermaFacade;
 import facade.VentaFacade;
-import model.ComboDefinition;
 import service.AppServices;
 import service.AuthService;
 import service.CatalogoService;
@@ -53,6 +55,7 @@ import service.DevolucionTicketService;
 import service.DisponibilidadExtraService;
 import service.DisponibilidadProductoService;
 import service.FichajeService;
+import service.MermaService;
 import service.MovimientoStockService;
 import service.ProductoPersonalizacionService;
 import service.RecipeResolverService;
@@ -122,14 +125,20 @@ public class MainApp {
         MovimientoStockDao movimientoStockDao = new MovimientoStockDao();
 
         // =====================================================
-        // 7) DAOs DE COMBOS / DESCUENTOS
+        // 7) DAOs DE MERMA
+        // =====================================================
+        MermaDao mermaDao = new MermaDao();
+        MermaItemDao mermaItemDao = new MermaItemDao();
+
+        // =====================================================
+        // 8) DAOs DE COMBOS / DESCUENTOS
         // =====================================================
         ComboDao comboDao = new ComboDao();
         ComboItemDao comboItemDao = new ComboItemDao();
         DescuentoDao descuentoDao = new DescuentoDao();
 
         // =====================================================
-        // 8) DAOs DE DEVOLUCIONES
+        // 9) DAOs DE DEVOLUCIONES
         // =====================================================
         DevolucionDao devolucionDao = new DevolucionDao();
         DevolucionItemDao devolucionItemDao = new DevolucionItemDao();
@@ -147,7 +156,7 @@ public class MainApp {
         );
 
         // =====================================================
-        // 9) SERVICES GENERALES
+        // 10) SERVICES GENERALES
         // =====================================================
         AuthService authService = new AuthService(usuarioDao);
         FichajeService fichajeService = new FichajeService(fichajeDao, sesionCajaDao);
@@ -156,7 +165,7 @@ public class MainApp {
         UsuarioService usuarioService = new UsuarioService(usuarioDao);
 
         // =====================================================
-        // 10) SERVICES DE CATÁLOGO / CUSTOMIZACIÓN
+        // 11) SERVICES DE CATÁLOGO / CUSTOMIZACIÓN
         // =====================================================
         CatalogoService catalogoService = new CatalogoService(
                 categoriaDao,
@@ -174,7 +183,7 @@ public class MainApp {
                 );
 
         // =====================================================
-        // 11) SERVICES DE RECETA / STOCK INGREDIENTE / MOVIMIENTOS
+        // 12) SERVICES DE RECETA / STOCK INGREDIENTE / MOVIMIENTOS
         // =====================================================
         RecipeResolverService recipeResolverService =
                 new RecipeResolverService(
@@ -197,7 +206,18 @@ public class MainApp {
                 );
 
         // =====================================================
-        // 12) SERVICES DE VENTAS / IMPRESIÓN / TICKETS
+        // 13) SERVICES DE MERMA
+        // =====================================================
+        MermaService mermaService = new MermaService(
+                mermaDao,
+                mermaItemDao,
+                recipeResolverService,
+                stockIngredienteService, 
+                movimientoStockService
+        );
+
+        // =====================================================
+        // 14) SERVICES DE VENTAS / IMPRESIÓN / TICKETS
         // =====================================================
         /**
          * AJUSTE NUEVO IMPORTANTE:
@@ -219,7 +239,7 @@ public class MainApp {
         TicketClienteService ticketClienteService = new TicketClienteService(ticketJsonDao);
 
         // =====================================================
-        // 13) SERVICES DE DISPONIBILIDAD / STOCK PRODUCTO
+        // 15) SERVICES DE DISPONIBILIDAD / STOCK PRODUCTO
         // =====================================================
         DisponibilidadProductoService disponibilidadProductoService =
                 new DisponibilidadProductoService(stockProductoDao);
@@ -228,14 +248,14 @@ public class MainApp {
                 new DisponibilidadExtraService(extraDao);
 
         // =====================================================
-        // 14) SERVICES DE COMBOS / DESCUENTOS
+        // 16) SERVICES DE COMBOS / DESCUENTOS
         // =====================================================
         ComboService comboService = new ComboService(comboDao, comboItemDao);
         ComboMatcherService comboMatcherService = new ComboMatcherService();
         DescuentoService descuentoService = new DescuentoService(descuentoDao);
 
         // =====================================================
-        // 15) SERVICES DE DEVOLUCIONES
+        // 17) SERVICES DE DEVOLUCIONES
         // =====================================================
         DevolucionService devolucionService = new DevolucionService(
                 ventaDao,
@@ -250,15 +270,16 @@ public class MainApp {
                 new DevolucionTicketService(devolucionTicketJsonDao);
 
         // =====================================================
-        // 16) FACADES
+        // 18) FACADES
         // =====================================================
         FichajeFacade fichajeFacade = new FichajeFacade(usuarioDao, fichajeService);
         CajaFacade cajaFacade = new CajaFacade(sesionCajaService);
         VentaFacade ventaFacade = new VentaFacade(ventaService);
         DevolucionFacade devolucionFacade = new DevolucionFacade(devolucionService);
+        MermaFacade mermaFacade = new MermaFacade(mermaService);
 
         // =====================================================
-        // 17) APP SERVICES
+        // 19) APP SERVICES
         // =====================================================
         AppServices appServices = new AppServices(
                 authService,
@@ -285,11 +306,13 @@ public class MainApp {
 
                 devolucionService,
                 devolucionFacade,
-                devolucionTicketService
+                devolucionTicketService,
+
+                mermaFacade
         );
 
         // =====================================================
-        // 18) CONTEXTO INICIAL DE CAJA / SUCURSAL
+        // 20) CONTEXTO INICIAL DE CAJA / SUCURSAL
         // =====================================================
         // TODO:
         // - de momento se deja fijo
@@ -300,7 +323,7 @@ public class MainApp {
         AppContext.setIdSucursal(1);
 
         // =====================================================
-        // 19) UI
+        // 21) UI
         // =====================================================
         SwingUtilities.invokeLater(() -> {
             LoginScreen screen = new LoginScreen(appServices, idCaja);

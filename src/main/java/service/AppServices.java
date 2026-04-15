@@ -3,6 +3,7 @@ package service;
 import facade.CajaFacade;
 import facade.DevolucionFacade;
 import facade.FichajeFacade;
+import facade.MermaFacade;
 import facade.VentaFacade;
 import model.ComboDefinition;
 
@@ -23,6 +24,7 @@ import java.util.List;
  * - cache en memoria de combos activos
  * - soporte para devoluciones
  * - soporte para lectura de ticket de devolución
+ * - soporte para merma
  */
 public class AppServices {
 
@@ -100,7 +102,20 @@ public class AppServices {
     public final DevolucionTicketService devolucionTicketService;
 
     // =====================================================
-    // 7) CONSTRUCTOR
+    // 7) SERVICIOS DE MERMA
+    // =====================================================
+
+    /**
+     * Facade principal del caso de uso de merma.
+     *
+     * Uso previsto:
+     * - registrar mermas desde VentasFrame en ModoOperacion.MERMA
+     * - reutilizar la misma arquitectura UI -> Facade -> Service -> DAO
+     */
+    public final MermaFacade mermaFacade;
+
+    // =====================================================
+    // 8) CONSTRUCTOR
     // =====================================================
 
     public AppServices(
@@ -128,7 +143,9 @@ public class AppServices {
 
             DevolucionService devolucionService,
             DevolucionFacade devolucionFacade,
-            DevolucionTicketService devolucionTicketService
+            DevolucionTicketService devolucionTicketService,
+
+            MermaFacade mermaFacade
     ) {
         // -----------------------------
         // 1) Servicios generales
@@ -176,10 +193,15 @@ public class AppServices {
         this.devolucionService = devolucionService;
         this.devolucionFacade = devolucionFacade;
         this.devolucionTicketService = devolucionTicketService;
+
+        // -----------------------------
+        // 7) Servicios de merma
+        // -----------------------------
+        this.mermaFacade = mermaFacade;
     }
 
     // =====================================================
-    // 8) MÉTODOS DE SOPORTE PARA COMBOS
+    // 9) MÉTODOS DE SOPORTE PARA COMBOS
     // =====================================================
 
     /**

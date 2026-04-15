@@ -25,8 +25,14 @@ import dtoS.RegistrarVentaResultDTO;
 import dtoS.TamanoDTO;
 import dtoS.TamanoPrecioDTO;
 import dtoS.TicketClienteDTO;
+import dtoS.MermaRequest;
+import dtoS.MermaItemRequest;
+import dtoS.MermaExtraRequest;
+import dtoS.MermaPersonalizacionRequest;
+import dtoS.MermaResultDTO;
 import enums.MetodoPago;
 import enums.TipoServicio;
+import enums.ModoOperacion;
 import model.CobroSession;
 import model.DescuentoAplicado;
 import model.TicketCombo;
@@ -45,6 +51,8 @@ import ui.dialog.BuscarProductoDialog;
 import ui.dialog.CodigoPromocionalDialog;
 import ui.dialog.CodigoPromocionalDialogResult;
 import ui.dialog.DisponibilidadItemsDialog;
+import ui.dialog.MermaDialog;
+import ui.dialog.MermaDialogResult;
 import ui.dialog.DescuentoEmpleadoDialog;
 import ui.dialog.DescuentoEmpleadoDialogResult;
 import ui.dialog.DevolucionesDialog;
@@ -100,6 +108,8 @@ public class VentasFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private final AppServices services;
+	private final ModoOperacion modoOperacion;
+	private final MermaDialogResult mermaDialogResult;
 
 	// =====================================================
 	// 2) ESTADO EN MEMORIA DE LA VENTA ACTUAL
@@ -141,30 +151,51 @@ public class VentasFrame extends BaseTpvFrame {
 	// 5) CONSTRUCTOR
 	// =====================================================
 
+	// =====================================================
+	// CONSTRUCTORES NECESARIOS DE VentasFrame
+	// =====================================================
+
 	public VentasFrame(Runnable onLogoutNavigate, Runnable onBack, AppServices services) {
-		super(buildTitleWithCaja(), onLogoutNavigate, services);
-		this.services = services;
-		this.onLogoutNavigateAction = onLogoutNavigate;
-		this.onBackToAdminAction = onBack;
-
-		requireAuthenticatedOrExit();
-
-		// Guard: debe existir sesión de caja operativa en AppContext
-		AppContext.getSesionCajaActual();
-
-		buildUI(onBack);
-		loadCategorias();
-		configureOpcionesByRole();
-		refreshAll();
+	    this(onLogoutNavigate, onBack, services, ModoOperacion.VENTA, null);
 	}
 
-	private static String buildTitleWithCaja() {
+	public VentasFrame(Runnable onLogoutNavigate,
+	                   Runnable onBack,
+	                   AppServices services,
+	                   ModoOperacion modoOperacion) {
+	    this(onLogoutNavigate, onBack, services, modoOperacion, null);
+	}
+
+	public VentasFrame(Runnable onLogoutNavigate,
+	                   Runnable onBack,
+	                   AppServices services,
+	                   ModoOperacion modoOperacion,
+	                   MermaDialogResult mermaDialogResult) {
+	    super(buildTitleWithCaja(modoOperacion), onLogoutNavigate, services);
+
+	    this.services = services;
+	    this.onLogoutNavigateAction = onLogoutNavigate;
+	    this.onBackToAdminAction = onBack;
+	    this.modoOperacion = modoOperacion != null ? modoOperacion : ModoOperacion.VENTA;
+	    this.mermaDialogResult = mermaDialogResult;
+
+	    requireAuthenticatedOrExit();
+	    AppContext.getSesionCajaActual();
+
+	    buildUI(onBack);
+	    loadCategorias();
+	    configureOpcionesByRole();
+	    refreshAll();
+	}
+
+	private static String buildTitleWithCaja(ModoOperacion modoOperacion) {
 		String caja = "(sin caja)";
 		try {
 			caja = AppContext.getSesionCajaActual().getNombreCaja();
 		} catch (Exception ignored) {
 		}
-		return "Ventas - Caja: " + caja;
+		String prefijo = modoOperacion == ModoOperacion.MERMA ? "Merma" : "Ventas";
+		return prefijo + " - Caja: " + caja;
 	}
 
 	// =====================================================
@@ -306,6 +337,11 @@ public class VentasFrame extends BaseTpvFrame {
 			public void onCerrarSesionClicked() {
 				onCerrarSesion();
 			}
+
+			@Override
+			public void onMermaClicked() {
+				onMerma();
+			}
 		});
 
 		centerPanel.setDescuentoActionListener(new DescuentoPanel.DescuentoActionListener() {
@@ -355,8 +391,15 @@ public class VentasFrame extends BaseTpvFrame {
 		// -------------------------------------------------
 		// SOUTH: barra inferior de acciones
 		// -------------------------------------------------
-		bottomBarPanel = new BottomBarPanel(ticketSession, this::onCobrar, this::onCancelar, this::onOpciones,
-				this::onDescuentos, this::onEliminar);
+		bottomBarPanel = new BottomBarPanel(
+		        ticketSession,
+		        modoOperacion,
+		        this::onCobrar,
+		        this::onCancelar,
+		        this::onOpciones,
+		        this::onDescuentos,
+		        this::onEliminar
+		);
 		root.add(bottomBarPanel, BorderLayout.SOUTH);
 
 		main.add(root, BorderLayout.CENTER);
@@ -469,20 +512,46 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void onCancelar() {
-		int res = JOptionPane.showConfirmDialog(this, "¿Cancelar el pedido actual?", "Cancelar venta",
-				JOptionPane.YES_NO_OPTION);
 
-		if (res == JOptionPane.YES_OPTION) {
-			ticketSession.clear();
-			cobroSession.clear();
+	    if (modoOperacion == ModoOperacion.MERMA) {
 
-			centerPanel.getNombrePedidoPanel().clear();
-			centerPanel.getPagoPanel().clear();
-			centerPanel.showCatalogo();
-			centerPanel.clearCustomizationData();
+	        int opcion = JOptionPane.showConfirmDialog(
+	                this,
+	                "¿Salir del modo merma?",
+	                "Merma",
+	                JOptionPane.YES_NO_OPTION,
+	                JOptionPane.WARNING_MESSAGE
+	        );
 
-			refreshAll();
-		}
+	        if (opcion == JOptionPane.YES_OPTION) {
+	            dispose();
+
+	            if (onBackToAdminAction != null) {
+	                onBackToAdminAction.run();
+	            }
+	        }
+
+	        return;
+	    }
+
+	    int res = JOptionPane.showConfirmDialog(
+	            this,
+	            "¿Cancelar el pedido actual?",
+	            "Cancelar venta",
+	            JOptionPane.YES_NO_OPTION
+	    );
+
+	    if (res == JOptionPane.YES_OPTION) {
+	        ticketSession.clear();
+	        cobroSession.clear();
+
+	        centerPanel.getNombrePedidoPanel().clear();
+	        centerPanel.getPagoPanel().clear();
+	        centerPanel.showCatalogo();
+	        centerPanel.clearCustomizationData();
+
+	        refreshAll();
+	    }
 	}
 
 	// =====================================================
@@ -620,6 +689,12 @@ public class VentasFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private void onDescuentos() {
+		if (isModoMerma()) {
+			JOptionPane.showMessageDialog(this, "En modo merma no están disponibles descuentos ni promociones.",
+					"Modo merma", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
 		if (ticketSession.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "No hay productos en el ticket.", "Descuentos",
 					JOptionPane.WARNING_MESSAGE);
@@ -817,6 +892,11 @@ public class VentasFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private void onCobrar() {
+		if (modoOperacion == ModoOperacion.MERMA) {
+			onRegistrarMerma();
+			return;
+		}
+
 		if (ticketSession.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "No hay productos en el ticket.", "Cobrar",
 					JOptionPane.WARNING_MESSAGE);
@@ -1009,66 +1089,66 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private RegistrarVentaItemRequest buildItemRequest(TicketItem item, int ticketItemIndex) {
-	    RegistrarVentaItemRequest dto = new RegistrarVentaItemRequest();
+		RegistrarVentaItemRequest dto = new RegistrarVentaItemRequest();
 
-	    BigDecimal precioUnitario = safe(item.getPrecioBase());
-	    BigDecimal subtotalBruto = safe(item.getSubtotal());
-	    BigDecimal importeDescuentoLinea = calcularImporteDescuentoLinea(ticketItemIndex);
-	    BigDecimal subtotalFinal = subtotalBruto.subtract(importeDescuentoLinea);
+		BigDecimal precioUnitario = safe(item.getPrecioBase());
+		BigDecimal subtotalBruto = safe(item.getSubtotal());
+		BigDecimal importeDescuentoLinea = calcularImporteDescuentoLinea(ticketItemIndex);
+		BigDecimal subtotalFinal = subtotalBruto.subtract(importeDescuentoLinea);
 
-	    if (subtotalFinal.compareTo(BigDecimal.ZERO) < 0) {
-	        subtotalFinal = BigDecimal.ZERO;
-	    }
+		if (subtotalFinal.compareTo(BigDecimal.ZERO) < 0) {
+			subtotalFinal = BigDecimal.ZERO;
+		}
 
-	    dto.setIdProducto(item.getProducto().getIdProducto());
-	    dto.setNombreProducto(item.getProducto().getNombre());
-	    dto.setCantidad(1);
+		dto.setIdProducto(item.getProducto().getIdProducto());
+		dto.setNombreProducto(item.getProducto().getNombre());
+		dto.setCantidad(1);
 
-	    dto.setPrecioUnitario(precioUnitario);
-	    dto.setSubtotalBruto(subtotalBruto);
-	    dto.setImporteDescuentoLinea(importeDescuentoLinea);
-	    dto.setSubtotalFinal(subtotalFinal);
+		dto.setPrecioUnitario(precioUnitario);
+		dto.setSubtotalBruto(subtotalBruto);
+		dto.setImporteDescuentoLinea(importeDescuentoLinea);
+		dto.setSubtotalFinal(subtotalFinal);
 
-	    BigDecimal ivaPorcentaje = safe(item.getProducto().getIvaPorcentaje());
-	    dto.setIva(calcularIvaIncluido(subtotalFinal, ivaPorcentaje));
+		BigDecimal ivaPorcentaje = safe(item.getProducto().getIvaPorcentaje());
+		dto.setIva(calcularIvaIncluido(subtotalFinal, ivaPorcentaje));
 
-	    dto.setDescripcionPersonalizacion(buildDescripcionPersonalizacion(item));
+		dto.setDescripcionPersonalizacion(buildDescripcionPersonalizacion(item));
 
-	    // =====================================================
-	    // NUEVO BLOQUE: SNAPSHOT DE CAFÉ
-	    // =====================================================
-	    dto.setIdTipoCafeSeleccionado(item.getIdTipoCafeSeleccionado());
-	    dto.setNombreTipoCafeSnapshot(item.getNombreTipoCafeSeleccionado());
-	    dto.setSuplementoTipoCafe(safe(item.getSuplementoTipoCafe()));
+		// =====================================================
+		// NUEVO BLOQUE: SNAPSHOT DE CAFÉ
+		// =====================================================
+		dto.setIdTipoCafeSeleccionado(item.getIdTipoCafeSeleccionado());
+		dto.setNombreTipoCafeSnapshot(item.getNombreTipoCafeSeleccionado());
+		dto.setSuplementoTipoCafe(safe(item.getSuplementoTipoCafe()));
 
-	    List<RegistrarVentaExtraRequest> extras = new ArrayList<>();
-	    for (TicketExtra extra : item.getExtras()) {
-	        extras.add(buildExtraRequest(extra));
-	    }
-	    dto.setExtras(extras);
-	    
-	    dto.setIdTamano(item.getTamano().getIdTamano());
-	    dto.setNombreTamano(item.getTamano().getNombre());
+		List<RegistrarVentaExtraRequest> extras = new ArrayList<>();
+		for (TicketExtra extra : item.getExtras()) {
+			extras.add(buildExtraRequest(extra));
+		}
+		dto.setExtras(extras);
 
-	    dto.setIdIngredienteTipoCafeSeleccionado(item.getIdIngredienteTipoCafeSeleccionado());
+		dto.setIdTamano(item.getTamano().getIdTamano());
+		dto.setNombreTamano(item.getTamano().getNombre());
 
-	    List<RegistrarVentaPersonalizacionRequest> pers = new ArrayList<>();
-	    if (item.getPersonalizaciones() != null && !item.getPersonalizaciones().isEmpty()) {
-	        for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
-	            if (p == null) {
-	                continue;
-	            }
+		dto.setIdIngredienteTipoCafeSeleccionado(item.getIdIngredienteTipoCafeSeleccionado());
 
-	            RegistrarVentaPersonalizacionRequest rp = new RegistrarVentaPersonalizacionRequest();
-	            rp.setIdPersonalizacion(p.getIdPersonalizacion());
-	            rp.setNombrePersonalizacion(p.getNombre());
-	            rp.setPrecioPersonalizacion(p.getPrecio());
-	            pers.add(rp);
-	        }
-	    }
-	    dto.setPersonalizaciones(pers);
+		List<RegistrarVentaPersonalizacionRequest> pers = new ArrayList<>();
+		if (item.getPersonalizaciones() != null && !item.getPersonalizaciones().isEmpty()) {
+			for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+				if (p == null) {
+					continue;
+				}
 
-	    return dto;
+				RegistrarVentaPersonalizacionRequest rp = new RegistrarVentaPersonalizacionRequest();
+				rp.setIdPersonalizacion(p.getIdPersonalizacion());
+				rp.setNombrePersonalizacion(p.getNombre());
+				rp.setPrecioPersonalizacion(p.getPrecio());
+				pers.add(rp);
+			}
+		}
+		dto.setPersonalizaciones(pers);
+
+		return dto;
 	}
 
 	/**
@@ -1224,42 +1304,42 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private String buildDescripcionPersonalizacion(TicketItem item) {
-	    try {
-	        Map<String, Object> root = new LinkedHashMap<>();
+		try {
+			Map<String, Object> root = new LinkedHashMap<>();
 
-	        root.put("tamano", item.getTamano() != null ? item.getTamano().getNombre() : null);
+			root.put("tamano", item.getTamano() != null ? item.getTamano().getNombre() : null);
 
-	        // =====================================================
-	        // NUEVO BLOQUE: meter también el café en el JSON interno
-	        // =====================================================
-	        root.put("tipoCafe", item.getNombreTipoCafeSeleccionado());
-	        root.put("suplementoTipoCafe", safe(item.getSuplementoTipoCafe()));
+			// =====================================================
+			// NUEVO BLOQUE: meter también el café en el JSON interno
+			// =====================================================
+			root.put("tipoCafe", item.getNombreTipoCafeSeleccionado());
+			root.put("suplementoTipoCafe", safe(item.getSuplementoTipoCafe()));
 
-	        List<String> personalizaciones = new ArrayList<>();
-	        if (item.getPersonalizaciones() != null && !item.getPersonalizaciones().isEmpty()) {
-	            for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
-	                if (p != null && p.getNombre() != null && !p.getNombre().isBlank()) {
-	                    personalizaciones.add(p.getNombre().trim());
-	                }
-	            }
-	        }
-	        root.put("personalizaciones", personalizaciones);
+			List<String> personalizaciones = new ArrayList<>();
+			if (item.getPersonalizaciones() != null && !item.getPersonalizaciones().isEmpty()) {
+				for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+					if (p != null && p.getNombre() != null && !p.getNombre().isBlank()) {
+						personalizaciones.add(p.getNombre().trim());
+					}
+				}
+			}
+			root.put("personalizaciones", personalizaciones);
 
-	        List<String> askMes = new ArrayList<>();
-	        if (item.getAskMes() != null && !item.getAskMes().isEmpty()) {
-	            for (String ask : item.getAskMes()) {
-	                if (ask != null && !ask.isBlank()) {
-	                    askMes.add(ask.trim());
-	                }
-	            }
-	        }
-	        root.put("askMes", askMes);
+			List<String> askMes = new ArrayList<>();
+			if (item.getAskMes() != null && !item.getAskMes().isEmpty()) {
+				for (String ask : item.getAskMes()) {
+					if (ask != null && !ask.isBlank()) {
+						askMes.add(ask.trim());
+					}
+				}
+			}
+			root.put("askMes", askMes);
 
-	        return objectMapper.writeValueAsString(root);
+			return objectMapper.writeValueAsString(root);
 
-	    } catch (JsonProcessingException e) {
-	        throw new RuntimeException("Error construyendo JSON de descripcion_personalizacion.", e);
-	    }
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error construyendo JSON de descripcion_personalizacion.", e);
+		}
 	}
 
 	// =====================================================
@@ -1311,48 +1391,48 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private ColaItemDescripcionDTO buildColaItemDescripcion(TicketItem item) {
-	    ColaItemDescripcionDTO dto = new ColaItemDescripcionDTO();
+		ColaItemDescripcionDTO dto = new ColaItemDescripcionDTO();
 
-	    dto.setNombrePedido(normalizarNombrePedido(cobroSession.getNombrePedido()));
-	    dto.setTipoServicio(cobroSession.getTipoServicio() != null
-	            ? cobroSession.getTipoServicio().name()
-	            : TipoServicio.PARA_TOMAR.name());
+		dto.setNombrePedido(normalizarNombrePedido(cobroSession.getNombrePedido()));
+		dto.setTipoServicio(cobroSession.getTipoServicio() != null ? cobroSession.getTipoServicio().name()
+				: TipoServicio.PARA_TOMAR.name());
 
-	    dto.setProducto(item.getProducto() != null ? item.getProducto().getNombre() : "SIN_PRODUCTO");
-	    dto.setTamano(item.getTamano() != null ? item.getTamano().getNombre() : "");
-	    dto.setCantidad(1);
+		dto.setProducto(item.getProducto() != null ? item.getProducto().getNombre() : "SIN_PRODUCTO");
+		dto.setTamano(item.getTamano() != null ? item.getTamano().getNombre() : "");
+		dto.setCantidad(1);
 
-	    // =====================================================
-	    // NUEVO BLOQUE: snapshot de café para cola/monitor
-	    // =====================================================
-	    dto.setTipoCafe(item.getNombreTipoCafeSeleccionado());
+		// =====================================================
+		// NUEVO BLOQUE: snapshot de café para cola/monitor
+		// =====================================================
+		dto.setTipoCafe(item.getNombreTipoCafeSeleccionado());
 
-	    if (item.getExtras() != null && !item.getExtras().isEmpty()) {
-	        for (TicketExtra extra : item.getExtras()) {
-	            if (extra != null && extra.getNombre() != null && !extra.getNombre().isBlank()) {
-	                dto.addExtra(extra.getNombre().trim());
-	            }
-	        }
-	    }
+		if (item.getExtras() != null && !item.getExtras().isEmpty()) {
+			for (TicketExtra extra : item.getExtras()) {
+				if (extra != null && extra.getNombre() != null && !extra.getNombre().isBlank()) {
+					dto.addExtra(extra.getNombre().trim());
+				}
+			}
+		}
 
-	    if (item.getPersonalizaciones() != null && !item.getPersonalizaciones().isEmpty()) {
-	        for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
-	            if (p != null && p.getNombre() != null && !p.getNombre().isBlank()) {
-	                dto.addPersonalizacion(p.getNombre().trim());
-	            }
-	        }
-	    }
+		if (item.getPersonalizaciones() != null && !item.getPersonalizaciones().isEmpty()) {
+			for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+				if (p != null && p.getNombre() != null && !p.getNombre().isBlank()) {
+					dto.addPersonalizacion(p.getNombre().trim());
+				}
+			}
+		}
 
-	    if (item.getAskMes() != null && !item.getAskMes().isEmpty()) {
-	        for (String ask : item.getAskMes()) {
-	            if (ask != null && !ask.isBlank()) {
-	                dto.addAskMe(ask.trim());
-	            }
-	        }
-	    }
+		if (item.getAskMes() != null && !item.getAskMes().isEmpty()) {
+			for (String ask : item.getAskMes()) {
+				if (ask != null && !ask.isBlank()) {
+					dto.addAskMe(ask.trim());
+				}
+			}
+		}
 
-	    return dto;
+		return dto;
 	}
+
 	private void finalizarCobroTrasPersistencia(RegistrarVentaResultDTO result) {
 		int idVenta = result.getIdVenta();
 
@@ -1485,6 +1565,11 @@ public class VentasFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private void onOpciones() {
+		if (isModoMerma()) {
+			JOptionPane.showMessageDialog(this, "En modo merma no están disponibles las opciones comerciales.",
+					"Modo merma", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
 		centerPanel.showOpciones();
 	}
 
@@ -1504,6 +1589,12 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void onReimprimir() {
+		if (isModoMerma()) {
+			JOptionPane.showMessageDialog(this, "En modo merma no está disponible la reimpresión de tickets.",
+					"Modo merma", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
 		try {
 			int idSesion = AppContext.getSesionCajaActual().getIdSesion();
 
@@ -1521,11 +1612,23 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void onUltimosTickets() {
+		if (isModoMerma()) {
+			JOptionPane.showMessageDialog(this, "En modo merma no está disponible la consulta de tickets.",
+					"Modo merma", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
 		TicketsHoyDialog dialog = new TicketsHoyDialog(this, services);
 		dialog.showDialog();
 	}
 
 	private void onDevoluciones() {
+		if (isModoMerma()) {
+			JOptionPane.showMessageDialog(this, "En modo merma no está disponible la devoluciones.", "Modo merma",
+					JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
 		try {
 			DevolucionesDialog dialog = new DevolucionesDialog(this, services);
 			dialog.showDialog();
@@ -1735,7 +1838,7 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void configureOpcionesByRole() {
-		centerPanel.setOpcionesAdminMode(isAdminActual());
+		centerPanel.setOpcionesAdminMode(!isModoMerma() && isAdminActual());
 	}
 
 	private enums.CustomizationMode resolveMode(TicketItem item) {
@@ -1791,6 +1894,12 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void recalcularPromocionesSegunPrioridad() {
+		if (isModoMerma()) {
+			ticketSession.clearAppliedCombos();
+			ticketSession.clearDiscount();
+			return;
+		}
+
 		if (ticketSession.hasDiscount()) {
 			recalcularDescuentoAplicadoSiExiste();
 
@@ -1804,43 +1913,43 @@ public class VentasFrame extends BaseTpvFrame {
 			recalcularCombosAutomaticos();
 		}
 	}
-	
+
 	// =====================================================
 	// 6) MÉTODO NUEVO
 //	    Gestión del click en la card CAFE.
 	// =====================================================
 
 	private void onCenterTipoCafeClicked(TipoCafeDTO tipoCafe) {
-	    if (tipoCafe == null) {
-	        return;
-	    }
+		if (tipoCafe == null) {
+			return;
+		}
 
-	    TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
-	    if (selectedRow == null) {
-	        return;
-	    }
+		TicketRow selectedRow = ticketSession.getSelectedRowOrNull();
+		if (selectedRow == null) {
+			return;
+		}
 
-	    int itemIndex = selectedRow.getItemIndex();
-	    if (itemIndex < 0) {
-	        return;
-	    }
+		int itemIndex = selectedRow.getItemIndex();
+		if (itemIndex < 0) {
+			return;
+		}
 
-	    // =================================================
-	    // NUEVO:
-	    // guardar el café seleccionado en el item actual.
-	    // =================================================
-	    ticketSession.changeTipoCafe(itemIndex, tipoCafe);
-	    ticketSession.selectItemRow(itemIndex);
+		// =================================================
+		// NUEVO:
+		// guardar el café seleccionado en el item actual.
+		// =================================================
+		ticketSession.changeTipoCafe(itemIndex, tipoCafe);
+		ticketSession.selectItemRow(itemIndex);
 
-	    // =================================================
-	    // IMPORTANTE:
-	    // si hay descuento aplicado, hay que recalcularlo
-	    // porque el subtotal del item puede cambiar por
-	    // el suplemento del café.
-	    // =================================================
-	    recalcularDescuentoAplicadoSiExiste();
+		// =================================================
+		// IMPORTANTE:
+		// si hay descuento aplicado, hay que recalcularlo
+		// porque el subtotal del item puede cambiar por
+		// el suplemento del café.
+		// =================================================
+		recalcularDescuentoAplicadoSiExiste();
 
-	    refreshAll();
+		refreshAll();
 	}
 	// =====================================================
 	// 7) MÉTODO NUEVO
@@ -1848,18 +1957,370 @@ public class VentasFrame extends BaseTpvFrame {
 //	    cuando se crea el item en el ticket.
 	// =====================================================
 
-	private void applyDefaultTipoCafeIfExists(int itemIndex, int idProducto) {
-	    List<TipoCafeDTO> tiposCafe = services.productoPersonalizacionService.getTiposCafeByProducto(idProducto);
+	private boolean isModoMerma() {
+		return modoOperacion == ModoOperacion.MERMA;
+	}
 
-	    if (tiposCafe == null || tiposCafe.isEmpty()) {
+	private void onRegistrarMerma() {
+		try {
+			MermaRequest request = buildMermaRequestFromDialog();
+			MermaResultDTO result = services.mermaFacade.registrarMerma(request);
+
+			JOptionPane.showMessageDialog(this, "Merma registrada correctamente.\nID merma: " + result.getIdMerma(),
+					"Merma registrada", JOptionPane.INFORMATION_MESSAGE);
+
+			clearAfterMerma();
+
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Error registrando la merma:\n" + e.getMessage(), "Error",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+	}
+
+	private MermaRequest buildMermaRequestFromDialog() {
+		if (mermaDialogResult == null || !mermaDialogResult.isConfirmed()) {
+			throw new IllegalStateException("No hay contexto válido de merma.");
+		}
+
+		if (ticketSession == null || ticketSession.getItems() == null || ticketSession.getItems().isEmpty()) {
+			throw new IllegalStateException("No hay items en el ticket para registrar como merma.");
+		}
+
+		MermaRequest request = new MermaRequest();
+		request.setTipoMerma("PRODUCTO_TERMINADO");
+		request.setOrigen("VENTAS");
+		request.setMotivo(mermaDialogResult.getMotivo());
+		request.setObservaciones(mermaDialogResult.getObservaciones());
+
+		List<MermaItemRequest> items = new ArrayList<>();
+
+		for (TicketItem item : ticketSession.getItems()) {
+			if (item == null || item.getProducto() == null) {
+				continue;
+			}
+
+			MermaItemRequest mi = new MermaItemRequest();
+			mi.setIdProducto(item.getProducto().getIdProducto());
+			mi.setNombreProductoSnapshot(item.getProducto().getNombre());
+
+			if (item.getTamano() != null) {
+				mi.setIdTamano(item.getTamano().getIdTamano());
+				mi.setNombreTamanoSnapshot(item.getTamano().getNombre());
+			}
+
+			mi.setIdTipoCafeSeleccionado(item.getIdTipoCafeSeleccionado());
+			mi.setNombreTipoCafeSnapshot(item.getNombreTipoCafeSeleccionado());
+			mi.setIdIngredienteTipoCafeSeleccionado(item.getIdIngredienteTipoCafeSeleccionado());
+			mi.setSuplementoTipoCafe(safe(item.getSuplementoTipoCafe()));
+
+			mi.setCantidad(BigDecimal.ONE);
+			mi.setUsarReceta(item.getTamano() != null);
+
+			mi.setExtras(buildMermaExtras(item));
+			mi.setPersonalizaciones(buildMermaPersonalizaciones(item));
+			mi.setAskMes(item.getAskMes() != null ? new ArrayList<>(item.getAskMes()) : new ArrayList<>());
+
+			mi.setConfiguracionJson(buildMermaConfiguracionJson(item));
+			mi.setDescripcionSnapshot(buildMermaDescripcionSnapshot(item));
+
+			items.add(mi);
+		}
+
+		request.setItems(items);
+		return request;
+	}
+
+	private MermaItemRequest buildMermaItemRequest(TicketItem item) {
+		MermaItemRequest dto = new MermaItemRequest();
+		dto.setIdProducto(item.getProducto().getIdProducto());
+		dto.setNombreProductoSnapshot(item.getProducto().getNombre());
+
+		if (item.getTamano() != null) {
+			dto.setIdTamano(item.getTamano().getIdTamano());
+			dto.setNombreTamanoSnapshot(item.getTamano().getNombre());
+		}
+
+		dto.setIdTipoCafeSeleccionado(item.getIdTipoCafeSeleccionado());
+		dto.setNombreTipoCafeSnapshot(item.getNombreTipoCafeSeleccionado());
+		dto.setIdIngredienteTipoCafeSeleccionado(item.getIdIngredienteTipoCafeSeleccionado());
+		dto.setSuplementoTipoCafe(safe(item.getSuplementoTipoCafe()));
+		dto.setCantidad(BigDecimal.ONE);
+		dto.setUsarReceta(debeUsarReceta(item));
+
+		List<MermaExtraRequest> extras = new ArrayList<>();
+		for (TicketExtra extra : item.getExtras()) {
+			MermaExtraRequest e = new MermaExtraRequest();
+			e.setIdExtra(extra.getIdExtra());
+			e.setNombreExtra(extra.getNombre());
+			e.setTipoExtra(extra.getTipo());
+			e.setPrecioExtra(safe(extra.getPrecio()));
+			e.setCantidad(BigDecimal.ONE);
+			extras.add(e);
+		}
+		dto.setExtras(extras);
+
+		List<MermaPersonalizacionRequest> personalizaciones = new ArrayList<>();
+		for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+			MermaPersonalizacionRequest mp = new MermaPersonalizacionRequest();
+			mp.setIdPersonalizacion(p.getIdPersonalizacion());
+			mp.setNombrePersonalizacion(p.getNombre());
+			mp.setTipoPersonalizacion(p.getTipo());
+			mp.setPrecioPersonalizacion(safe(p.getPrecio()));
+			personalizaciones.add(mp);
+		}
+		dto.setPersonalizaciones(personalizaciones);
+
+		dto.setAskMes(new ArrayList<>(item.getAskMes()));
+		dto.setConfiguracionJson(buildMermaConfiguracionJson(item));
+		dto.setDescripcionSnapshot(buildMermaDescripcionSnapshot(item));
+
+		return dto;
+	}
+
+	private boolean debeUsarReceta(TicketItem item) {
+		if (item == null || item.getProducto() == null) {
+			return false;
+		}
+
+		int idSubcategoria = item.getProducto().getIdSubcategoria();
+		return idSubcategoria >= 1 && idSubcategoria <= 7;
+	}
+
+	private String buildMermaConfiguracionJson(TicketItem item) {
+		try {
+			Map<String, Object> root = new LinkedHashMap<>();
+			root.put("producto", item.getProducto() != null ? item.getProducto().getNombre() : null);
+			root.put("tamano", item.getTamano() != null ? item.getTamano().getNombre() : null);
+			root.put("idTipoCafe", item.getIdTipoCafeSeleccionado());
+			root.put("tipoCafe", item.getNombreTipoCafeSeleccionado());
+			root.put("suplementoTipoCafe", safe(item.getSuplementoTipoCafe()));
+
+			List<Map<String, Object>> extras = new ArrayList<>();
+			for (TicketExtra extra : item.getExtras()) {
+				Map<String, Object> e = new LinkedHashMap<>();
+				e.put("idExtra", extra.getIdExtra());
+				e.put("nombre", extra.getNombre());
+				e.put("tipo", extra.getTipo());
+				e.put("precio", safe(extra.getPrecio()));
+				extras.add(e);
+			}
+			root.put("extras", extras);
+
+			List<Map<String, Object>> personalizaciones = new ArrayList<>();
+			for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+				Map<String, Object> mp = new LinkedHashMap<>();
+				mp.put("idPersonalizacion", p.getIdPersonalizacion());
+				mp.put("nombre", p.getNombre());
+				mp.put("tipo", p.getTipo());
+				mp.put("precio", safe(p.getPrecio()));
+				personalizaciones.add(mp);
+			}
+			root.put("personalizaciones", personalizaciones);
+			root.put("askMes", new ArrayList<>(item.getAskMes()));
+
+			return objectMapper.writeValueAsString(root);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error construyendo configuracion_json de merma.", e);
+		}
+	}
+
+	private String buildMermaDescripcionSnapshot(TicketItem item) {
+		StringBuilder sb = new StringBuilder();
+
+		if (item.getProducto() != null) {
+			sb.append(item.getProducto().getNombre());
+		}
+
+		if (item.getTamano() != null && item.getTamano().getNombre() != null) {
+			sb.append(" ").append(item.getTamano().getNombre());
+		}
+
+		if (item.hasTipoCafeSeleccionado() && item.getNombreTipoCafeSeleccionado() != null
+				&& !item.getNombreTipoCafeSeleccionado().isBlank()) {
+			sb.append(" | Café: ").append(item.getNombreTipoCafeSeleccionado().trim());
+		}
+
+		for (TicketExtra extra : item.getExtras()) {
+			sb.append(" + ").append(extra.getNombre());
+		}
+
+		for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+			sb.append(" - ").append(p.getNombre());
+		}
+
+		for (String ask : item.getAskMes()) {
+			if (ask != null && !ask.isBlank()) {
+				sb.append(" | Ask Me: ").append(ask.trim());
+			}
+		}
+
+		return sb.toString().trim();
+	}
+
+	private void registrarMermaReal(MermaRequest request) {
+		try {
+			MermaResultDTO result = services.mermaFacade.registrarMerma(request);
+
+			ticketSession.clear();
+			cobroSession.clear();
+			centerPanel.getNombrePedidoPanel().clear();
+			centerPanel.getPagoPanel().clear();
+			centerPanel.clearCustomizationData();
+			centerPanel.showCatalogo();
+			refreshAll();
+
+			JOptionPane.showMessageDialog(this, "Merma registrada correctamente.\n\nID merma: " + result.getIdMerma(),
+					"Merma registrada", JOptionPane.INFORMATION_MESSAGE);
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			String mensaje = "No se pudo registrar la merma.";
+			if (e.getMessage() != null) {
+				mensaje += "\n\n" + e.getMessage();
+			}
+			if (e.getCause() != null && e.getCause().getMessage() != null) {
+				mensaje += "\n\nCausa: " + e.getCause().getMessage();
+			}
+
+			JOptionPane.showMessageDialog(this, mensaje, "Error al registrar merma", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	private void onMerma() {
+	    if (!isAdminActual()) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "Solo administradores o encargados pueden registrar mermas.",
+	                "Acceso denegado",
+	                JOptionPane.WARNING_MESSAGE
+	        );
 	        return;
 	    }
 
-	    for (TipoCafeDTO tipoCafe : tiposCafe) {
-	        if (tipoCafe != null && tipoCafe.isPorDefecto()) {
-	            ticketSession.changeTipoCafe(itemIndex, tipoCafe);
-	            return;
-	        }
+	    MermaDialog dialog = new MermaDialog(this);
+	    MermaDialogResult result = dialog.showDialog();
+
+	    if (result == null || !result.isConfirmed()) {
+	        return;
 	    }
+
+	    // ocultamos la pantalla actual de ventas
+	    this.setVisible(false);
+
+	    VentasFrame mermaFrame = new VentasFrame(
+	            onLogoutNavigateAction,
+	            () -> {
+	                // al salir del modo merma, reabrimos esta misma pantalla
+	                this.setVisible(true);
+	                this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+	                this.toFront();
+	            },
+	            services,
+	            ModoOperacion.MERMA,
+	            result
+	    );
+
+	    mermaFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+	    mermaFrame.setVisible(true);
+	}
+
+	private List<MermaExtraRequest> buildMermaExtras(TicketItem item) {
+		List<MermaExtraRequest> out = new ArrayList<>();
+
+		if (item.getExtras() == null || item.getExtras().isEmpty()) {
+			return out;
+		}
+
+		for (TicketExtra extra : item.getExtras()) {
+			if (extra == null)
+				continue;
+
+			MermaExtraRequest dto = new MermaExtraRequest();
+			dto.setIdExtra(extra.getIdExtra());
+			dto.setNombreExtra(extra.getNombre());
+			dto.setTipoExtra(extra.getTipo());
+			dto.setPrecioExtra(safe(extra.getPrecio()));
+			dto.setCantidad(BigDecimal.ONE);
+			out.add(dto);
+		}
+
+		return out;
+	}
+
+	private List<MermaPersonalizacionRequest> buildMermaPersonalizaciones(TicketItem item) {
+		List<MermaPersonalizacionRequest> out = new ArrayList<>();
+
+		if (item.getPersonalizaciones() == null || item.getPersonalizaciones().isEmpty()) {
+			return out;
+		}
+
+		for (TicketPersonalizacion p : item.getPersonalizaciones().values()) {
+			if (p == null)
+				continue;
+
+			MermaPersonalizacionRequest dto = new MermaPersonalizacionRequest();
+			dto.setIdPersonalizacion(p.getIdPersonalizacion());
+			dto.setNombrePersonalizacion(p.getNombre());
+			dto.setTipoPersonalizacion(p.getTipo());
+			dto.setPrecioPersonalizacion(safe(p.getPrecio()));
+			out.add(dto);
+		}
+
+		return out;
+	}
+
+	private void clearAfterMerma() {
+		if (ticketSession != null) {
+			ticketSession.clear();
+		}
+
+		if (ticketPanel != null) {
+			ticketPanel.refreshFromTicket();
+		}
+
+		if (customizationPanel != null) {
+			customizationPanel.refresh();
+		}
+
+		if (bottomBarPanel != null) {
+			bottomBarPanel.refresh();
+		}
+
+		if (centerPanel != null) {
+			centerPanel.showCatalogo();
+		}
+	}
+
+	private String askRequiredValue(String title, String message, String suggestedValue) {
+		while (true) {
+			Object value = JOptionPane.showInputDialog(this, message, title, JOptionPane.QUESTION_MESSAGE, null, null,
+					suggestedValue);
+
+			if (value == null) {
+				return null;
+			}
+
+			String normalized = value.toString().trim();
+			if (!normalized.isEmpty()) {
+				return normalized;
+			}
+
+			JOptionPane.showMessageDialog(this, "Este campo es obligatorio.", title, JOptionPane.WARNING_MESSAGE);
+		}
+	}
+
+	private void applyDefaultTipoCafeIfExists(int itemIndex, int idProducto) {
+		List<TipoCafeDTO> tiposCafe = services.productoPersonalizacionService.getTiposCafeByProducto(idProducto);
+
+		if (tiposCafe == null || tiposCafe.isEmpty()) {
+			return;
+		}
+
+		for (TipoCafeDTO tipoCafe : tiposCafe) {
+			if (tipoCafe != null && tipoCafe.isPorDefecto()) {
+				ticketSession.changeTipoCafe(itemIndex, tipoCafe);
+				return;
+			}
+		}
 	}
 }

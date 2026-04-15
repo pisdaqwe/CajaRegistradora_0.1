@@ -4,18 +4,20 @@ import dao.MovimientoStockDao;
 import dtoS.IngredienteConsumidoDTO;
 import dtoS.RegistrarMovimientoStockRequest;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 
 /**
  * Service para registrar movimientos de stock.
  *
- * Reglas:
- * - debe venir idProducto XOR idIngrediente
- * - cantidad > 0
- * - idSucursal > 0
+ * RESPONSABILIDADES:
+ * - validar request
+ * - normalizar datos mínimos
+ * - delegar en MovimientoStockDao
  *
- * En esta fase lo usaremos sobre todo para SALIDA de ingredientes
- * al registrar una venta.
+ * IMPORTANTE:
+ * - aquí sí validamos el XOR producto/ingrediente
+ * - el DAO solo inserta
  */
 public class MovimientoStockService {
 
@@ -29,52 +31,39 @@ public class MovimientoStockService {
     }
 
     /**
-     * Registra un movimiento genérico ya montado.
+     * Registro genérico de movimiento usando conexión externa.
      */
     public void registrar(Connection con, RegistrarMovimientoStockRequest request) {
-        if (con == null) {
-            throw new IllegalArgumentException("Connection no puede ser null");
-        }
-        if (request == null) {
-            throw new IllegalArgumentException("request no puede ser null");
-        }
-
         validarRequest(request);
-
         movimientoStockDao.insert(con, request);
     }
 
     /**
-     * Método cómodo para registrar la salida de un ingrediente
-     * consumido en una venta.
+     * Registro genérico sin conexión externa.
+     */
+    public void registrar(RegistrarMovimientoStockRequest request) {
+        validarRequest(request);
+        movimientoStockDao.insert(request);
+    }
+
+    /**
+     * Registra una salida de ingrediente normal.
      *
-     * Ejemplo de referencia:
-     * - VENTA:53 ITEM:137
+     * Uso típico:
+     * - venta
+     * - consumo operativo
      */
     public void registrarSalidaIngrediente(Connection con,
                                            int idSucursal,
                                            IngredienteConsumidoDTO ingrediente,
                                            String referencia,
                                            String motivo) {
-        if (con == null) {
-            throw new IllegalArgumentException("Connection no puede ser null");
-        }
-        if (idSucursal <= 0) {
-            throw new IllegalArgumentException("idSucursal debe ser > 0");
-        }
         if (ingrediente == null) {
             throw new IllegalArgumentException("ingrediente no puede ser null");
-        }
-        if (ingrediente.getIdIngrediente() <= 0) {
-            throw new IllegalArgumentException("idIngrediente inválido");
-        }
-        if (ingrediente.getCantidad() == null || ingrediente.getCantidad().signum() <= 0) {
-            throw new IllegalArgumentException("cantidad inválida");
         }
 
         RegistrarMovimientoStockRequest request = new RegistrarMovimientoStockRequest();
         request.setIdSucursal(idSucursal);
-        request.setIdProducto(null);
         request.setIdIngrediente(ingrediente.getIdIngrediente());
         request.setCantidad(ingrediente.getCantidad());
         request.setIdUnidad(ingrediente.getIdUnidad());
@@ -86,44 +75,89 @@ public class MovimientoStockService {
     }
 
     /**
-     * Método cómodo para registrar una entrada manual de ingrediente.
-     * Lo dejamos ya preparado para futuro.
+     * Registra una salida de ingrediente enlazada a una merma concreta.
+     *
+     * Uso típico:
+     * - MermaService cuando usarReceta = true
      */
-    public void registrarEntradaIngrediente(Connection con,
-                                            int idSucursal,
-                                            IngredienteConsumidoDTO ingrediente,
-                                            String referencia,
-                                            String motivo) {
-        if (con == null) {
-            throw new IllegalArgumentException("Connection no puede ser null");
-        }
-        if (idSucursal <= 0) {
-            throw new IllegalArgumentException("idSucursal debe ser > 0");
-        }
+    public void registrarSalidaIngredienteMerma(Connection con,
+                                                int idSucursal,
+                                                IngredienteConsumidoDTO ingrediente,
+                                                int idMerma,
+                                                int idMermaItem,
+                                                String referencia,
+                                                String motivo) {
         if (ingrediente == null) {
             throw new IllegalArgumentException("ingrediente no puede ser null");
         }
-        if (ingrediente.getIdIngrediente() <= 0) {
-            throw new IllegalArgumentException("idIngrediente inválido");
+        if (idMerma <= 0) {
+            throw new IllegalArgumentException("idMerma debe ser > 0");
         }
-        if (ingrediente.getCantidad() == null || ingrediente.getCantidad().signum() <= 0) {
-            throw new IllegalArgumentException("cantidad inválida");
+        if (idMermaItem <= 0) {
+            throw new IllegalArgumentException("idMermaItem debe ser > 0");
         }
 
         RegistrarMovimientoStockRequest request = new RegistrarMovimientoStockRequest();
         request.setIdSucursal(idSucursal);
-        request.setIdProducto(null);
         request.setIdIngrediente(ingrediente.getIdIngrediente());
         request.setCantidad(ingrediente.getCantidad());
         request.setIdUnidad(ingrediente.getIdUnidad());
-        request.setTipo("ENTRADA");
+        request.setTipo("SALIDA");
         request.setReferencia(referencia);
         request.setMotivo(motivo);
+        request.setIdMerma(idMerma);
+        request.setIdMermaItem(idMermaItem);
+
+        registrar(con, request);
+    }
+
+    /**
+     * Registra una salida de producto enlazada a una merma concreta.
+     *
+     * Uso típico:
+     * - merma de producto retail / empaquetado
+     * - merma sin receta
+     */
+    public void registrarSalidaProductoMerma(Connection con,
+                                             int idSucursal,
+                                             int idProducto,
+                                             BigDecimal cantidad,
+                                             int idMerma,
+                                             int idMermaItem,
+                                             String referencia,
+                                             String motivo) {
+        if (idProducto <= 0) {
+            throw new IllegalArgumentException("idProducto debe ser > 0");
+        }
+        if (cantidad == null || cantidad.signum() <= 0) {
+            throw new IllegalArgumentException("cantidad debe ser > 0");
+        }
+        if (idMerma <= 0) {
+            throw new IllegalArgumentException("idMerma debe ser > 0");
+        }
+        if (idMermaItem <= 0) {
+            throw new IllegalArgumentException("idMermaItem debe ser > 0");
+        }
+
+        RegistrarMovimientoStockRequest request = new RegistrarMovimientoStockRequest();
+        request.setIdSucursal(idSucursal);
+        request.setIdProducto(idProducto);
+        request.setCantidad(cantidad);
+        request.setIdUnidad(null); // stock_producto no usa unidad
+        request.setTipo("SALIDA");
+        request.setReferencia(referencia);
+        request.setMotivo(motivo);
+        request.setIdMerma(idMerma);
+        request.setIdMermaItem(idMermaItem);
 
         registrar(con, request);
     }
 
     private void validarRequest(RegistrarMovimientoStockRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request no puede ser null");
+        }
+
         if (request.getIdSucursal() <= 0) {
             throw new IllegalArgumentException("idSucursal debe ser > 0");
         }
