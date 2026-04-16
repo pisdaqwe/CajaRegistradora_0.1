@@ -1,193 +1,153 @@
 package ui.informes;
 
 import dtoS.InformeFiltroDTO;
+import enums.FamiliaInforme;
+import enums.ModoVistaInforme;
 import enums.TipoInforme;
-import ui.common.InformeUiTheme;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.EnumMap;
+import java.util.Map;
 
-/**
- * Panel lateral de filtros del módulo de informes.
- *
- * Primera fase:
- * - filtros visuales
- * - lectura de estado
- * - todavía sin carga real desde BD
- */
 public class InformeFiltrosPanel extends JPanel {
 
-    private final JComboBox<TipoInforme> cmbTipoInforme;
+    private final JLabel lblModuleTitle;
+    private final JLabel lblModuleSubtitle;
 
-    private final JSpinner spFechaDesde;
-    private final JSpinner spFechaHasta;
+    private final CardLayout cardLayout;
+    private final JPanel cardPanel;
 
-    private final JComboBox<String> cmbSucursal;
-    private final JComboBox<String> cmbCaja;
-    private final JComboBox<String> cmbEmpleado;
-    private final JComboBox<String> cmbMetodoPago;
+    private final Map<FamiliaInforme, InformeFilterModule> modules;
 
-    private final JSpinner spTopN;
-
-    private final JCheckBox chkIncluirDevoluciones;
+    private FamiliaInforme currentFamilia;
+    private TipoInforme currentTipoInforme;
 
     public InformeFiltrosPanel() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(0, 12));
         setBackground(InformeUiTheme.CARD_BG);
         setBorder(InformeUiTheme.createCardBorder());
 
+        JPanel header = new JPanel();
+        header.setOpaque(false);
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+
         JLabel title = InformeUiTheme.createSectionTitle("Filtros del informe");
-        title.setBorder(new EmptyBorder(0, 0, 12, 0));
-        add(title, BorderLayout.NORTH);
 
-        JPanel content = new JPanel();
-        content.setOpaque(false);
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        lblModuleTitle = new JLabel("Configuración");
+        lblModuleTitle.setFont(InformeUiTheme.FONT_LABEL);
+        lblModuleTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        cmbTipoInforme = new JComboBox<>(TipoInforme.values());
-        InformeUiTheme.styleCombo(cmbTipoInforme);
+        lblModuleSubtitle = new JLabel("La configuración cambia según el tipo de informe");
+        lblModuleSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblModuleSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        spFechaDesde = createDateSpinner(firstDayOfCurrentMonth());
-        spFechaHasta = createDateSpinner(new Date());
+        header.add(title);
+        header.add(Box.createVerticalStrut(8));
+        header.add(lblModuleTitle);
+        header.add(Box.createVerticalStrut(2));
+        header.add(lblModuleSubtitle);
 
-        cmbSucursal = new JComboBox<>(new String[]{
-                "Todas las sucursales",
-                "Tienda principal"
-        });
-        InformeUiTheme.styleCombo(cmbSucursal);
+        modules = new EnumMap<>(FamiliaInforme.class);
+        modules.put(FamiliaInforme.VENTAS_TIEMPO, new VentasTiempoFilterPanel());
+        modules.put(FamiliaInforme.COMERCIAL, new ComercialFilterPanel());
+        modules.put(FamiliaInforme.EQUIPO, new EquipoFilterPanel());
+        modules.put(FamiliaInforme.OPERATIVA, new OperativaFilterPanel());
 
-        cmbCaja = new JComboBox<>(new String[]{
-                "Todas las cajas",
-                "Caja 1",
-                "Caja 2"
-        });
-        InformeUiTheme.styleCombo(cmbCaja);
+        cardLayout = new CardLayout();
+        cardPanel = new JPanel(cardLayout);
+        cardPanel.setOpaque(false);
 
-        cmbEmpleado = new JComboBox<>(new String[]{
-                "Todos los empleados",
-                "Administrador Temporal",
-                "Cajero Demo"
-        });
-        InformeUiTheme.styleCombo(cmbEmpleado);
-
-        cmbMetodoPago = new JComboBox<>(new String[]{
-                "Todos los métodos",
-                "Efectivo",
-                "Tarjeta",
-                "Vale"
-        });
-        InformeUiTheme.styleCombo(cmbMetodoPago);
-
-        spTopN = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
-        InformeUiTheme.styleSpinner(spTopN);
-
-        chkIncluirDevoluciones = new JCheckBox("Incluir devoluciones");
-        chkIncluirDevoluciones.setSelected(true);
-        InformeUiTheme.styleCheckBox(chkIncluirDevoluciones);
-
-        content.add(createFieldBlock("Tipo de informe", cmbTipoInforme));
-        content.add(createFieldBlock("Fecha desde", spFechaDesde));
-        content.add(createFieldBlock("Fecha hasta", spFechaHasta));
-        content.add(createFieldBlock("Sucursal", cmbSucursal));
-        content.add(createFieldBlock("Caja", cmbCaja));
-        content.add(createFieldBlock("Empleado", cmbEmpleado));
-        content.add(createFieldBlock("Método de pago", cmbMetodoPago));
-        content.add(createFieldBlock("Top N", spTopN));
-
-        JPanel checkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        checkPanel.setOpaque(false);
-        checkPanel.setBorder(new EmptyBorder(8, 0, 0, 0));
-        checkPanel.add(chkIncluirDevoluciones);
-        content.add(checkPanel);
-
-        content.add(Box.createVerticalGlue());
-
-        add(content, BorderLayout.CENTER);
-
-        setPreferredSize(new Dimension(320, 600));
-    }
-
-    private JPanel createFieldBlock(String labelText, JComponent field) {
-        JPanel block = new JPanel(new BorderLayout(0, 6));
-        block.setOpaque(false);
-        block.setBorder(new EmptyBorder(0, 0, 14, 0));
-
-        JLabel label = InformeUiTheme.createFieldLabel(labelText);
-
-        block.add(label, BorderLayout.NORTH);
-        block.add(field, BorderLayout.CENTER);
-        return block;
-    }
-
-    private JSpinner createDateSpinner(Date date) {
-        JSpinner spinner = new JSpinner(new SpinnerDateModel(date, null, null, Calendar.DAY_OF_MONTH));
-        spinner.setEditor(new JSpinner.DateEditor(spinner, "dd/MM/yyyy"));
-        InformeUiTheme.styleSpinner(spinner);
-        return spinner;
-    }
-
-    private Date firstDayOfCurrentMonth() {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTime();
-    }
-
-    public InformeFiltroDTO leerFiltros() {
-        InformeFiltroDTO dto = new InformeFiltroDTO();
-
-        dto.setTipoInforme((TipoInforme) cmbTipoInforme.getSelectedItem());
-        dto.setFechaDesde(toLocalDate((Date) spFechaDesde.getValue()));
-        dto.setFechaHasta(toLocalDate((Date) spFechaHasta.getValue()));
-        dto.setIncluirDevoluciones(chkIncluirDevoluciones.isSelected());
-        dto.setTopN((Integer) spTopN.getValue());
-
-        String metodo = (String) cmbMetodoPago.getSelectedItem();
-        if (metodo != null && !metodo.equalsIgnoreCase("Todos los métodos")) {
-            dto.setMetodoPago(metodo);
+        for (Map.Entry<FamiliaInforme, InformeFilterModule> entry : modules.entrySet()) {
+            cardPanel.add((Component) entry.getValue(), entry.getKey().name());
         }
 
-        // De momento los IDs se quedan null
-        dto.setIdSucursal(null);
-        dto.setIdCaja(null);
-        dto.setIdEmpleado(null);
-        dto.setIdCategoria(null);
-        dto.setIdProducto(null);
+        JScrollPane scrollPane = new JScrollPane(cardPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        add(header, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        setPreferredSize(new Dimension(340, 650));
+    }
+
+    public void setTipoInforme(TipoInforme tipoInforme) {
+        if (tipoInforme == null) {
+            return;
+        }
+
+        currentTipoInforme = tipoInforme;
+        currentFamilia = tipoInforme.getFamilia();
+
+        lblModuleTitle.setText(tipoInforme.getDisplayName());
+        lblModuleSubtitle.setText(tipoInforme.getShortDescription());
+
+        cardLayout.show(cardPanel, currentFamilia.name());
+
+        InformeFilterModule module = modules.get(currentFamilia);
+        if (module != null) {
+            module.setTipoInforme(tipoInforme);
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    public void resetCurrent() {
+        InformeFilterModule module = getCurrentModule();
+        if (module != null) {
+            module.reset();
+        }
+    }
+
+    public ModoVistaInforme getCurrentModoVista() {
+        InformeFilterModule module = getCurrentModule();
+        return module != null ? module.getModoVista() : ModoVistaInforme.AGREGADA;
+    }
+
+    public String getCurrentFilterSummary() {
+        InformeFilterModule module = getCurrentModule();
+        if (module == null) {
+            return currentTipoInforme != null ? currentTipoInforme.getDisplayName() : "Sin configuración";
+        }
+        return module.buildSummary();
+    }
+
+    public InformeFiltroDTO buildFiltroDTO() {
+        InformeFilterModule module = getCurrentModule();
+
+        if (module == null) {
+            InformeFiltroDTO dto = new InformeFiltroDTO();
+            dto.setTipoInforme(currentTipoInforme);
+            dto.setModoVista(ModoVistaInforme.AGREGADA);
+            return dto;
+        }
+
+        InformeFiltroDTO dto = module.buildFiltroDTO();
+
+        if (dto.getTipoInforme() == null) {
+            dto.setTipoInforme(currentTipoInforme);
+        }
 
         return dto;
     }
 
-    public TipoInforme getTipoInformeSeleccionado() {
-        return (TipoInforme) cmbTipoInforme.getSelectedItem();
+    public TipoInforme getCurrentTipoInforme() {
+        return currentTipoInforme;
     }
 
-    public void setTipoInforme(TipoInforme tipoInforme) {
-        cmbTipoInforme.setSelectedItem(tipoInforme);
+    public FamiliaInforme getCurrentFamilia() {
+        return currentFamilia;
     }
 
-    public void reset() {
-        cmbTipoInforme.setSelectedItem(TipoInforme.RESUMEN_EJECUTIVO);
-        spFechaDesde.setValue(firstDayOfCurrentMonth());
-        spFechaHasta.setValue(new Date());
-        cmbSucursal.setSelectedIndex(0);
-        cmbCaja.setSelectedIndex(0);
-        cmbEmpleado.setSelectedIndex(0);
-        cmbMetodoPago.setSelectedIndex(0);
-        spTopN.setValue(10);
-        chkIncluirDevoluciones.setSelected(true);
-    }
-
-    private LocalDate toLocalDate(Date date) {
-        return date.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate();
+    private InformeFilterModule getCurrentModule() {
+        if (currentFamilia == null) {
+            return null;
+        }
+        return modules.get(currentFamilia);
     }
 }

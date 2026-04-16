@@ -1,5 +1,5 @@
+package ui.dialog;
 
-package ui.informes;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import ui.theme.InformeUiTheme;
@@ -21,78 +21,98 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InformeGraficoPanel extends JPanel {
+public class InformeGraficoDialog extends JDialog {
 
-    private final JLabel lblTitle;
-    private final JLabel lblSubtitle;
+    private final TipoInforme tipoInforme;
+    private final String filterSummary;
+
+    private final JComboBox<ModoVistaInforme> cmbModoVista;
+    private final JComboBox<String> cmbTipoGrafico;
     private final JPanel chartContainer;
 
     private ChartPanel chartPanel;
 
-    private TipoInforme currentTipoInforme;
-    private ModoVistaInforme currentModoVista;
-    private String currentGraphType;
+    public InformeGraficoDialog(Window owner,
+                                TipoInforme tipoInforme,
+                                ModoVistaInforme modoVistaInicial,
+                                String filterSummary) {
+        super(owner, "Visualización de gráfico", ModalityType.APPLICATION_MODAL);
+        this.tipoInforme = tipoInforme;
+        this.filterSummary = filterSummary;
 
-    public InformeGraficoPanel() {
-        setLayout(new BorderLayout(0, 12));
-        setBackground(InformeUiTheme.CARD_BG);
-        setBorder(InformeUiTheme.createCardBorder());
+        getContentPane().setBackground(InformeUiTheme.APP_BG);
+        setLayout(new BorderLayout());
 
-        JPanel top = new JPanel();
-        top.setOpaque(false);
-        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        JPanel root = new JPanel(new BorderLayout(16, 16));
+        root.setBackground(InformeUiTheme.APP_BG);
+        root.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        lblTitle = new JLabel("Visualización");
-        lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+        JPanel top = InformeUiTheme.createCardPanel(new BorderLayout(16, 0));
+
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        JLabel lblTitle = new JLabel(tipoInforme.getDisplayName());
+        lblTitle.setFont(InformeUiTheme.FONT_TITLE);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        lblSubtitle = new JLabel("No hay gráfico generado todavía");
-        lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
-        lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        JLabel lblSummary = new JLabel(filterSummary != null ? filterSummary : "");
+        lblSummary.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSummary.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        top.add(lblTitle);
-        top.add(Box.createVerticalStrut(4));
-        top.add(lblSubtitle);
+        left.add(lblTitle);
+        left.add(Box.createVerticalStrut(4));
+        left.add(lblSummary);
 
-        chartContainer = new JPanel(new BorderLayout());
-        chartContainer.setOpaque(false);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.setOpaque(false);
 
-        add(top, BorderLayout.NORTH);
-        add(chartContainer, BorderLayout.CENTER);
+        cmbModoVista = new JComboBox<>(ModoVistaInforme.values());
+        cmbModoVista.setSelectedItem(modoVistaInicial != null ? modoVistaInicial : ModoVistaInforme.AGREGADA);
+        InformeUiTheme.styleCombo(cmbModoVista);
 
-        setPreferredSize(new Dimension(460, 600));
-    }
+        cmbTipoGrafico = new JComboBox<>(buildGraphOptions());
+        InformeUiTheme.styleCombo(cmbTipoGrafico);
 
-    public void showPlaceholder(TipoInforme tipoInforme, ModoVistaInforme modoVista) {
-        this.currentTipoInforme = tipoInforme;
-        this.currentModoVista = modoVista != null ? modoVista : ModoVistaInforme.AGREGADA;
-        this.currentGraphType = getDefaultGraphType(tipoInforme);
-
-        lblTitle.setText("Gráfico · " + tipoInforme.getDisplayName());
-        lblSubtitle.setText(buildSubtitle(tipoInforme, this.currentModoVista, this.currentGraphType));
-
-        refreshChart();
-    }
-
-    public void setGraphType(String graphType) {
-        if (graphType == null || graphType.isBlank()) {
-            return;
+        if (!supportsComparativeMode(tipoInforme)) {
+            cmbModoVista.setSelectedItem(ModoVistaInforme.AGREGADA);
+            cmbModoVista.setEnabled(false);
         }
-        this.currentGraphType = graphType;
-        lblSubtitle.setText(buildSubtitle(currentTipoInforme, currentModoVista, currentGraphType));
+
+        cmbModoVista.addActionListener(e -> refreshChart());
+        cmbTipoGrafico.addActionListener(e -> refreshChart());
+
+        right.add(cmbModoVista);
+        right.add(cmbTipoGrafico);
+
+        top.add(left, BorderLayout.CENTER);
+        top.add(right, BorderLayout.EAST);
+
+        chartContainer = InformeUiTheme.createCardPanel(new BorderLayout());
+
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        bottom.setOpaque(false);
+
+        JButton btnCerrar = new JButton("Cerrar");
+        InformeUiTheme.styleDangerButton(btnCerrar);
+        btnCerrar.addActionListener(e -> dispose());
+
+        bottom.add(btnCerrar);
+
+        root.add(top, BorderLayout.NORTH);
+        root.add(chartContainer, BorderLayout.CENTER);
+        root.add(bottom, BorderLayout.SOUTH);
+
+        add(root, BorderLayout.CENTER);
+
         refreshChart();
+
+        setSize(1100, 700);
+        setLocationRelativeTo(owner);
     }
 
-    public void setModoVista(ModoVistaInforme modoVista) {
-        if (modoVista == null) {
-            return;
-        }
-        this.currentModoVista = modoVista;
-        lblSubtitle.setText(buildSubtitle(currentTipoInforme, currentModoVista, currentGraphType));
-        refreshChart();
-    }
-
-    public String[] getAvailableGraphTypes(TipoInforme tipoInforme) {
+    private String[] buildGraphOptions() {
         List<String> options = new ArrayList<>();
         options.add("Líneas");
         options.add("Barras");
@@ -104,34 +124,7 @@ public class InformeGraficoPanel extends JPanel {
         return options.toArray(new String[0]);
     }
 
-    public boolean supportsComparativeMode(TipoInforme tipoInforme) {
-        return switch (tipoInforme) {
-            case VENTAS_POR_DIA,
-                 TICKET_MEDIO_POR_DIA,
-                 VENTAS_POR_FRANJA_HORARIA -> true;
-            default -> false;
-        };
-    }
-
-    private String getDefaultGraphType(TipoInforme tipoInforme) {
-        return switch (tipoInforme) {
-            case PAGOS_POR_METODO -> "Circular";
-            default -> "Líneas";
-        };
-    }
-
-    private String buildSubtitle(TipoInforme tipoInforme, ModoVistaInforme modoVista, String graphType) {
-        if (tipoInforme == null) {
-            return "Sin configuración";
-        }
-        return tipoInforme.getShortDescription() + " · " + modoVista.getLabel() + " · " + graphType;
-    }
-
     private boolean supportsPieChart(TipoInforme tipoInforme) {
-        if (tipoInforme == null) {
-            return false;
-        }
-
         return switch (tipoInforme) {
             case PAGOS_POR_METODO,
                  RESUMEN_EJECUTIVO,
@@ -142,22 +135,27 @@ public class InformeGraficoPanel extends JPanel {
         };
     }
 
+    private boolean supportsComparativeMode(TipoInforme tipoInforme) {
+        return switch (tipoInforme) {
+            case VENTAS_POR_DIA,
+                 TICKET_MEDIO_POR_DIA,
+                 VENTAS_POR_FRANJA_HORARIA -> true;
+            default -> false;
+        };
+    }
+
     private void refreshChart() {
-        if (currentTipoInforme == null) {
-            chartContainer.removeAll();
-            chartContainer.revalidate();
-            chartContainer.repaint();
-            return;
-        }
+        String selectedGraph = (String) cmbTipoGrafico.getSelectedItem();
+        ModoVistaInforme modoVista = (ModoVistaInforme) cmbModoVista.getSelectedItem();
 
         JFreeChart chart;
 
-        if ("Circular".equalsIgnoreCase(currentGraphType) && supportsPieChart(currentTipoInforme)) {
+        if ("Circular".equalsIgnoreCase(selectedGraph) && supportsPieChart(tipoInforme)) {
             chart = buildPieChartByTipo();
-        } else if ("Barras".equalsIgnoreCase(currentGraphType)) {
-            chart = buildBarChartByTipo(currentModoVista);
+        } else if ("Barras".equalsIgnoreCase(selectedGraph)) {
+            chart = buildBarChartByTipo(modoVista);
         } else {
-            chart = buildLineChartByTipo(currentModoVista);
+            chart = buildLineChartByTipo(modoVista);
         }
 
         if (chartPanel != null) {
@@ -173,12 +171,8 @@ public class InformeGraficoPanel extends JPanel {
         chartContainer.repaint();
     }
 
-    // =====================================================
-    // DISPATCH
-    // =====================================================
-
     private JFreeChart buildBarChartByTipo(ModoVistaInforme modoVista) {
-        return switch (currentTipoInforme) {
+        return switch (tipoInforme) {
             case RESUMEN_EJECUTIVO -> createBarChartResumen();
             case VENTAS_POR_DIA -> createBarChartVentasPorDia(modoVista);
             case VENTAS_POR_FRANJA_HORARIA -> createBarChartVentasPorFranja(modoVista);
@@ -202,7 +196,7 @@ public class InformeGraficoPanel extends JPanel {
     }
 
     private JFreeChart buildLineChartByTipo(ModoVistaInforme modoVista) {
-        return switch (currentTipoInforme) {
+        return switch (tipoInforme) {
             case RESUMEN_EJECUTIVO -> createLineChartResumen();
             case VENTAS_POR_DIA -> createLineChartVentasPorDia(modoVista);
             case VENTAS_POR_FRANJA_HORARIA -> createLineChartVentasPorFranja(modoVista);
@@ -226,7 +220,7 @@ public class InformeGraficoPanel extends JPanel {
     }
 
     private JFreeChart buildPieChartByTipo() {
-        return switch (currentTipoInforme) {
+        return switch (tipoInforme) {
             case RESUMEN_EJECUTIVO -> createPieChartResumen();
             case PAGOS_POR_METODO -> createPieChartPagos();
             case COMBOS_VENDIDOS -> createPieChartCombos();
@@ -470,7 +464,7 @@ public class InformeGraficoPanel extends JPanel {
 
         return buildLineChart("Ventas por día", "€", dataset);
     }
-    
+
     private JFreeChart createLineChartVentasPorFranja(ModoVistaInforme modoVista) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 

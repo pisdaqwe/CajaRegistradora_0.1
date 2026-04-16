@@ -1,6 +1,5 @@
 package model;
 
-
 import java.time.LocalDateTime;
 
 public class Usuario {
@@ -14,7 +13,9 @@ public class Usuario {
 
     private Rol rol;
 
-    // Getters y setters
+    // NUEVO
+    private Integer idSucursal;
+
     public int getIdUsuario() {
         return idUsuario;
     }
@@ -70,5 +71,12 @@ public class Usuario {
     public void setRol(Rol rol) {
         this.rol = rol;
     }
-}
 
+    public Integer getIdSucursal() {
+        return idSucursal;
+    }
+
+    public void setIdSucursal(Integer idSucursal) {
+        this.idSucursal = idSucursal;
+    }
+}

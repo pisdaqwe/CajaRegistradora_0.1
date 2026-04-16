@@ -18,6 +18,7 @@ import dao.DevolucionTicketJsonDao;
 import dao.ExtraDao;
 import dao.ExtraRecetaReglaDao;
 import dao.FichajeDao;
+import dao.InformesDao;
 import dao.MermaDao;
 import dao.MermaItemDao;
 import dao.MovimientoStockDao;
@@ -55,6 +56,7 @@ import service.DevolucionTicketService;
 import service.DisponibilidadExtraService;
 import service.DisponibilidadProductoService;
 import service.FichajeService;
+import service.InformesService;
 import service.MermaService;
 import service.MovimientoStockService;
 import service.ProductoPersonalizacionService;
@@ -154,9 +156,15 @@ public class MainApp {
                 devolucionTicketJsonDao,
                 stockProductoDao
         );
+        
+        // =====================================================
+        // 10) DAOs DE DEVOLUCIONES
+        // =====================================================
+        
+        InformesDao informesDao = new InformesDao();
 
         // =====================================================
-        // 10) SERVICES GENERALES
+        // 11) SERVICES GENERALES
         // =====================================================
         AuthService authService = new AuthService(usuarioDao);
         FichajeService fichajeService = new FichajeService(fichajeDao, sesionCajaDao);
@@ -183,7 +191,7 @@ public class MainApp {
                 );
 
         // =====================================================
-        // 12) SERVICES DE RECETA / STOCK INGREDIENTE / MOVIMIENTOS
+        // 13) SERVICES DE RECETA / STOCK INGREDIENTE / MOVIMIENTOS
         // =====================================================
         RecipeResolverService recipeResolverService =
                 new RecipeResolverService(
@@ -206,7 +214,7 @@ public class MainApp {
                 );
 
         // =====================================================
-        // 13) SERVICES DE MERMA
+        // 14) SERVICES DE MERMA
         // =====================================================
         MermaService mermaService = new MermaService(
                 mermaDao,
@@ -217,7 +225,7 @@ public class MainApp {
         );
 
         // =====================================================
-        // 14) SERVICES DE VENTAS / IMPRESIÓN / TICKETS
+        // 15) SERVICES DE VENTAS / IMPRESIÓN / TICKETS
         // =====================================================
         /**
          * AJUSTE NUEVO IMPORTANTE:
@@ -239,7 +247,7 @@ public class MainApp {
         TicketClienteService ticketClienteService = new TicketClienteService(ticketJsonDao);
 
         // =====================================================
-        // 15) SERVICES DE DISPONIBILIDAD / STOCK PRODUCTO
+        // 16) SERVICES DE DISPONIBILIDAD / STOCK PRODUCTO
         // =====================================================
         DisponibilidadProductoService disponibilidadProductoService =
                 new DisponibilidadProductoService(stockProductoDao);
@@ -248,14 +256,14 @@ public class MainApp {
                 new DisponibilidadExtraService(extraDao);
 
         // =====================================================
-        // 16) SERVICES DE COMBOS / DESCUENTOS
+        // 17) SERVICES DE COMBOS / DESCUENTOS
         // =====================================================
         ComboService comboService = new ComboService(comboDao, comboItemDao);
         ComboMatcherService comboMatcherService = new ComboMatcherService();
         DescuentoService descuentoService = new DescuentoService(descuentoDao);
 
         // =====================================================
-        // 17) SERVICES DE DEVOLUCIONES
+        // 18) SERVICES DE DEVOLUCIONES
         // =====================================================
         DevolucionService devolucionService = new DevolucionService(
                 ventaDao,
@@ -268,9 +276,13 @@ public class MainApp {
          */
         DevolucionTicketService devolucionTicketService =
                 new DevolucionTicketService(devolucionTicketJsonDao);
-
+        
         // =====================================================
-        // 18) FACADES
+        // 19) SERVICES DE DEVOLUCIONES
+        // =====================================================
+        	InformesService informesService = new InformesService(informesDao );
+        // =====================================================
+        // 19) FACADES
         // =====================================================
         FichajeFacade fichajeFacade = new FichajeFacade(usuarioDao, fichajeService);
         CajaFacade cajaFacade = new CajaFacade(sesionCajaService);
@@ -279,7 +291,7 @@ public class MainApp {
         MermaFacade mermaFacade = new MermaFacade(mermaService);
 
         // =====================================================
-        // 19) APP SERVICES
+        // 20) APP SERVICES
         // =====================================================
         AppServices appServices = new AppServices(
                 authService,
@@ -308,7 +320,9 @@ public class MainApp {
                 devolucionFacade,
                 devolucionTicketService,
 
-                mermaFacade
+                mermaFacade,
+                informesService
+                
         );
 
         // =====================================================

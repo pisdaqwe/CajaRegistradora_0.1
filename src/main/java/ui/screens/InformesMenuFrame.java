@@ -52,11 +52,10 @@ public class InformesMenuFrame extends BaseTpvFrame {
         JButton btnPagos = createBigButton("Pagos");
         JButton btnResumenArticulos = createBigButton("Resumen Artículos");
 
-        btnInformeCaja.addActionListener(e -> abrirExplorador(TipoInforme.INFORME_CAJA));
+        btnInformeCaja.addActionListener(e -> abrirExplorador(TipoInforme.VENTAS_POR_CAJA));
         btnInformeVentas.addActionListener(e -> abrirExplorador(TipoInforme.VENTAS_POR_DIA));
         btnPagos.addActionListener(e -> abrirExplorador(TipoInforme.PAGOS_POR_METODO));
         btnResumenArticulos.addActionListener(e -> abrirExplorador(TipoInforme.PRODUCTOS_MAS_VENDIDOS));
-
         grid.add(btnInformeCaja);
         grid.add(btnInformeVentas);
         grid.add(btnPagos);

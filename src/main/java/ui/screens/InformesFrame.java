@@ -1,44 +1,36 @@
 package ui.screens;
 
-
-
-import dtoS.InformeFiltroDTO;
+import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
-import ui.common.InformeUiTheme;
+import ui.dialog.InformeGraficoDialog;
 import ui.informes.InformeFiltrosPanel;
-import ui.informes.InformeGraficoPanel;
 import ui.informes.InformeKpiPanel;
 import ui.informes.InformeTablaPanel;
+import ui.informes.InformeToolbarPanel;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import dtoS.InformeFiltroDTO;
+import dtoS.InformeVentasPorDiaResultDTO;
+
 import java.awt.*;
 
-/**
- * Pantalla principal del módulo de informes.
- *
- * Esta es la primera versión visual profesional:
- * - filtros a la izquierda
- * - KPIs arriba en el centro
- * - tabla abajo en el centro
- * - gráfico a la derecha
- *
- * De momento:
- * - no hay SQL real
- * - no hay PDF real
- * - sí hay datos demo para validar diseño y flujo
- */
 public class InformesFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
-    private final AppServices appServices;
+    private final AppServices services;
 
+    private InformeToolbarPanel toolbarPanel;
     private InformeFiltrosPanel filtrosPanel;
     private InformeKpiPanel kpiPanel;
     private InformeTablaPanel tablaPanel;
-    private InformeGraficoPanel graficoPanel;
+
+    private TipoInforme currentTipoInforme;
+    private boolean generated;
 
     public InformesFrame(Runnable onLogoutNavigate,
                          Runnable onBack,
@@ -46,18 +38,15 @@ public class InformesFrame extends BaseTpvFrame {
                          TipoInforme tipoInicial) {
         super("Centro de Informes", onLogoutNavigate, services);
         this.onBack = onBack;
-        this.appServices = services;
+        this.services = services;
 
         requireAuthenticatedOrExit();
 
         buildUI();
         refreshHeader();
 
-        if (tipoInicial != null) {
-            filtrosPanel.setTipoInforme(tipoInicial);
-        }
-
-        generarVistaDemo();
+        currentTipoInforme = tipoInicial != null ? tipoInicial : TipoInforme.RESUMEN_EJECUTIVO;
+        applyTipoInforme(currentTipoInforme);
     }
 
     private void buildUI() {
@@ -65,118 +54,130 @@ public class InformesFrame extends BaseTpvFrame {
         root.setBorder(new EmptyBorder(18, 18, 18, 18));
         root.setBackground(InformeUiTheme.APP_BG);
 
-        root.add(buildTopBar(), BorderLayout.NORTH);
-        root.add(buildBody(), BorderLayout.CENTER);
-
-        main.add(root, BorderLayout.CENTER);
-    }
-
-    private JPanel buildTopBar() {
-        JPanel topBar = InformeUiTheme.createCardPanel(new BorderLayout(16, 0));
-
-        JPanel titlePanel = new JPanel();
-        titlePanel.setOpaque(false);
-        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
-
-        JLabel lblTitle = new JLabel("Explorador de Informes");
-        lblTitle.setFont(InformeUiTheme.FONT_TITLE);
-        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
-
-        JLabel lblSubtitle = new JLabel("Panel analítico visual · KPIs · tabla · gráfico · exportación futura");
-        lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
-        lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
-
-        titlePanel.add(lblTitle);
-        titlePanel.add(Box.createVerticalStrut(4));
-        titlePanel.add(lblSubtitle);
-
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actions.setOpaque(false);
-
-        JButton btnGenerar = new JButton("Generar");
-        JButton btnLimpiar = new JButton("Limpiar");
-        JButton btnPdf = new JButton("Exportar PDF");
-        JButton btnImprimir = new JButton("Imprimir");
-        JButton btnVolver = new JButton("Volver");
-
-        InformeUiTheme.stylePrimaryButton(btnGenerar);
-        InformeUiTheme.styleSecondaryButton(btnLimpiar);
-        InformeUiTheme.styleSecondaryButton(btnPdf);
-        InformeUiTheme.styleSecondaryButton(btnImprimir);
-        InformeUiTheme.styleDangerButton(btnVolver);
-
-        btnGenerar.addActionListener(e -> generarVistaDemo());
-        btnLimpiar.addActionListener(e -> {
-            filtrosPanel.reset();
-            generarVistaDemo();
-        });
-
-        btnPdf.addActionListener(e ->
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Exportación PDF pendiente.\nPrimero vamos a cerrar la UI y luego conectamos PDFBox.",
-                        "PDF pendiente",
-                        JOptionPane.INFORMATION_MESSAGE
-                )
-        );
-
-        btnImprimir.addActionListener(e ->
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Impresión pendiente.\nLa conectaremos después de generar el PDF.",
-                        "Impresión pendiente",
-                        JOptionPane.INFORMATION_MESSAGE
-                )
-        );
-
-        btnVolver.addActionListener(e -> volver());
-
-        actions.add(btnGenerar);
-        actions.add(btnLimpiar);
-        actions.add(btnPdf);
-        actions.add(btnImprimir);
-        actions.add(btnVolver);
-
-        topBar.add(titlePanel, BorderLayout.CENTER);
-        topBar.add(actions, BorderLayout.EAST);
-
-        return topBar;
-    }
-
-    private JPanel buildBody() {
-        JPanel body = new JPanel(new BorderLayout(16, 16));
-        body.setOpaque(false);
-
+        toolbarPanel = new InformeToolbarPanel();
         filtrosPanel = new InformeFiltrosPanel();
         kpiPanel = new InformeKpiPanel();
         tablaPanel = new InformeTablaPanel();
-        graficoPanel = new InformeGraficoPanel();
 
-        JPanel centerPanel = new JPanel(new BorderLayout(0, 16));
-        centerPanel.setOpaque(false);
-        centerPanel.add(kpiPanel, BorderLayout.NORTH);
-        centerPanel.add(tablaPanel, BorderLayout.CENTER);
+        JPanel center = new JPanel(new BorderLayout(0, 16));
+        center.setOpaque(false);
+        center.add(kpiPanel, BorderLayout.NORTH);
+        center.add(tablaPanel, BorderLayout.CENTER);
 
-        body.add(filtrosPanel, BorderLayout.WEST);
-        body.add(centerPanel, BorderLayout.CENTER);
-        body.add(graficoPanel, BorderLayout.EAST);
+        root.add(toolbarPanel, BorderLayout.NORTH);
+        root.add(filtrosPanel, BorderLayout.WEST);
+        root.add(center, BorderLayout.CENTER);
 
-        return body;
+        main.add(root, BorderLayout.CENTER);
+
+        wireEvents();
     }
 
-    private void generarVistaDemo() {
-        InformeFiltroDTO filtros = filtrosPanel.leerFiltros();
-        TipoInforme tipo = filtros.getTipoInforme();
+    private void wireEvents() {
+        toolbarPanel.onTipoInformeChanged(e -> {
+            TipoInforme selected = toolbarPanel.getSelectedTipoInforme();
+            applyTipoInforme(selected);
+        });
 
-        kpiPanel.cargarDemo(tipo);
-        tablaPanel.cargarDemo(tipo);
-        graficoPanel.cargarDemo(tipo);
+        toolbarPanel.onGenerar(e -> generateMock());
+        toolbarPanel.onLimpiar(e -> resetCurrentVisualState());
+        toolbarPanel.onVerGrafico(e -> openGraphDialog());
+
+        toolbarPanel.onExportarPdf(e -> JOptionPane.showMessageDialog(
+                this,
+                "PDF pendiente.\nPrimero cerramos la UI y luego metemos la lógica real.",
+                "Pendiente",
+                JOptionPane.INFORMATION_MESSAGE
+        ));
+
+        toolbarPanel.onVolver(e -> {
+            safeDispose();
+            if (onBack != null) {
+                onBack.run();
+            }
+        });
     }
 
-    private void volver() {
-        safeDispose();
-        if (onBack != null) {
-            onBack.run();
+    private void applyTipoInforme(TipoInforme tipoInforme) {
+        currentTipoInforme = tipoInforme;
+        toolbarPanel.setSelectedTipoInforme(tipoInforme);
+        filtrosPanel.setTipoInforme(tipoInforme);
+        generated = false;
+        toolbarPanel.setGraficoEnabled(false);
+        kpiPanel.showPlaceholder(tipoInforme);
+        tablaPanel.showEmpty("Configura los filtros y pulsa Generar para visualizar este informe.");
+    }
+
+    private void resetCurrentVisualState() {
+        filtrosPanel.resetCurrent();
+        generated = false;
+        toolbarPanel.setGraficoEnabled(false);
+        kpiPanel.showPlaceholder(currentTipoInforme);
+        tablaPanel.showEmpty("Estado reiniciado. Pulsa Generar para reconstruir la vista.");
+    }
+
+    private void generateMock() {
+        InformeFiltroDTO filtroDTO = filtrosPanel.buildFiltroDTO();
+        generated = true;
+
+        try {
+            if (currentTipoInforme == TipoInforme.VENTAS_POR_DIA) {
+                InformeVentasPorDiaResultDTO result = services.informesService.getVentasPorDia(filtroDTO);
+
+                kpiPanel.cargarVentasPorDia(result);
+                tablaPanel.cargarVentasPorDia(result, filtroDTO.getModoVista());
+                toolbarPanel.setGraficoEnabled(true);
+
+                System.out.println("Informe real generado: " + filtroDTO.getTipoInforme());
+                System.out.println("Modo vista: " + filtroDTO.getModoVista());
+                System.out.println("Fecha desde: " + filtroDTO.getFechaDesde());
+                System.out.println("Fecha hasta: " + filtroDTO.getFechaHasta());
+                System.out.println("Id sucursal: " + filtroDTO.getIdSucursal());
+                System.out.println("Id caja: " + filtroDTO.getIdCaja());
+                System.out.println("Todos empleados: " + filtroDTO.isTodosLosEmpleados());
+                System.out.println("Ids empleados: " + filtroDTO.getIdsEmpleados());
+                System.out.println("Método pago: " + filtroDTO.getMetodoPago());
+                System.out.println("Incluir devoluciones: " + filtroDTO.isIncluirDevoluciones());
+
+                return;
+            }
+
+            // resto de informes siguen visuales/mock
+            kpiPanel.showPlaceholder(currentTipoInforme);
+            tablaPanel.showPlaceholder(currentTipoInforme, filtroDTO.getModoVista());
+            toolbarPanel.setGraficoEnabled(true);
+
+        } catch (Exception e) {
+            generated = false;
+            toolbarPanel.setGraficoEnabled(false);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al generar el informe:\n" + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            e.printStackTrace();
         }
+    }
+
+    private void openGraphDialog() {
+        if (!generated) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Primero genera el informe para poder visualizar el gráfico.",
+                    "Gráfico no disponible",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        InformeGraficoDialog dialog = new InformeGraficoDialog(
+                this,
+                currentTipoInforme,
+                filtrosPanel.getCurrentModoVista(),
+                filtrosPanel.getCurrentFilterSummary()
+        );
+        dialog.setVisible(true);
     }
 }

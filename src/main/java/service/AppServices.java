@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dao.InformesDao;
+
 /**
  * Contenedor central de servicios de la aplicación.
  *
@@ -111,11 +113,19 @@ public class AppServices {
      * Uso previsto:
      * - registrar mermas desde VentasFrame en ModoOperacion.MERMA
      * - reutilizar la misma arquitectura UI -> Facade -> Service -> DAO
+     * 
      */
     public final MermaFacade mermaFacade;
+    
+    // =====================================================
+    // 8) SERVICIOS DE INFORMES
+    // =====================================================
+
+   
+    public final InformesService informesService;
 
     // =====================================================
-    // 8) CONSTRUCTOR
+    // 9) CONSTRUCTOR
     // =====================================================
 
     public AppServices(
@@ -145,7 +155,8 @@ public class AppServices {
             DevolucionFacade devolucionFacade,
             DevolucionTicketService devolucionTicketService,
 
-            MermaFacade mermaFacade
+            MermaFacade mermaFacade,
+            InformesService informesService
     ) {
         // -----------------------------
         // 1) Servicios generales
@@ -198,6 +209,10 @@ public class AppServices {
         // 7) Servicios de merma
         // -----------------------------
         this.mermaFacade = mermaFacade;
+        // -----------------------------
+        // 8) Servicios de merma
+        // -----------------------------
+        this.informesService = informesService;
     }
 
     // =====================================================

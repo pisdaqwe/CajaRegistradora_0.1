@@ -1,31 +1,32 @@
 package ui.informes;
 
+import enums.ModoVistaInforme;
 import enums.TipoInforme;
-import ui.common.InformeUiTheme;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import dtoS.InformeVentasPorDiaResultDTO;
+
 import java.awt.*;
 
-/**
- * Panel central de tabla de resultados.
- *
- * Primera fase:
- * - muestra datos demo
- * - sirve para validar diseño, tamaños y estructura visual
- */
 public class InformeTablaPanel extends JPanel {
 
+    private final JLabel lblTitle;
     private final JTable table;
     private final DefaultTableModel model;
+    private final JLabel lblEmpty;
+
+    private final CardLayout centerLayout;
+    private final JPanel centerPanel;
 
     public InformeTablaPanel() {
         setLayout(new BorderLayout(0, 12));
         setBackground(InformeUiTheme.CARD_BG);
         setBorder(InformeUiTheme.createCardBorder());
 
-        JLabel title = InformeUiTheme.createSectionTitle("Resultado tabular");
-        add(title, BorderLayout.NORTH);
+        lblTitle = InformeUiTheme.createSectionTitle("Resultado tabular");
 
         model = new DefaultTableModel() {
             @Override
@@ -40,96 +41,301 @@ public class InformeTablaPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(table);
         InformeUiTheme.styleScrollPane(scrollPane);
 
-        add(scrollPane, BorderLayout.CENTER);
+        lblEmpty = new JLabel("Selecciona un informe y pulsa Generar.", SwingConstants.CENTER);
+        lblEmpty.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lblEmpty.setFont(InformeUiTheme.FONT_BODY);
 
-        cargarDemo(TipoInforme.RESUMEN_EJECUTIVO);
+        centerLayout = new CardLayout();
+        centerPanel = new JPanel(centerLayout);
+        centerPanel.setOpaque(false);
+        centerPanel.add(lblEmpty, "EMPTY");
+        centerPanel.add(scrollPane, "TABLE");
+
+        add(lblTitle, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+
+        centerLayout.show(centerPanel, "EMPTY");
     }
 
-    public void cargarDemo(TipoInforme tipo) {
-        switch (tipo) {
-            case INFORME_CAJA -> setData(
-                    new String[]{"Caja", "Apertura", "Ventas", "Devoluciones", "Neto", "Estado"},
-                    new Object[][]{
-                            {"Caja 1", "250,00 €", "2.136,40 €", "-52,34 €", "2.084,06 €", "Cerrada"},
-                            {"Caja 2", "300,00 €", "1.845,20 €", "-18,00 €", "1.827,20 €", "Abierta"}
-                    }
-            );
-            case VENTAS_POR_DIA -> setData(
-                    new String[]{"Fecha", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"},
-                    new Object[][]{
-                            {"01/04/2026", "782,40 €", "-12,00 €", "770,40 €", "84", "9,19 €"},
-                            {"02/04/2026", "905,20 €", "-22,00 €", "883,20 €", "96", "9,43 €"},
-                            {"03/04/2026", "846,10 €", "-18,20 €", "827,90 €", "92", "9,19 €"},
-                            {"04/04/2026", "1.012,60 €", "-31,00 €", "981,60 €", "108", "9,38 €"},
-                            {"05/04/2026", "1.123,40 €", "-31,00 €", "1.092,40 €", "120", "9,36 €"}
-                    }
-            );
-            case TICKET_MEDIO_POR_DIA -> setData(
-                    new String[]{"Fecha", "Tickets", "Ventas", "Ticket medio", "Combo medio"},
-                    new Object[][]{
-                            {"01/04/2026", "84", "782,40 €", "9,19 €", "11,80 €"},
-                            {"02/04/2026", "96", "905,20 €", "9,43 €", "12,10 €"},
-                            {"03/04/2026", "92", "846,10 €", "9,19 €", "11,75 €"},
-                            {"04/04/2026", "108", "1.012,60 €", "9,38 €", "12,42 €"},
-                            {"05/04/2026", "120", "1.123,40 €", "9,36 €", "12,58 €"}
-                    }
-            );
-            case PAGOS_POR_METODO -> setData(
-                    new String[]{"Método", "Operaciones", "Importe", "% total"},
-                    new Object[][]{
-                            {"Tarjeta", "326", "2.848,20 €", "58,0%"},
-                            {"Efectivo", "214", "1.936,40 €", "39,4%"},
-                            {"Vale", "14", "127,60 €", "2,6%"}
-                    }
-            );
-            case PRODUCTOS_MAS_VENDIDOS -> setData(
-                    new String[]{"Producto", "Unidades", "Bruto", "Devoluciones", "Neto"},
-                    new Object[][]{
-                            {"Latte Clásico", "148", "740,00 €", "-8,00 €", "732,00 €"},
-                            {"Cappuccino Grande", "123", "676,50 €", "-6,50 €", "670,00 €"},
-                            {"Croissant Mantequilla", "112", "392,00 €", "-12,00 €", "380,00 €"},
-                            {"Matcha Latte", "87", "495,90 €", "-0,00 €", "495,90 €"}
-                    }
-            );
-            case COMBOS_VENDIDOS -> setData(
-                    new String[]{"Combo", "Veces vendido", "Precio original", "Precio final", "Ahorro"},
-                    new Object[][]{
-                            {"Desayuno Classic", "22", "198,00 €", "171,60 €", "26,40 €"},
-                            {"Merienda Duo", "15", "165,00 €", "141,75 €", "23,25 €"},
-                            {"Frío + Snack", "11", "121,00 €", "101,20 €", "19,80 €"}
-                    }
-            );
-            case DESCUENTOS -> setData(
-                    new String[]{"Descuento", "Usos", "Base", "Importe descuento", "Beneficio"},
-                    new Object[][]{
-                            {"Empleado 30%", "18", "420,00 €", "126,00 €", "Interno"},
-                            {"Promo QR 10%", "25", "615,00 €", "61,50 €", "Cliente"},
-                            {"Cupón lanzamiento", "9", "180,00 €", "26,25 €", "Cliente"}
-                    }
-            );
-            case DEVOLUCIONES -> setData(
-                    new String[]{"Fecha", "Producto", "Cantidad", "Reembolso", "Repone stock", "Admin"},
-                    new Object[][]{
-                            {"05/04/2026", "Termo Acero", "1", "14,95 €", "Sí", "Administrador"},
-                            {"05/04/2026", "Taza Térmica Pequeña", "1", "9,95 €", "Sí", "Administrador"},
-                            {"05/04/2026", "Aquarius Limón 50cl", "1", "2,30 €", "Sí", "Administrador"}
-                    }
-            );
-            case RESUMEN_EJECUTIVO -> setData(
-                    new String[]{"Indicador", "Valor"},
-                    new Object[][]{
-                            {"Ventas brutas", "6.214,10 €"},
-                            {"Devoluciones", "-145,20 €"},
-                            {"Neto", "6.068,90 €"},
-                            {"Ticket medio", "9,42 €"},
-                            {"Combos vendidos", "36"},
-                            {"Ahorro total", "415,85 €"}
-                    }
-            );
+    public void showPlaceholder(TipoInforme tipoInforme, ModoVistaInforme modoVista) {
+        String[] cols= null;
+        Object[][] rows= null;
+
+        lblTitle.setText("Resultado · " + tipoInforme.getDisplayName());
+
+        switch (tipoInforme) {
+            case RESUMEN_EJECUTIVO -> {
+                cols = new String[]{"Indicador", "Valor"};
+                rows = new Object[][]{
+                        {"Ventas brutas", "6.214,10 €"},
+                        {"Devoluciones", "-145,20 €"},
+                        {"Neto", "6.068,90 €"},
+                        {"Ticket medio", "9,42 €"},
+                        {"Combos vendidos", "36"},
+                        {"Ahorro total", "415,85 €"}
+                };
+            }
+
+            case VENTAS_POR_DIA -> {
+                if (modoVista == ModoVistaInforme.COMPARATIVA) {
+                    cols = new String[]{"Fecha", "Empleado", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"};
+                    rows = new Object[][]{
+                            {"01/04/2026", "Ana", "320,40 €", "-10,00 €", "310,40 €", 31, "10,33 €"},
+                            {"01/04/2026", "Luis", "280,20 €", "0,00 €", "280,20 €", 29, "9,66 €"},
+                            {"01/04/2026", "Marta", "190,00 €", "-2,00 €", "188,00 €", 22, "8,54 €"},
+                            {"02/04/2026", "Ana", "340,80 €", "-8,00 €", "332,80 €", 33, "10,33 €"},
+                            {"02/04/2026", "Luis", "295,30 €", "-4,00 €", "291,30 €", 30, "9,84 €"},
+                            {"02/04/2026", "Marta", "215,40 €", "-1,00 €", "214,40 €", 24, "8,98 €"}
+                    };
+                } else {
+                    cols = new String[]{"Fecha", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"};
+                    rows = new Object[][]{
+                            {"01/04/2026", "782,40 €", "-12,00 €", "770,40 €", 84, "9,19 €"},
+                            {"02/04/2026", "905,20 €", "-22,00 €", "883,20 €", 96, "9,43 €"},
+                            {"03/04/2026", "846,10 €", "-18,20 €", "827,90 €", 92, "9,19 €"},
+                            {"04/04/2026", "1.012,60 €", "-31,00 €", "981,60 €", 108, "9,38 €"},
+                            {"05/04/2026", "1.123,40 €", "-31,00 €", "1.092,40 €", 120, "9,36 €"}
+                    };
+                }
+            }
+
+            case VENTAS_POR_FRANJA_HORARIA -> {
+                if (modoVista == ModoVistaInforme.COMPARATIVA) {
+                    cols = new String[]{"Franja", "Empleado", "Ventas", "Tickets", "Ticket medio"};
+                    rows = new Object[][]{
+                            {"08-10h", "Ana", "180,00 €", 17, "10,58 €"},
+                            {"08-10h", "Luis", "140,00 €", 16, "8,75 €"},
+                            {"10-12h", "Ana", "210,00 €", 20, "10,50 €"},
+                            {"10-12h", "Luis", "160,00 €", 18, "8,89 €"},
+                            {"12-14h", "Ana", "120,00 €", 12, "10,00 €"},
+                            {"12-14h", "Luis", "90,00 €", 10, "9,00 €"}
+                    };
+                } else {
+                    cols = new String[]{"Franja", "Ventas", "Tickets", "Ticket medio"};
+                    rows = new Object[][]{
+                            {"08-10h", "420,00 €", 44, "9,54 €"},
+                            {"10-12h", "610,00 €", 64, "9,53 €"},
+                            {"12-14h", "540,00 €", 58, "9,31 €"},
+                            {"14-16h", "330,00 €", 37, "8,92 €"}
+                    };
+                }
+            }
+
+            case TICKET_MEDIO_POR_DIA -> {
+                if (modoVista == ModoVistaInforme.COMPARATIVA) {
+                    cols = new String[]{"Fecha", "Empleado", "Tickets", "Ventas", "Ticket medio"};
+                    rows = new Object[][]{
+                            {"01/04/2026", "Ana", 31, "320,40 €", "10,33 €"},
+                            {"01/04/2026", "Luis", 29, "280,20 €", "9,66 €"},
+                            {"01/04/2026", "Marta", 22, "190,00 €", "8,54 €"},
+                            {"02/04/2026", "Ana", 33, "340,80 €", "10,33 €"},
+                            {"02/04/2026", "Luis", 30, "295,30 €", "9,84 €"},
+                            {"02/04/2026", "Marta", 24, "215,40 €", "8,98 €"}
+                    };
+                } else {
+                    cols = new String[]{"Fecha", "Tickets", "Ventas", "Ticket medio"};
+                    rows = new Object[][]{
+                            {"01/04/2026", 84, "782,40 €", "9,19 €"},
+                            {"02/04/2026", 96, "905,20 €", "9,43 €"},
+                            {"03/04/2026", 92, "846,10 €", "9,19 €"},
+                            {"04/04/2026", 108, "1.012,60 €", "9,38 €"},
+                            {"05/04/2026", 120, "1.123,40 €", "9,36 €"}
+                    };
+                }
+            }
+
+            case PAGOS_POR_METODO -> {
+                cols = new String[]{"Método", "Operaciones", "Importe", "% total"};
+                rows = new Object[][]{
+                        {"Tarjeta", 326, "2.848,20 €", "58,0%"},
+                        {"Efectivo", 214, "1.936,40 €", "39,4%"},
+                        {"Vale", 14, "127,60 €", "2,6%"}
+                };
+            }
+
+            case VENTAS_NETAS_VS_DEVOLUCIONES -> {
+                cols = new String[]{"Fecha", "Ventas", "Devoluciones", "Neto", "Ratio devolución"};
+                rows = new Object[][]{
+                        {"01/04/2026", "782,40 €", "12,00 €", "770,40 €", "1,53%"},
+                        {"02/04/2026", "905,20 €", "22,00 €", "883,20 €", "2,43%"},
+                        {"03/04/2026", "846,10 €", "18,20 €", "827,90 €", "2,15%"},
+                        {"04/04/2026", "1.012,60 €", "31,00 €", "981,60 €", "3,06%"}
+                };
+            }
+
+            case PRODUCTOS_MAS_VENDIDOS -> {
+                cols = new String[]{"Producto", "Unidades", "Bruto", "Devoluciones", "Neto"};
+                rows = new Object[][]{
+                        {"Latte Clásico", 148, "740,00 €", "-8,00 €", "732,00 €"},
+                        {"Cappuccino Grande", 123, "676,50 €", "-6,50 €", "670,00 €"},
+                        {"Croissant Mantequilla", 112, "392,00 €", "-12,00 €", "380,00 €"},
+                        {"Matcha Latte", 87, "495,90 €", "-0,00 €", "495,90 €"}
+                };
+            }
+
+            case EXTRAS_MAS_VENDIDOS -> {
+                cols = new String[]{"Extra", "Veces vendido", "Importe generado", "Categoría principal"};
+                rows = new Object[][]{
+                        {"Shot extra", 96, "144,00 €", "Café"},
+                        {"Sirope vainilla", 81, "121,50 €", "Café"},
+                        {"Leche avena", 62, "93,00 €", "Bebidas"},
+                        {"Topping caramelo", 41, "61,50 €", "Frappé"}
+                };
+            }
+
+            case COMBOS_VENDIDOS -> {
+                cols = new String[]{"Combo", "Veces vendido", "Precio original", "Precio final", "Ahorro"};
+                rows = new Object[][]{
+                        {"Desayuno Classic", 22, "198,00 €", "171,60 €", "26,40 €"},
+                        {"Merienda Duo", 15, "165,00 €", "141,75 €", "23,25 €"},
+                        {"Frío + Snack", 11, "121,00 €", "101,20 €", "19,80 €"}
+                };
+            }
+
+            case DESCUENTOS_APLICADOS -> {
+                cols = new String[]{"Descuento", "Usos", "Base", "Importe descuento", "Beneficio"};
+                rows = new Object[][]{
+                        {"Empleado 30%", 18, "420,00 €", "126,00 €", "Interno"},
+                        {"Promo QR 10%", 25, "615,00 €", "61,50 €", "Cliente"},
+                        {"Cupón lanzamiento", 9, "180,00 €", "26,25 €", "Cliente"}
+                };
+            }
+
+            case DEVOLUCIONES_POR_PRODUCTO -> {
+                cols = new String[]{"Producto", "Cantidad devuelta", "Reembolso", "Repone stock"};
+                rows = new Object[][]{
+                        {"Termo Acero", 1, "14,95 €", "Sí"},
+                        {"Taza Térmica Pequeña", 1, "9,95 €", "Sí"},
+                        {"Aquarius Limón 50cl", 1, "2,30 €", "Sí"}
+                };
+            }
+
+            case RANKING_EMPLEADOS_POR_VENTAS -> {
+                cols = new String[]{"Posición", "Empleado", "Ventas", "Tickets", "Ticket medio"};
+                rows = new Object[][]{
+                        {1, "Ana", "1.840,50 €", 183, "10,06 €"},
+                        {2, "Luis", "1.620,30 €", 172, "9,42 €"},
+                        {3, "Marta", "1.488,90 €", 169, "8,81 €"}
+                };
+            }
+
+            case RANKING_EMPLEADOS_POR_EXTRAS -> {
+                cols = new String[]{"Posición", "Empleado", "Extras vendidos", "Importe extras"};
+                rows = new Object[][]{
+                        {1, "Ana", 82, "123,00 €"},
+                        {2, "Luis", 69, "103,50 €"},
+                        {3, "Marta", 58, "87,00 €"}
+                };
+            }
+
+            case PRODUCTOS_VENDIDOS_POR_EMPLEADO -> {
+                cols = new String[]{"Empleado", "Producto", "Unidades", "Importe"};
+                rows = new Object[][]{
+                        {"Ana", "Latte", 118, "590,00 €"},
+                        {"Ana", "Croissant", 102, "357,00 €"},
+                        {"Luis", "Cappuccino", 95, "522,50 €"},
+                        {"Marta", "Matcha", 74, "421,80 €"}
+                };
+            }
+
+            case VENTAS_POR_CAJA -> {
+                cols = new String[]{"Caja", "Ventas", "Devoluciones", "Neto", "Tickets"};
+                rows = new Object[][]{
+                        {"Caja 1", "2.136,40 €", "-52,34 €", "2.084,06 €", 214},
+                        {"Caja 2", "1.845,20 €", "-18,00 €", "1.827,20 €", 196}
+                };
+            }
+
+            case VENTAS_POR_SESION_CAJA -> {
+                cols = new String[]{"Sesión", "Caja", "Empleado apertura", "Ventas", "Neto"};
+                rows = new Object[][]{
+                        {"#101", "Caja 1", "Ana", "980,40 €", "960,40 €"},
+                        {"#102", "Caja 1", "Luis", "1.120,20 €", "1.110,20 €"},
+                        {"#103", "Caja 2", "Marta", "875,90 €", "856,90 €"}
+                };
+            }
+
+            case TIEMPOS_POR_ESTACION -> {
+                cols = new String[]{"Estación", "Tiempo medio", "Items procesados", "Pico máximo"};
+                rows = new Object[][]{
+                        {"Bebidas calientes", "145 s", 128, "240 s"},
+                        {"Bebidas frías", "122 s", 91, "198 s"},
+                        {"Comida", "210 s", 74, "320 s"}
+                };
+            }
+
+            case MERMA_POR_PERIODO -> {
+                cols = new String[]{"Fecha", "Tipo", "Cantidad", "Observación"};
+                rows = new Object[][]{
+                        {"01/04/2026", "Producto", "45,00", "Mermas varias"},
+                        {"02/04/2026", "Ingrediente", "62,50", "Ajuste por caducidad"},
+                        {"03/04/2026", "Producto", "38,00", "Rotura / devolución interna"}
+                };
+            }
+
+            case MOVIMIENTOS_STOCK_AJUSTES -> {
+                cols = new String[]{"Fecha", "Movimiento", "Objeto", "Cantidad", "Motivo"};
+                rows = new Object[][]{
+                        {"01/04/2026", "ENTRADA", "Producto", "18", "Reposición"},
+                        {"01/04/2026", "SALIDA", "Ingrediente", "36", "Consumo operativo"},
+                        {"02/04/2026", "AJUSTE", "Ingrediente", "7", "Corrección"},
+                        {"02/04/2026", "MERMA", "Producto", "5", "Pérdida"}
+                };
+            }
         }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
     }
 
-    private void setData(String[] columns, Object[][] rows) {
-        model.setDataVector(rows, columns);
+    public void showEmpty(String text) {
+        lblEmpty.setText(text);
+        centerLayout.show(centerPanel, "EMPTY");
     }
+    
+    public void cargarVentasPorDia(InformeVentasPorDiaResultDTO result, ModoVistaInforme modoVista) {
+        lblTitle.setText("Resultado · Ventas por día");
+
+        if (modoVista == ModoVistaInforme.COMPARATIVA) {
+            String[] cols = {"Fecha", "Empleado", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"};
+            Object[][] rows = new Object[result.getRows().size()][7];
+
+            for (int i = 0; i < result.getRows().size(); i++) {
+                var row = result.getRows().get(i);
+                rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+                rows[i][1] = row.getNombreEmpleado();
+                rows[i][2] = formatMoney(row.getTotalVentas());
+                rows[i][3] = formatMoney(row.getTotalDevoluciones());
+                rows[i][4] = formatMoney(row.getTotalNeto());
+                rows[i][5] = row.getNumeroTickets();
+                rows[i][6] = formatMoney(row.getTicketMedio());
+            }
+
+            model.setDataVector(rows, cols);
+        } else {
+            String[] cols = {"Fecha", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"};
+            Object[][] rows = new Object[result.getRows().size()][6];
+
+            for (int i = 0; i < result.getRows().size(); i++) {
+                var row = result.getRows().get(i);
+                rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+                rows[i][1] = formatMoney(row.getTotalVentas());
+                rows[i][2] = formatMoney(row.getTotalDevoluciones());
+                rows[i][3] = formatMoney(row.getTotalNeto());
+                rows[i][4] = row.getNumeroTickets();
+                rows[i][5] = formatMoney(row.getTicketMedio());
+            }
+
+            model.setDataVector(rows, cols);
+        }
+
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    private String formatMoney(java.math.BigDecimal value) {
+        java.math.BigDecimal safe = value != null ? value : java.math.BigDecimal.ZERO;
+        return String.format(java.util.Locale.forLanguageTag("es-ES"), "%,.2f €", safe);
+    }
+    
+    
 }
