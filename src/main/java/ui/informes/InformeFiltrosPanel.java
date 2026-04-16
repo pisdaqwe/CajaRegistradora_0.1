@@ -4,6 +4,7 @@ import dtoS.InformeFiltroDTO;
 import enums.FamiliaInforme;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
+import service.AppServices;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -12,6 +13,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class InformeFiltrosPanel extends JPanel {
+
+    private final AppServices services;
 
     private final JLabel lblModuleTitle;
     private final JLabel lblModuleSubtitle;
@@ -24,7 +27,9 @@ public class InformeFiltrosPanel extends JPanel {
     private FamiliaInforme currentFamilia;
     private TipoInforme currentTipoInforme;
 
-    public InformeFiltrosPanel() {
+    public InformeFiltrosPanel(AppServices services) {
+        this.services = services;
+
         setLayout(new BorderLayout(0, 12));
         setBackground(InformeUiTheme.CARD_BG);
         setBorder(InformeUiTheme.createCardBorder());
@@ -50,7 +55,7 @@ public class InformeFiltrosPanel extends JPanel {
         header.add(lblModuleSubtitle);
 
         modules = new EnumMap<>(FamiliaInforme.class);
-        modules.put(FamiliaInforme.VENTAS_TIEMPO, new VentasTiempoFilterPanel());
+        modules.put(FamiliaInforme.VENTAS_TIEMPO, new VentasTiempoFilterPanel(services));
         modules.put(FamiliaInforme.COMERCIAL, new ComercialFilterPanel());
         modules.put(FamiliaInforme.EQUIPO, new EquipoFilterPanel());
         modules.put(FamiliaInforme.OPERATIVA, new OperativaFilterPanel());

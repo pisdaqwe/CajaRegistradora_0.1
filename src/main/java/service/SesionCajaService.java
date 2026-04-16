@@ -59,6 +59,12 @@ public class SesionCajaService {
                 .orElseThrow(() ->
                         new IllegalStateException("No hay ninguna sesión de caja abierta"));
     }
+    public List<Caja> findActivasBySucursal(int idSucursal) {
+        if (idSucursal <= 0) {
+            throw new IllegalArgumentException("idSucursal debe ser > 0");
+        }
+        return cajaDao.findActivasBySucursal(idSucursal);
+    }
 
     // =====================================================
     // APERTURA DE SESIÓN

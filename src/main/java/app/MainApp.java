@@ -33,6 +33,7 @@ import dao.SesionCajaDao;
 import dao.StockIngredienteDao;
 import dao.StockProductoDao;
 import dao.SubcategoriaDao;
+import dao.SucursalDao;
 import dao.TicketJsonDao;
 import dao.UsuarioDao;
 import dao.UsuarioRecordadoDao;
@@ -63,6 +64,7 @@ import service.ProductoPersonalizacionService;
 import service.RecipeResolverService;
 import service.SesionCajaService;
 import service.StockIngredienteService;
+import service.SucursalService;
 import service.TicketClienteService;
 import service.UsuarioRecordadoService;
 import service.UsuarioService;
@@ -89,6 +91,7 @@ public class MainApp {
         SesionCajaDao sesionCajaDao = new SesionCajaDao();
         CajaDao cajaDao = new CajaDao();
         UsuarioRecordadoDao usuarioRecordadoDao = new UsuarioRecordadoDao();
+        SucursalDao sucursalDao = new SucursalDao();
 
         // =====================================================
         // 3) DAOs DE CATÁLOGO / CUSTOMIZACIÓN
@@ -281,6 +284,7 @@ public class MainApp {
         // 19) SERVICES DE DEVOLUCIONES
         // =====================================================
         	InformesService informesService = new InformesService(informesDao );
+        	SucursalService sucursalService = new SucursalService(sucursalDao);
         // =====================================================
         // 19) FACADES
         // =====================================================
@@ -321,7 +325,8 @@ public class MainApp {
                 devolucionTicketService,
 
                 mermaFacade,
-                informesService
+                informesService,
+                sucursalService
                 
         );
 

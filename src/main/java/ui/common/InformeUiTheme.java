@@ -8,21 +8,10 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
-/**
- * Tema visual centralizado del módulo de informes.
- *
- * Objetivo:
- * - mantener una estética premium tipo Starbucks
- * - evitar repetir colores/bordes/fuentes en todas las clases
- */
 public final class InformeUiTheme {
 
     private InformeUiTheme() {
     }
-
-    // =========================
-    // PALETA
-    // =========================
 
     public static final Color APP_BG = new Color(10, 24, 20);
     public static final Color CARD_BG = new Color(24, 49, 41);
@@ -36,13 +25,7 @@ public final class InformeUiTheme {
     public static final Color TEXT_PRIMARY = new Color(245, 242, 235);
     public static final Color TEXT_SECONDARY = new Color(189, 203, 196);
     public static final Color BORDER = new Color(48, 82, 70);
-
     public static final Color DANGER = new Color(150, 52, 52);
-    public static final Color WARNING = new Color(176, 126, 48);
-
-    // =========================
-    // FUENTES
-    // =========================
 
     public static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 28);
     public static final Font FONT_SUBTITLE = new Font("SansSerif", Font.PLAIN, 14);
@@ -51,11 +34,7 @@ public final class InformeUiTheme {
     public static final Font FONT_BODY = new Font("SansSerif", Font.PLAIN, 14);
     public static final Font FONT_BUTTON = new Font("SansSerif", Font.BOLD, 14);
     public static final Font FONT_KPI_TITLE = new Font("SansSerif", Font.BOLD, 13);
-    public static final Font FONT_KPI_VALUE = new Font("SansSerif", Font.BOLD, 26);
-
-    // =========================
-    // HELPERS
-    // =========================
+    public static final Font FONT_KPI_VALUE = new Font("SansSerif", Font.BOLD, 24);
 
     public static JPanel createCardPanel(LayoutManager layout) {
         JPanel p = new JPanel(layout);
@@ -141,6 +120,16 @@ public final class InformeUiTheme {
         checkBox.setOpaque(false);
         checkBox.setForeground(TEXT_PRIMARY);
         checkBox.setFont(FONT_BODY);
+    }
+
+    public static void styleList(JList<?> list) {
+        list.setBackground(PANEL_BG);
+        list.setForeground(TEXT_PRIMARY);
+        list.setSelectionBackground(STARBUCKS_GREEN);
+        list.setSelectionForeground(Color.WHITE);
+        list.setFont(FONT_BODY);
+        list.setFixedCellHeight(28);
+        list.setBorder(new EmptyBorder(4, 4, 4, 4));
     }
 
     public static void styleSpinner(JSpinner spinner) {

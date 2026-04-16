@@ -2,7 +2,6 @@ package app;
 
 import dtoS.SesionCajaRefDTO;
 import model.Usuario;
-import net.bytebuddy.asm.Advice.This;
 
 public final class AppContext {
 
@@ -101,6 +100,7 @@ public final class AppContext {
     // LOGOUT
     // =========================
     public static void clear() {
+    	idSucursalActual = 0;
         usuarioActual = null;
         sesionCajaActual = null;
     }

@@ -123,6 +123,7 @@ public class AppServices {
 
    
     public final InformesService informesService;
+    public final SucursalService sucursalService;
 
     // =====================================================
     // 9) CONSTRUCTOR
@@ -156,7 +157,8 @@ public class AppServices {
             DevolucionTicketService devolucionTicketService,
 
             MermaFacade mermaFacade,
-            InformesService informesService
+            InformesService informesService,
+            SucursalService sucursalService
     ) {
         // -----------------------------
         // 1) Servicios generales
@@ -213,6 +215,7 @@ public class AppServices {
         // 8) Servicios de merma
         // -----------------------------
         this.informesService = informesService;
+        this.sucursalService = sucursalService;
     }
 
     // =====================================================

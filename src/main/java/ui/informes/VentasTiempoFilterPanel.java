@@ -1,9 +1,14 @@
 package ui.informes;
 
+import app.AppContext;
 import dtoS.InformeFiltroDTO;
 import enums.AgrupacionTemporal;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
+import model.Caja;
+import model.Sucursal;
+import model.Usuario;
+import service.AppServices;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -16,6 +21,8 @@ import java.util.Date;
 import java.util.List;
 
 public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
+
+    private final AppServices services;
 
     private final JSpinner spFechaDesde;
     private final JSpinner spFechaHasta;
@@ -33,7 +40,12 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
     private final JRadioButton rbAgregada;
     private final JRadioButton rbComparativa;
 
-    public VentasTiempoFilterPanel() {
+    private final List<Caja> cajasCargadas = new ArrayList<>();
+    private final List<Usuario> usuariosCargados = new ArrayList<>();
+
+    public VentasTiempoFilterPanel(AppServices services) {
+        this.services = services;
+
         JPanel content = createContentPanel();
 
         spFechaDesde = createDateSpinner(firstDayOfCurrentMonth());
@@ -42,17 +54,11 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         cmbAgrupacion = new JComboBox<>(AgrupacionTemporal.values());
         InformeUiTheme.styleCombo(cmbAgrupacion);
 
-        cmbSucursal = new JComboBox<>(new String[]{
-                "Todas las sucursales",
-                "Tienda principal"
-        });
+        cmbSucursal = new JComboBox<>();
         InformeUiTheme.styleCombo(cmbSucursal);
+        cmbSucursal.setEnabled(false);
 
-        cmbCaja = new JComboBox<>(new String[]{
-                "Todas las cajas",
-                "Caja 1",
-                "Caja 2"
-        });
+        cmbCaja = new JComboBox<>();
         InformeUiTheme.styleCombo(cmbCaja);
 
         cmbMetodoPago = new JComboBox<>(new String[]{
@@ -68,12 +74,6 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         InformeUiTheme.styleCheckBox(chkTodosEmpleados);
 
         empleadosModel = new DefaultListModel<>();
-        empleadosModel.addElement("Administrador Temporal");
-        empleadosModel.addElement("Bogdan");
-        empleadosModel.addElement("Ana");
-        empleadosModel.addElement("Luis");
-        empleadosModel.addElement("Marta");
-
         lstEmpleados = new JList<>(empleadosModel);
         lstEmpleados.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         InformeUiTheme.styleList(lstEmpleados);
@@ -142,6 +142,10 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         content.add(createFieldBlock("Opciones", wrapCheckBox(chkIncluirDevoluciones)));
 
         add(content, BorderLayout.NORTH);
+
+        cargarSucursalActual();
+        cargarCajasPorSucursalActual();
+        cargarUsuariosPorSucursalActual();
     }
 
     @Override
@@ -171,7 +175,6 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         spFechaDesde.setValue(firstDayOfCurrentMonth());
         spFechaHasta.setValue(new Date());
         cmbAgrupacion.setSelectedItem(AgrupacionTemporal.DIA);
-        cmbSucursal.setSelectedIndex(0);
         cmbCaja.setSelectedIndex(0);
         cmbMetodoPago.setSelectedIndex(0);
         chkTodosEmpleados.setSelected(true);
@@ -179,6 +182,10 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         lstEmpleados.setEnabled(false);
         chkIncluirDevoluciones.setSelected(true);
         rbAgregada.setSelected(true);
+
+        cargarSucursalActual();
+        cargarCajasPorSucursalActual();
+        cargarUsuariosPorSucursalActual();
     }
 
     @Override
@@ -216,8 +223,8 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         dto.setFechaDesde(toLocalDate((Date) spFechaDesde.getValue()));
         dto.setFechaHasta(toLocalDate((Date) spFechaHasta.getValue()));
 
-        dto.setIdSucursal(parseSucursalId((String) cmbSucursal.getSelectedItem()));
-        dto.setIdCaja(parseCajaId((String) cmbCaja.getSelectedItem()));
+        dto.setIdSucursal(AppContext.getIdSucursal());
+        dto.setIdCaja(getSelectedCajaId());
 
         dto.setTodosLosEmpleados(chkTodosEmpleados.isSelected());
         dto.setIdsEmpleados(buildSelectedEmpleadoIds());
@@ -232,6 +239,71 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         return dto;
     }
 
+    private void cargarSucursalActual() {
+        int idSucursal = AppContext.getIdSucursal();
+        if (idSucursal <= 0) {
+            throw new IllegalStateException("AppContext no tiene una sucursal actual válida");
+        }
+
+        Sucursal sucursal = services.sucursalService.findByIdOrThrow(idSucursal);
+
+        cmbSucursal.removeAllItems();
+        cmbSucursal.addItem(sucursal.getNombre());
+        cmbSucursal.setSelectedIndex(0);
+        cmbSucursal.setEnabled(false);
+    }
+
+    private void cargarCajasPorSucursalActual() {
+        int idSucursal = AppContext.getIdSucursal();
+
+        cajasCargadas.clear();
+        cmbCaja.removeAllItems();
+        cmbCaja.addItem("Todas las cajas");
+
+        List<Caja> cajas = services.sesionCajaService.findActivasBySucursal(idSucursal);
+        cajasCargadas.addAll(cajas);
+
+        for (Caja caja : cajas) {
+            cmbCaja.addItem(caja.getNombre());
+        }
+
+        cmbCaja.setSelectedIndex(0);
+    }
+
+    private void cargarUsuariosPorSucursalActual() {
+        int idSucursal = AppContext.getIdSucursal();
+
+        usuariosCargados.clear();
+        empleadosModel.clear();
+
+        List<Usuario> usuarios = services.usuarioService.findActivosBySucursal(idSucursal);
+        usuariosCargados.addAll(usuarios);
+
+        for (Usuario usuario : usuarios) {
+            String label = usuario.getNombre() + " (" + usuario.getUsuario() + ")";
+            empleadosModel.addElement(label);
+        }
+
+        chkTodosEmpleados.setSelected(true);
+        lstEmpleados.clearSelection();
+        lstEmpleados.setEnabled(false);
+    }
+
+    private Integer getSelectedCajaId() {
+        int index = cmbCaja.getSelectedIndex();
+
+        if (index <= 0) {
+            return null;
+        }
+
+        int cajaIndex = index - 1;
+        if (cajaIndex >= 0 && cajaIndex < cajasCargadas.size()) {
+            return cajasCargadas.get(cajaIndex).getIdCaja();
+        }
+
+        return null;
+    }
+
     private List<Integer> buildSelectedEmpleadoIds() {
         List<Integer> ids = new ArrayList<>();
 
@@ -239,31 +311,13 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
             return ids;
         }
 
-        for (int idx : lstEmpleados.getSelectedIndices()) {
-            ids.add(idx + 1); // mock temporal
+        for (int selectedIndex : lstEmpleados.getSelectedIndices()) {
+            if (selectedIndex >= 0 && selectedIndex < usuariosCargados.size()) {
+                ids.add(usuariosCargados.get(selectedIndex).getIdUsuario());
+            }
         }
 
         return ids;
-    }
-
-    private Integer parseSucursalId(String selected) {
-        if (selected == null || selected.equalsIgnoreCase("Todas las sucursales")) {
-            return null;
-        }
-        return 1; // mock temporal
-    }
-
-    private Integer parseCajaId(String selected) {
-        if (selected == null || selected.equalsIgnoreCase("Todas las cajas")) {
-            return null;
-        }
-        if (selected.equalsIgnoreCase("Caja 1")) {
-            return 1;
-        }
-        if (selected.equalsIgnoreCase("Caja 2")) {
-            return 2;
-        }
-        return null;
     }
 
     private JPanel wrapCheckBox(JCheckBox checkBox) {

@@ -1,5 +1,7 @@
 package ui.screens;
 
+import dtoS.InformeFiltroDTO;
+import dtoS.InformeVentasPorDiaResultDTO;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import service.AppServices;
@@ -13,10 +15,6 @@ import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
-import dtoS.InformeFiltroDTO;
-import dtoS.InformeVentasPorDiaResultDTO;
-
 import java.awt.*;
 
 public class InformesFrame extends BaseTpvFrame {
@@ -46,6 +44,7 @@ public class InformesFrame extends BaseTpvFrame {
         refreshHeader();
 
         currentTipoInforme = tipoInicial != null ? tipoInicial : TipoInforme.RESUMEN_EJECUTIVO;
+        toolbarPanel.setSelectedTipoInforme(currentTipoInforme);
         applyTipoInforme(currentTipoInforme);
     }
 
@@ -55,7 +54,7 @@ public class InformesFrame extends BaseTpvFrame {
         root.setBackground(InformeUiTheme.APP_BG);
 
         toolbarPanel = new InformeToolbarPanel();
-        filtrosPanel = new InformeFiltrosPanel();
+        filtrosPanel = new InformeFiltrosPanel(services);
         kpiPanel = new InformeKpiPanel();
         tablaPanel = new InformeTablaPanel();
 
@@ -100,10 +99,13 @@ public class InformesFrame extends BaseTpvFrame {
 
     private void applyTipoInforme(TipoInforme tipoInforme) {
         currentTipoInforme = tipoInforme;
-        toolbarPanel.setSelectedTipoInforme(tipoInforme);
+
+        toolbarPanel.updateSubtitle(tipoInforme);
         filtrosPanel.setTipoInforme(tipoInforme);
+
         generated = false;
         toolbarPanel.setGraficoEnabled(false);
+
         kpiPanel.showPlaceholder(tipoInforme);
         tablaPanel.showEmpty("Configura los filtros y pulsa Generar para visualizar este informe.");
     }
@@ -138,11 +140,9 @@ public class InformesFrame extends BaseTpvFrame {
                 System.out.println("Ids empleados: " + filtroDTO.getIdsEmpleados());
                 System.out.println("Método pago: " + filtroDTO.getMetodoPago());
                 System.out.println("Incluir devoluciones: " + filtroDTO.isIncluirDevoluciones());
-
                 return;
             }
 
-            // resto de informes siguen visuales/mock
             kpiPanel.showPlaceholder(currentTipoInforme);
             tablaPanel.showPlaceholder(currentTipoInforme, filtroDTO.getModoVista());
             toolbarPanel.setGraficoEnabled(true);
