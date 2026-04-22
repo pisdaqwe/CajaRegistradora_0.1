@@ -23,9 +23,29 @@ public enum TipoInforme {
     VENTAS_POR_SESION_CAJA("Ventas por sesión de caja", "Resumen por sesión operativa", FamiliaInforme.OPERATIVA),
     TIEMPOS_POR_ESTACION("Tiempos por estación", "Carga y eficiencia operativa", FamiliaInforme.OPERATIVA),
     MERMA_POR_PERIODO("Merma por período", "Control de pérdidas", FamiliaInforme.OPERATIVA),
-    MOVIMIENTOS_STOCK_AJUSTES("Movimientos de stock / ajustes", "Auditoría de inventario", FamiliaInforme.OPERATIVA);
-
-    private final String displayName;
+    MOVIMIENTOS_STOCK_AJUSTES("Movimientos de stock / ajustes", "Auditoría de inventario", FamiliaInforme.OPERATIVA),
+    VENTAS_PRODUCTO_POR_EMPLEADO(
+            "Ventas producto por empleado",
+            "Muestra qué empleados han vendido determinados productos, con unidades e importe generado.",
+            FamiliaInforme.EQUIPO
+    ),
+    RANKING_EMPLEADOS_POR_PRODUCTO(
+            "Ranking empleados por producto",
+            "Ordena a los empleados según las ventas realizadas de los productos seleccionados.",
+            FamiliaInforme.EQUIPO
+    ),
+    VENTAS_EXTRA_POR_EMPLEADO(
+            "Ventas extra por empleado",
+            "Muestra qué empleados han vendido determinados extras, con frecuencia e importe generado.",
+            FamiliaInforme.EQUIPO
+    ),
+    RANKING_EMPLEADOS_POR_EXTRA(
+            "Ranking empleados por extra",
+            "Ordena a los empleados según las ventas realizadas de los extras seleccionados.",
+            FamiliaInforme.EQUIPO
+    );
+   
+	private final String displayName;
     private final String shortDescription;
     private final FamiliaInforme familia;
 

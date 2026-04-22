@@ -1,12 +1,16 @@
 package ui.dialog;
 
-import service.AppServices;
+import app.AppContext;
 import dtoS.ColaMonitorItemDTO;
+import service.AppServices;
 import service.ColaImpresionService;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -16,23 +20,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Monitor global de preparación.
- *
- * Flujo MVP:
- * - 3 estaciones fijas
- * - Cada estación muestra SOLO items pendientes del día
- * - Botón "Imprimir siguiente" consume el primero de la cola
- * - El detalle del item "impreso" se muestra en un JTextArea
- * - Auto-refresh por Timer
- *
- * Este diálogo NO depende de AppContext ni de sesión.
- */
 public class MonitorPreparacionDialog extends JDialog {
 
-    public static final int ESTACION_BEBIDAS_CALIENTES = ColaImpresionService.ESTACION_BEBIDAS_CALIENTES;
-    public static final int ESTACION_BEBIDAS_FRIAS = ColaImpresionService.ESTACION_BEBIDAS_FRIAS;
-    public static final int ESTACION_COMIDA = ColaImpresionService.ESTACION_COMIDA;
+    private static final String CODIGO_BEBIDAS_CALIENTES = "BEBIDAS_CALIENTES";
+    private static final String CODIGO_BEBIDAS_FRIAS = "BEBIDAS_FRIAS";
+    private static final String CODIGO_COMIDA = "COMIDA";
 
     private static final int REFRESH_MS = 2500;
     private static final DateTimeFormatter HORA_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -41,44 +33,47 @@ public class MonitorPreparacionDialog extends JDialog {
     private final ColaImpresionService colaImpresionService;
     private final Timer refreshTimer;
 
+    private final int idSucursalActual;
+
     private final StationPanel calientesPanel;
     private final StationPanel friasPanel;
     private final StationPanel comidaPanel;
 
-    private final JButton btnRefresh = new JButton("Refrescar ahora");
+    private final JButton btnRefresh = new JButton("Refrescar");
     private final JButton btnClose = new JButton("Cerrar");
 
     public MonitorPreparacionDialog(Window owner, AppServices appServices) {
         super(owner, "Monitor de preparación", ModalityType.MODELESS);
 
         this.appServices = Objects.requireNonNull(appServices, "appServices no puede ser null");
-        this.colaImpresionService =Objects.requireNonNull(appServices.colaImpresionService,"Cola impresion service no puede ser null");
-                
-       
+        this.colaImpresionService = Objects.requireNonNull(
+                appServices.colaImpresionService,
+                "colaImpresionService no puede ser null"
+        );
+        this.idSucursalActual = AppContext.getIdSucursal();
+
+        int idEstacionCalientes = colaImpresionService
+                .requireIdEstacionByCodigoYSucursal(CODIGO_BEBIDAS_CALIENTES, idSucursalActual);
+
+        int idEstacionFrias = colaImpresionService
+                .requireIdEstacionByCodigoYSucursal(CODIGO_BEBIDAS_FRIAS, idSucursalActual);
+
+        int idEstacionComida = colaImpresionService
+                .requireIdEstacionByCodigoYSucursal(CODIGO_COMIDA, idSucursalActual);
+
+        calientesPanel = new StationPanel(idEstacionCalientes, "BEBIDAS CALIENTES");
+        friasPanel = new StationPanel(idEstacionFrias, "BEBIDAS FRÍAS");
+        comidaPanel = new StationPanel(idEstacionComida, "COMIDA");
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(1500, 760);
-        setMinimumSize(new Dimension(1320, 640));
+        setSize(1520, 820);
+        setMinimumSize(new Dimension(1360, 700));
         setLocationRelativeTo(owner);
 
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(new EmptyBorder(12, 12, 12, 12));
+        JPanel root = new JPanel(new BorderLayout(14, 14));
+        root.setBackground(InformeUiTheme.APP_BG);
+        root.setBorder(new EmptyBorder(16, 16, 16, 16));
         setContentPane(root);
-
-        calientesPanel = new StationPanel(
-                ESTACION_BEBIDAS_CALIENTES,
-                "BEBIDAS CALIENTES"
-        );
-
-        friasPanel = new StationPanel(
-                ESTACION_BEBIDAS_FRIAS,
-                "BEBIDAS FRÍAS"
-        );
-
-        comidaPanel = new StationPanel(
-                ESTACION_COMIDA,
-                "COMIDA"
-        );
 
         root.add(buildNorthPanel(), BorderLayout.NORTH);
         root.add(buildCenterPanel(), BorderLayout.CENTER);
@@ -93,44 +88,61 @@ public class MonitorPreparacionDialog extends JDialog {
     }
 
     private JComponent buildNorthPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setOpaque(false);
+
+        JPanel leftCard = InformeUiTheme.createCardPanel(new BorderLayout(0, 8));
 
         JLabel lblTitle = new JLabel("Monitor de preparación");
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitle.setFont(InformeUiTheme.FONT_TITLE);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JTextArea info = new JTextArea(
-                "Muestra únicamente items pendientes del día actual. "
-                        + "Cada estación tiene su propia cola. "
-                        + "El botón \"Imprimir siguiente\" consume el primer item pendiente, "
-                        + "lo muestra en pantalla y lo marca como impreso/preparado."
+        JLabel lblSub = new JLabel(
+                "<html>"
+                        + "Sucursal actual: <b>" + idSucursalActual + "</b><br>"
+                        + "Muestra únicamente items pendientes del día actual. "
+                        + "Cada estación trabaja sobre su propia cola de impresión."
+                        + "</html>"
         );
-        info.setEditable(false);
-        info.setOpaque(false);
-        info.setLineWrap(true);
-        info.setWrapStyleWord(true);
-        info.setFont(new Font("Arial", Font.PLAIN, 13));
+        lblSub.setFont(InformeUiTheme.FONT_BODY);
+        lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        JPanel left = new JPanel(new BorderLayout(0, 4));
-        left.setOpaque(false);
-        left.add(lblTitle, BorderLayout.NORTH);
-        left.add(info, BorderLayout.CENTER);
+        leftCard.add(lblTitle, BorderLayout.NORTH);
+        leftCard.add(lblSub, BorderLayout.CENTER);
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        right.setOpaque(false);
-        right.add(btnRefresh);
-        right.add(btnClose);
+        JPanel rightCard = InformeUiTheme.createCardPanel(new BorderLayout(0, 10));
+        rightCard.setPreferredSize(new Dimension(250, 100));
 
-        panel.add(left, BorderLayout.CENTER);
-        panel.add(right, BorderLayout.EAST);
+        JLabel lblInfo = new JLabel("Acciones");
+        lblInfo.setFont(InformeUiTheme.FONT_SECTION);
+        lblInfo.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttons.setOpaque(false);
+
+        InformeUiTheme.styleSecondaryButton(btnRefresh);
+        InformeUiTheme.stylePrimaryButton(btnClose);
+
+        buttons.add(btnRefresh);
+        buttons.add(btnClose);
+
+        rightCard.add(lblInfo, BorderLayout.NORTH);
+        rightCard.add(buttons, BorderLayout.CENTER);
+
+        panel.add(leftCard, BorderLayout.CENTER);
+        panel.add(rightCard, BorderLayout.EAST);
 
         return panel;
     }
 
     private JComponent buildCenterPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 10, 0));
+        JPanel panel = new JPanel(new GridLayout(1, 3, 12, 0));
+        panel.setOpaque(false);
+
         panel.add(calientesPanel);
         panel.add(friasPanel);
         panel.add(comidaPanel);
+
         return panel;
     }
 
@@ -208,6 +220,42 @@ public class MonitorPreparacionDialog extends JDialog {
         return ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
     }
 
+    private String buildPreviewText(ColaMonitorItemDTO item) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("VISTA PREVIA DEL ITEM").append("\n");
+        sb.append("----------------------------------------").append("\n");
+        sb.append("Estación: ").append(item.getNombreEstacion()).append("\n");
+        sb.append("Cola #: ").append(item.getIdCola()).append("\n");
+        sb.append("Venta #: ").append(item.getIdVenta()).append("\n");
+        sb.append("Hora cola: ").append(formatHora(item.getFechaCreacion())).append("\n");
+        sb.append("\n");
+        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)");
+
+        return sb.toString();
+    }
+
+    private String buildPrintedText(ColaMonitorItemDTO item) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("MINI-TICKET / ETIQUETA").append("\n");
+        sb.append("========================================").append("\n");
+        sb.append("ESTACIÓN: ").append(item.getNombreEstacion()).append("\n");
+        sb.append("COLA #: ").append(item.getIdCola()).append("\n");
+        sb.append("VENTA #: ").append(item.getIdVenta()).append("\n");
+        sb.append("HORA: ").append(LocalDateTime.now().format(HORA_FMT)).append("\n");
+        sb.append("========================================").append("\n");
+        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)").append("\n");
+        sb.append("========================================").append("\n");
+        sb.append("IMPRESO Y MARCADO COMO PREPARADO");
+
+        return sb.toString();
+    }
+
+    private String formatHora(LocalDateTime fecha) {
+        return fecha != null ? fecha.format(HORA_FMT) : "--:--:--";
+    }
+
     private final class StationPanel extends JPanel {
 
         private final int idEstacion;
@@ -226,8 +274,10 @@ public class MonitorPreparacionDialog extends JDialog {
             this.idEstacion = idEstacion;
             this.stationName = stationName;
 
-            setLayout(new BorderLayout(8, 8));
-            setBorder(new EmptyBorder(4, 4, 4, 4));
+            setLayout(new BorderLayout(10, 10));
+            setOpaque(true);
+            setBackground(InformeUiTheme.CARD_BG);
+            setBorder(InformeUiTheme.createCardBorder());
 
             add(buildHeader(), BorderLayout.NORTH);
             add(buildBody(), BorderLayout.CENTER);
@@ -239,42 +289,43 @@ public class MonitorPreparacionDialog extends JDialog {
         }
 
         private JComponent buildHeader() {
-            JPanel panel = new JPanel(new BorderLayout(8, 8));
-            panel.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                    stationName,
-                    TitledBorder.LEFT,
-                    TitledBorder.TOP,
-                    new Font("Arial", Font.BOLD, 15)
-            ));
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            panel.setOpaque(false);
 
-            lblCount.setFont(new Font("Arial", Font.BOLD, 13));
+            JPanel titleBox = new JPanel();
+            titleBox.setOpaque(false);
+            titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
 
-            panel.add(lblCount, BorderLayout.WEST);
+            JLabel lblTitle = new JLabel(stationName);
+            lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+            lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+            lblCount.setFont(InformeUiTheme.FONT_LABEL);
+            lblCount.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+            titleBox.add(lblTitle);
+            titleBox.add(Box.createVerticalStrut(4));
+            titleBox.add(lblCount);
+
+            InformeUiTheme.stylePrimaryButton(btnPrintNext);
+
+            panel.add(titleBox, BorderLayout.CENTER);
             panel.add(btnPrintNext, BorderLayout.EAST);
+
             return panel;
         }
 
         private JComponent buildBody() {
-            JPanel body = new JPanel(new GridLayout(2, 1, 8, 8));
+            JPanel body = new JPanel(new GridLayout(2, 1, 10, 10));
+            body.setOpaque(false);
 
             JScrollPane spList = new JScrollPane(lstItems);
-            spList.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(new Color(190, 190, 190)),
-                    "Cola pendiente (hoy)",
-                    TitledBorder.LEFT,
-                    TitledBorder.TOP,
-                    new Font("Arial", Font.BOLD, 13)
-            ));
+            spList.setBorder(createSectionBorder("Cola pendiente (hoy)"));
+            spList.getViewport().setBackground(InformeUiTheme.CARD_BG_2);
 
             JScrollPane spText = new JScrollPane(txtPrinted);
-            spText.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(new Color(190, 190, 190)),
-                    "Último mini-ticket simulado",
-                    TitledBorder.LEFT,
-                    TitledBorder.TOP,
-                    new Font("Arial", Font.BOLD, 13)
-            ));
+            spText.setBorder(createSectionBorder("Último mini-ticket simulado"));
+            spText.getViewport().setBackground(InformeUiTheme.CARD_BG_2);
 
             body.add(spList);
             body.add(spText);
@@ -284,14 +335,31 @@ public class MonitorPreparacionDialog extends JDialog {
 
         private JComponent buildFooter() {
             JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            panel.setOpaque(false);
+
+            InformeUiTheme.styleSecondaryButton(btnClearPreview);
             panel.add(btnClearPreview);
+
             return panel;
+        }
+
+        private Border createSectionBorder(String title) {
+            return BorderFactory.createTitledBorder(
+                    new CompoundBorder(
+                            new LineBorder(InformeUiTheme.BORDER, 1, true),
+                            new EmptyBorder(4, 4, 4, 4)
+                    ),
+                    title
+            );
         }
 
         private void configureList() {
             lstItems.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             lstItems.setCellRenderer(new ColaItemRenderer());
-            lstItems.setFont(new Font("Arial", Font.PLAIN, 13));
+            lstItems.setFont(InformeUiTheme.FONT_BODY);
+            lstItems.setBackground(InformeUiTheme.CARD_BG_2);
+            lstItems.setForeground(InformeUiTheme.TEXT_PRIMARY);
+            lstItems.setFixedCellHeight(-1);
         }
 
         private void configureTextArea() {
@@ -299,7 +367,10 @@ public class MonitorPreparacionDialog extends JDialog {
             txtPrinted.setLineWrap(true);
             txtPrinted.setWrapStyleWord(true);
             txtPrinted.setFont(new Font("Consolas", Font.PLAIN, 13));
-            txtPrinted.setBackground(Color.WHITE);
+            txtPrinted.setBackground(InformeUiTheme.CARD_BG_2);
+            txtPrinted.setForeground(InformeUiTheme.TEXT_PRIMARY);
+            txtPrinted.setCaretColor(InformeUiTheme.TEXT_PRIMARY);
+            txtPrinted.setBorder(new EmptyBorder(10, 10, 10, 10));
         }
 
         private void wireLocalEvents() {
@@ -351,53 +422,18 @@ public class MonitorPreparacionDialog extends JDialog {
         }
     }
 
-    private String buildPreviewText(ColaMonitorItemDTO item) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("VISTA PREVIA DEL ITEM").append("\n");
-        sb.append("----------------------------------------").append("\n");
-        sb.append("Estación: ").append(item.getNombreEstacion()).append("\n");
-        sb.append("Cola #: ").append(item.getIdCola()).append("\n");
-        sb.append("Venta #: ").append(item.getIdVenta()).append("\n");
-        sb.append("Hora cola: ").append(formatHora(item.getFechaCreacion())).append("\n");
-        sb.append("\n");
-        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)");
-
-        return sb.toString();
-    }
-
-    private String buildPrintedText(ColaMonitorItemDTO item) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("MINI-TICKET / ETIQUETA").append("\n");
-        sb.append("========================================").append("\n");
-        sb.append("ESTACIÓN: ").append(item.getNombreEstacion()).append("\n");
-        sb.append("COLA #: ").append(item.getIdCola()).append("\n");
-        sb.append("VENTA #: ").append(item.getIdVenta()).append("\n");
-        sb.append("HORA: ").append(LocalDateTime.now().format(HORA_FMT)).append("\n");
-        sb.append("========================================").append("\n");
-        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)").append("\n");
-        sb.append("========================================").append("\n");
-        sb.append("IMPRESO Y MARCADO COMO PREPARADO");
-
-        return sb.toString();
-    }
-
-    private String formatHora(LocalDateTime fecha) {
-        return fecha != null ? fecha.format(HORA_FMT) : "--:--:--";
-    }
-
     private static final class ColaItemRenderer extends JPanel implements ListCellRenderer<ColaMonitorItemDTO> {
 
         private final JLabel lblTop = new JLabel();
         private final JLabel lblBottom = new JLabel();
 
         ColaItemRenderer() {
-            setLayout(new BorderLayout(0, 2));
+            setLayout(new BorderLayout(0, 4));
             setBorder(new EmptyBorder(8, 8, 8, 8));
+            setOpaque(true);
 
-            lblTop.setFont(new Font("Arial", Font.BOLD, 13));
-            lblBottom.setFont(new Font("Arial", Font.PLAIN, 12));
+            lblTop.setFont(InformeUiTheme.FONT_LABEL);
+            lblBottom.setFont(InformeUiTheme.FONT_BODY);
 
             add(lblTop, BorderLayout.NORTH);
             add(lblBottom, BorderLayout.CENTER);
@@ -425,9 +461,13 @@ public class MonitorPreparacionDialog extends JDialog {
             lblBottom.setText(value.getResumenLista());
 
             if (isSelected) {
-                setBackground(new Color(210, 230, 255));
+                setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+                lblTop.setForeground(InformeUiTheme.TEXT_PRIMARY);
+                lblBottom.setForeground(InformeUiTheme.TEXT_PRIMARY);
             } else {
-                setBackground(Color.WHITE);
+                setBackground(InformeUiTheme.CARD_BG_2);
+                lblTop.setForeground(InformeUiTheme.TEXT_PRIMARY);
+                lblBottom.setForeground(InformeUiTheme.TEXT_SECONDARY);
             }
 
             return this;

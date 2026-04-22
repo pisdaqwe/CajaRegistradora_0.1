@@ -147,4 +147,9 @@ public class ProductoPersonalizacionService {
                         "No existe precio para producto " + idProducto + " y tamaño " + idTamano
                 ));
     }
+    
+    //Informes//
+    public List<ExtraDTO> getTodosLosExtrasActivosParaInformes() {
+        return extraDao.findTodosActivosOrdenados();
+    }
 }

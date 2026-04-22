@@ -326,52 +326,103 @@ public class SesionCajaDao {
     // =====================================================
 
     public List<LoginRapidoButtonDTO> selectBotonesLoginRapidoByCaja(int idCaja) {
+        if (idCaja <= 0) {
+            throw new IllegalArgumentException("El id de caja debe ser mayor que 0.");
+        }
+
         String sql = """
                 SELECT DISTINCT
-                       u.id_usuario,
-                       u.usuario,
-                       u.nombre
-                FROM sesion_caja sc
-                JOIN caja c
-                  ON c.id_caja = sc.id_caja
-                JOIN usuario u
-                  ON u.id_usuario = sc.id_usuario_apertura
-                JOIN fichaje f
-                  ON f.id_usuario = u.id_usuario
-                WHERE sc.id_caja = ?
-                  AND sc.estado = 'ABIERTA'
-                  AND c.activa = 1
-                  AND c.estado = 'OPERATIVA'
-                  AND u.activo = 1
-                  AND f.estado = 'ABIERTO'
-                  AND f.fecha_salida IS NULL
-                ORDER BY u.nombre ASC
+                       x.id_usuario,
+                       x.nombre_boton
+                FROM (
+                    SELECT
+                        u.id_usuario,
+                        CASE
+        					WHEN TRIM(u.nombre) NOT LIKE '% %' THEN UPPER(TRIM(u.nombre))
+        					ELSE UPPER(
+        						CONCAT(
+        							SUBSTRING_INDEX(TRIM(u.nombre), ' ', 1),
+        							' ',
+        							LEFT(SUBSTRING_INDEX(TRIM(u.nombre), ' ', -1), 1),
+        							'.'
+        						)
+        					)
+        				END AS nombre_boton
+                    FROM usuario u
+                    JOIN rol r
+                        ON r.id_rol = u.id_rol
+                    JOIN fichaje f
+                        ON f.id_usuario = u.id_usuario
+                    JOIN caja c
+                        ON c.id_caja = ?
+                    WHERE u.activo = 1
+                      AND u.id_sucursal = c.id_sucursal
+                      AND UPPER(r.nombre) IN ('ADMIN', 'ENCARGADO', 'TECNICO')
+                      AND f.estado = 'ABIERTO'
+                      AND f.fecha_salida IS NULL
+
+                    UNION
+
+                    SELECT
+                        u.id_usuario,
+                        CASE
+        					WHEN TRIM(u.nombre) NOT LIKE '% %' THEN UPPER(TRIM(u.nombre))
+        					ELSE UPPER(
+        						CONCAT(
+        							SUBSTRING_INDEX(TRIM(u.nombre), ' ', 1),
+        							' ',
+        							LEFT(SUBSTRING_INDEX(TRIM(u.nombre), ' ', -1), 1),
+        							'.'
+        						)
+        					)
+        				END AS nombre_boton
+                    FROM sesion_caja sc
+                    JOIN caja c
+                        ON c.id_caja = sc.id_caja
+                    JOIN usuario u
+                        ON u.id_usuario = sc.id_usuario_apertura
+                    JOIN rol r
+                        ON r.id_rol = u.id_rol
+                    JOIN fichaje f
+                        ON f.id_usuario = u.id_usuario
+                    WHERE sc.id_caja = ?
+                      AND sc.estado = 'ABIERTA'
+                      AND c.activa = 1
+                      AND c.estado = 'OPERATIVA'
+                      AND u.activo = 1
+                      AND u.id_sucursal = c.id_sucursal
+                      AND UPPER(r.nombre) = 'CAJERO'
+                      AND f.estado = 'ABIERTO'
+                      AND f.fecha_salida IS NULL
+                ) x
+                ORDER BY x.nombre_boton
                 """;
 
-        List<LoginRapidoButtonDTO> lista = new ArrayList<>();
+        List<LoginRapidoButtonDTO> result = new ArrayList<>();
 
-        try (Connection con = DbPool.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, idCaja);
+            ps.setInt(2, idCaja);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(new LoginRapidoButtonDTO(
+                    LoginRapidoButtonDTO dto = new LoginRapidoButtonDTO(
                             rs.getInt("id_usuario"),
-                            buildNombreVisible(
-                                    rs.getString("nombre"),
-                                    rs.getString("usuario")
-                            )
-                    ));
+                            rs.getString("nombre_boton")
+                    );
+                    result.add(dto);
                 }
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Error cargando botones de login rápido", e);
+            throw new RuntimeException(
+                    "Error obteniendo botones de login rápido para la caja " + idCaja, e
+            );
         }
 
-        return lista;
+        return result;
     }
 
     // =====================================================

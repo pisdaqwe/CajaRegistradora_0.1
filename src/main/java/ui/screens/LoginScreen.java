@@ -11,8 +11,12 @@ import ui.dialog.PinDialog;
 import ui.dialog.PinDialog.PinDialogMode;
 import ui.dialog.PinDialogResult;
 import ui.router.PostLoginRouter;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -23,6 +27,17 @@ public class LoginScreen extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
+    private static final Font FONT_BRAND = new Font("SansSerif", Font.BOLD, 34);
+    private static final Font FONT_INFO_TITLE = new Font("SansSerif", Font.BOLD, 24);
+    private static final Font FONT_INFO_BODY = new Font("SansSerif", Font.PLAIN, 16);
+    private static final Font FONT_CLOCK = new Font("SansSerif", Font.BOLD, 18);
+    private static final Font FONT_DISPLAY = new Font("SansSerif", Font.BOLD, 30);
+    private static final Font FONT_KEYPAD = new Font("SansSerif", Font.BOLD, 28);
+    private static final Font FONT_KEYPAD_SPECIAL = new Font("SansSerif", Font.BOLD, 16);
+    private static final Font FONT_QUICK_LOGIN = new Font("SansSerif", Font.BOLD, 16);
+    private static final Font FONT_ACTION = new Font("SansSerif", Font.BOLD, 18);
+    private static final Font FONT_TICKET = new Font("Monospaced", Font.PLAIN, 13);
+
     private final int idCaja;
     private final AppServices services;
 
@@ -30,9 +45,9 @@ public class LoginScreen extends JFrame {
     private JTextArea txtTicket;
     private JPanel panelBotonesRapidos;
 
-    public LoginScreen(AppServices services, int id_caja) {
+    public LoginScreen(AppServices services, int idCaja) {
         this.services = services;
-        this.idCaja = id_caja;
+        this.idCaja = idCaja;
 
         initUI();
         cargarBotonesRapidos();
@@ -40,132 +55,367 @@ public class LoginScreen extends JFrame {
 
     private void initUI() {
         setTitle("TPV - Identificación");
-        setSize(1280, 800);
+        setSize(1280, 820);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        // =========================
-        // PANEL FONDO
-        // =========================
-        JPanel panelFondo = new JPanel(new BorderLayout());
-        panelFondo.setBackground(new Color(30, 30, 30));
-        setContentPane(panelFondo);
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(InformeUiTheme.APP_BG);
+        root.setBorder(new EmptyBorder(18, 24, 24, 24));
+        setContentPane(root);
 
-        // =========================
-        // RELOJ
-        // =========================
-        JLabel lblReloj = new JLabel();
-        lblReloj.setFont(new Font("Monospaced", Font.BOLD, 18));
-        lblReloj.setForeground(new Color(200, 200, 200));
-        lblReloj.setHorizontalAlignment(SwingConstants.RIGHT);
-        lblReloj.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 30));
-        panelFondo.add(lblReloj, BorderLayout.NORTH);
+        root.add(buildTopBar(), BorderLayout.NORTH);
+        root.add(buildMainContent(), BorderLayout.CENTER);
+    }
+
+    private JPanel buildTopBar() {
+        JPanel topBar = createTransparentPanel(new BorderLayout());
+        topBar.setBorder(new EmptyBorder(0, 0, 18, 0));
+
+        JPanel brandPanel = createTransparentPanel();
+        brandPanel.setLayout(new BoxLayout(brandPanel, BoxLayout.Y_AXIS));
+
+        JLabel lblMarca = new JLabel("TPV Cafetería");
+        lblMarca.setFont(FONT_BRAND);
+        lblMarca.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblSub = new JLabel("Acceso de empleados · Terminal " + AppContext.getNombreCajaTerminal());
+        lblSub.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        brandPanel.add(lblMarca);
+        brandPanel.add(Box.createVerticalStrut(4));
+        brandPanel.add(lblSub);
+
+        JLabel lblReloj = new JLabel("", SwingConstants.RIGHT);
+        lblReloj.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lblReloj.setFont(FONT_CLOCK);
+
+        topBar.add(brandPanel, BorderLayout.WEST);
+        topBar.add(lblReloj, BorderLayout.EAST);
+
         iniciarReloj(lblReloj);
 
-        // =========================
-        // WRAPPER DERECHO
-        // =========================
-        JPanel panelWrapper = new JPanel(new GridBagLayout());
-        panelWrapper.setOpaque(false);
-        panelFondo.add(panelWrapper, BorderLayout.EAST);
+        return topBar;
+    }
+
+    private JPanel buildMainContent() {
+        JPanel content = createTransparentPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1.0;
-        gbc.insets = new Insets(0, 0, 50, 40);
 
-        // =========================
-        // PANEL CENTRAL TPV
-        // =========================
-        JPanel panelCentral = new JPanel(new BorderLayout(15, 15));
-        panelCentral.setPreferredSize(new Dimension(400, 650));
-        panelCentral.setBackground(new Color(245, 245, 245));
-        panelCentral.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Color.BLACK, 3, true),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
+        gbc.gridx = 0;
+        gbc.weightx = 0.95;
+        gbc.insets = new Insets(0, 0, 0, 18);
+        content.add(buildLeftInfoPanel(), gbc);
 
-        panelWrapper.add(panelCentral, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.25;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        content.add(buildRightLoginCard(), gbc);
 
-        // =========================
-        // DISPLAY USUARIO / CÓDIGO
-        // =========================
+        return content;
+    }
+
+    private JPanel buildLeftInfoPanel() {
+        JPanel wrapper = createTransparentPanel(new BorderLayout());
+
+        JPanel card = InformeUiTheme.createCardPanel(new BorderLayout(0, 16));
+        card.setPreferredSize(new Dimension(430, 620));
+
+        JPanel header = createTransparentPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+
+        JLabel lblTitle = new JLabel("Bienvenido");
+        lblTitle.setFont(FONT_INFO_TITLE);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblBody = new JLabel(
+                "<html>"
+                        + "Identifícate para <b>fichar</b> o acceder al <b>TPV</b>.<br><br>"
+                        + "Cada terminal trabaja sobre una caja concreta.<br>"
+                        + "Usa tu código de empleado o selecciona un acceso rápido."
+                        + "</html>"
+        );
+        lblBody.setFont(FONT_INFO_BODY);
+        lblBody.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        header.add(lblTitle);
+        header.add(Box.createVerticalStrut(10));
+        header.add(lblBody);
+
+        JPanel terminalCard = new JPanel();
+        terminalCard.setBackground(InformeUiTheme.PANEL_BG);
+        terminalCard.setBorder(InformeUiTheme.createInnerCardBorder());
+        terminalCard.setLayout(new BoxLayout(terminalCard, BoxLayout.Y_AXIS));
+        terminalCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        terminalCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 170));
+
+        JLabel lblTerminal = new JLabel("Terminal actual");
+        lblTerminal.setFont(InformeUiTheme.FONT_LABEL);
+        lblTerminal.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        JLabel lblCaja = new JLabel(AppContext.getNombreCajaTerminal());
+        lblCaja.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblCaja.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblHint = new JLabel(
+                "<html>Partner Sign-In muestra los empleados disponibles<br>"
+                        + "para esta caja.</html>"
+        );
+        lblHint.setFont(InformeUiTheme.FONT_BODY);
+        lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        terminalCard.add(lblTerminal);
+        terminalCard.add(Box.createVerticalStrut(6));
+        terminalCard.add(lblCaja);
+        terminalCard.add(Box.createVerticalStrut(10));
+        terminalCard.add(lblHint);
+
+        JPanel tipsCard = new JPanel();
+        tipsCard.setBackground(InformeUiTheme.CARD_BG_2);
+        tipsCard.setBorder(InformeUiTheme.createInnerCardBorder());
+        tipsCard.setLayout(new BoxLayout(tipsCard, BoxLayout.Y_AXIS));
+        tipsCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tipsCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+
+        tipsCard.add(createTipLabel("• Clock In / Out para registrar entrada o salida"));
+        tipsCard.add(Box.createVerticalStrut(8));
+        tipsCard.add(createTipLabel("• Sign In para acceder al sistema"));
+        tipsCard.add(Box.createVerticalStrut(8));
+        tipsCard.add(createTipLabel("• El teclado numérico permite introducir tu código"));
+        tipsCard.add(Box.createVerticalStrut(8));
+        tipsCard.add(createTipLabel("• El ticket inferior muestra el último fichaje realizado"));
+
+        JPanel quickLoginPanel = buildQuickLoginPanel();
+        quickLoginPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        quickLoginPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
+
+        JPanel centerStack = createTransparentPanel();
+        centerStack.setLayout(new BoxLayout(centerStack, BoxLayout.Y_AXIS));
+
+        centerStack.add(terminalCard);
+        centerStack.add(Box.createVerticalStrut(14));
+        centerStack.add(quickLoginPanel);
+        centerStack.add(Box.createVerticalStrut(14));
+        centerStack.add(tipsCard);
+        centerStack.add(Box.createVerticalGlue());
+
+        card.add(header, BorderLayout.NORTH);
+        card.add(centerStack, BorderLayout.CENTER);
+
+        wrapper.add(card, BorderLayout.CENTER);
+        return wrapper;
+    }
+
+    private JPanel buildRightLoginCard() {
+        JPanel card = InformeUiTheme.createCardPanel(new BorderLayout(0, 14));
+        card.setPreferredSize(new Dimension(620, 640));
+
+        card.add(buildDisplayPanel(), BorderLayout.NORTH);
+        card.add(buildCenterArea(), BorderLayout.CENTER);
+        card.add(buildTicketPanel(), BorderLayout.SOUTH);
+
+        return card;
+    }
+
+    private JPanel buildDisplayPanel() {
+        JPanel panel = createTransparentPanel(new BorderLayout(0, 10));
+
+        JLabel lbl = new JLabel("Código de empleado");
+        lbl.setFont(InformeUiTheme.FONT_LABEL);
+        lbl.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
         txtUsuario = new JTextField();
         txtUsuario.setEditable(false);
         txtUsuario.setHorizontalAlignment(JTextField.CENTER);
-        txtUsuario.setFont(new Font("Monospaced", Font.BOLD, 28));
-        txtUsuario.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        panelCentral.add(txtUsuario, BorderLayout.NORTH);
+        txtUsuario.setFont(FONT_DISPLAY);
+        txtUsuario.setBackground(InformeUiTheme.CARD_BG_2);
+        txtUsuario.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        txtUsuario.setCaretColor(InformeUiTheme.TEXT_PRIMARY);
+        txtUsuario.setBorder(createInputBorder());
+        txtUsuario.setPreferredSize(new Dimension(100, 62));
 
-        // =========================
-        // PANEL BOTONES RÁPIDOS
-        // =========================
-        panelBotonesRapidos = new JPanel(new GridLayout(2, 3, 12, 12));
-        panelBotonesRapidos.setBorder(BorderFactory.createTitledBorder("Partner Sign-In"));
-        panelBotonesRapidos.setBackground(panelCentral.getBackground());
+        panel.add(lbl, BorderLayout.NORTH);
+        panel.add(txtUsuario, BorderLayout.CENTER);
 
-        // =========================
-        // TECLADO NUMÉRICO
-        // =========================
-        JPanel keypad = new JPanel(new GridLayout(4, 3, 5, 10));
-        keypad.setBackground(panelCentral.getBackground());
+        return panel;
+    }
+
+    private JPanel buildCenterArea() {
+        JPanel center = createTransparentPanel(new BorderLayout(16, 0));
+        center.add(buildKeypadPanel(), BorderLayout.CENTER);
+        center.add(buildRightActionColumn(), BorderLayout.EAST);
+        return center;
+    }
+
+ 
+    private JPanel buildQuickLoginPanel() {
+        JPanel wrapper = createTransparentPanel(new BorderLayout(0, 10));
+        wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblTitle = new JLabel("Partner Sign-In");
+        lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblSub = new JLabel("Accesos rápidos disponibles para esta caja");
+        lblSub.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        JPanel titlePanel = createTransparentPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.add(lblTitle);
+        titlePanel.add(Box.createVerticalStrut(4));
+        titlePanel.add(lblSub);
+
+        panelBotonesRapidos = new JPanel();
+        panelBotonesRapidos.setOpaque(false);
+
+        JScrollPane scroll = new JScrollPane(panelBotonesRapidos);
+        scroll.setBorder(InformeUiTheme.createInnerCardBorder());
+        scroll.getViewport().setBackground(InformeUiTheme.CARD_BG_2);
+        scroll.setBackground(InformeUiTheme.CARD_BG_2);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        scroll.setPreferredSize(new Dimension(100, 150));
+        scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
+        wrapper.add(titlePanel, BorderLayout.NORTH);
+        wrapper.add(scroll, BorderLayout.CENTER);
+
+        return wrapper;
+    }
+    
+    private JPanel buildKeypadPanel() {
+        JPanel wrapper = createTransparentPanel(new BorderLayout(0, 10));
+        wrapper.setPreferredSize(new Dimension(0, 380));
+        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 380));
+
+        JLabel lblTitle = new JLabel("Teclado numérico");
+        lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JPanel keypadCard = new JPanel(new GridLayout(4, 3, 10, 10));
+        keypadCard.setBackground(InformeUiTheme.CARD_BG_2);
+        keypadCard.setBorder(InformeUiTheme.createInnerCardBorder());
+        keypadCard.setPreferredSize(new Dimension(0, 330));
 
         for (int i = 1; i <= 9; i++) {
-            keypad.add(createNumberButton(String.valueOf(i)));
+            keypadCard.add(createNumberButton(String.valueOf(i)));
         }
-        keypad.add(createClearButton());
-        keypad.add(createNumberButton("0"));
-        keypad.add(createBackButton());
 
-        // =========================
-        // PANEL SUPERIOR
-        // =========================
-        JPanel panelSuperior = new JPanel(new BorderLayout(15, 15));
-        panelSuperior.setBackground(panelCentral.getBackground());
-        panelSuperior.add(panelBotonesRapidos, BorderLayout.NORTH);
-        panelSuperior.add(keypad, BorderLayout.CENTER);
+        keypadCard.add(createClearButton());
+        keypadCard.add(createNumberButton("0"));
+        keypadCard.add(createBackButton());
 
-        // =========================
-        // BOTONES DE ACCIÓN
-        // =========================
+        wrapper.add(lblTitle, BorderLayout.NORTH);
+        wrapper.add(keypadCard, BorderLayout.CENTER);
+
+        return wrapper;
+    }
+
+    private JPanel buildRightActionColumn() {
+        JPanel right = new JPanel(new BorderLayout(0, 14));
+        right.setBackground(InformeUiTheme.PANEL_BG);
+        right.setBorder(InformeUiTheme.createInnerCardBorder());
+        right.setPreferredSize(new Dimension(185, 100));
+
+        JLabel lbl = new JLabel("<html><center>Acciones<br>principales</center></html>", SwingConstants.CENTER);
+        lbl.setFont(InformeUiTheme.FONT_SECTION);
+        lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
         JButton btnClock = new JButton("Clock In / Out");
-        btnClock.setFont(new Font("Arial", Font.BOLD, 18));
+        InformeUiTheme.styleSecondaryButton(btnClock);
+        btnClock.setFont(FONT_ACTION);
+        btnClock.setPreferredSize(new Dimension(100, 64));
         btnClock.addActionListener(e -> fichar());
 
         JButton btnSignIn = new JButton("Sign In");
-        btnSignIn.setFont(new Font("Arial", Font.BOLD, 18));
+        InformeUiTheme.stylePrimaryButton(btnSignIn);
+        btnSignIn.setFont(FONT_ACTION);
+        btnSignIn.setPreferredSize(new Dimension(100, 64));
         btnSignIn.addActionListener(e -> hacerLoginCompleto());
 
-        JPanel actions = new JPanel(new GridLayout(2, 1, 10, 10));
-        actions.setBackground(panelCentral.getBackground());
+        JPanel actions = createTransparentPanel(new GridLayout(2, 1, 0, 12));
         actions.add(btnClock);
         actions.add(btnSignIn);
 
-        // =========================
-        // CENTER
-        // =========================
-        JPanel center = new JPanel(new BorderLayout(15, 15));
-        center.setBackground(panelCentral.getBackground());
-        center.add(panelSuperior, BorderLayout.CENTER);
-        center.add(actions, BorderLayout.SOUTH);
+        JLabel lblHint = new JLabel(
+                "<html><center>Introduce tu código<br>o usa un acceso rápido</center></html>",
+                SwingConstants.CENTER
+        );
+        lblHint.setFont(InformeUiTheme.FONT_BODY);
+        lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        panelCentral.add(center, BorderLayout.CENTER);
+        right.add(lbl, BorderLayout.NORTH);
+        right.add(actions, BorderLayout.CENTER);
+        right.add(lblHint, BorderLayout.SOUTH);
 
-        // =========================
-        // TICKET FICHAJE
-        // =========================
-        txtTicket = new JTextArea(6, 20);
-        txtTicket.setEditable(false);
-        txtTicket.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        txtTicket.setBorder(BorderFactory.createTitledBorder("Ticket Fichaje"));
-        panelCentral.add(new JScrollPane(txtTicket), BorderLayout.SOUTH);
+        return right;
     }
 
-    // ===============================
-    // LOGIN COMPLETO
-    // ===============================
+    private JPanel buildTicketPanel() {
+        JPanel wrapper = createTransparentPanel(new BorderLayout(0, 8));
+        wrapper.setPreferredSize(new Dimension(0, 150));
+
+        JLabel lblTitle = new JLabel("Último fichaje");
+        lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        txtTicket = new JTextArea(4, 20);
+        txtTicket.setEditable(false);
+        txtTicket.setLineWrap(true);
+        txtTicket.setWrapStyleWord(true);
+        txtTicket.setFont(FONT_TICKET);
+        txtTicket.setBackground(new Color(248, 243, 232));
+        txtTicket.setForeground(new Color(35, 35, 35));
+        txtTicket.setCaretColor(new Color(35, 35, 35));
+        txtTicket.setBorder(new CompoundBorder(
+                new LineBorder(new Color(214, 203, 182), 1, true),
+                new EmptyBorder(10, 10, 10, 10)
+        ));
+
+        JScrollPane scroll = new JScrollPane(txtTicket);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.getViewport().setBackground(new Color(248, 243, 232));
+        scroll.setPreferredSize(new Dimension(100, 110));
+
+        wrapper.add(lblTitle, BorderLayout.NORTH);
+        wrapper.add(scroll, BorderLayout.CENTER);
+
+        return wrapper;
+    }
+
+    private JLabel createTipLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(InformeUiTheme.FONT_BODY);
+        lbl.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        return lbl;
+    }
+
+    private JPanel createTransparentPanel() {
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private JPanel createTransparentPanel(LayoutManager layout) {
+        JPanel panel = new JPanel(layout);
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private Border createInputBorder() {
+        return new CompoundBorder(
+                new LineBorder(InformeUiTheme.BORDER, 1, true),
+                new EmptyBorder(12, 14, 12, 14)
+        );
+    }
+
     private void hacerLoginCompleto() {
         PinDialog dialog = new PinDialog(this, PinDialogMode.LOGIN_COMPLETO, null);
         PinDialogResult result = dialog.showDialog();
@@ -194,9 +444,6 @@ public class LoginScreen extends JFrame {
         }
     }
 
-    // ===============================
-    // LOGIN RÁPIDO
-    // ===============================
     private void hacerLoginRapido(LoginRapidoButtonDTO dto) {
         PinDialog dialog = new PinDialog(this, PinDialogMode.LOGIN_RAPIDO, dto.getNombreBoton());
         PinDialogResult result = dialog.showDialog();
@@ -222,9 +469,6 @@ public class LoginScreen extends JFrame {
         }
     }
 
-    // ===============================
-    // CONTEXTO POST-AUTENTICACIÓN
-    // ===============================
     private void completarContextoPostAutenticacion(Usuario usuarioLogueado) {
         if (usuarioLogueado == null) {
             throw new IllegalArgumentException("Usuario autenticado no puede ser null");
@@ -236,9 +480,29 @@ public class LoginScreen extends JFrame {
             SesionCajaRefDTO ref = services.sesionCajaService
                     .requireSesionAbiertaPorUsuario(usuarioLogueado.getIdUsuario());
 
+            if (ref.getIdCaja() != AppContext.getIdCajaTerminal()) {
+                throw new IllegalStateException(
+                        "Tienes una sesión abierta en " + ref.getNombreCaja()
+                                + ". Este terminal pertenece a " + AppContext.getNombreCajaTerminal()
+                                + ". Debes iniciar sesión en tu caja asignada o pedir reasignación."
+                );
+            }
+
+            if (ref.getIdSucursal() != AppContext.getIdSucursal()) {
+                throw new IllegalStateException(
+                        "La sesión de caja no pertenece a la sucursal del terminal actual."
+                );
+            }
+
             AppContext.setUsuario(usuarioLogueado);
             AppContext.setSesionCajaActual(ref);
             return;
+        }
+
+        if (usuarioLogueado.getIdSucursal() != AppContext.getIdSucursal()) {
+            throw new IllegalStateException(
+                    "El usuario no pertenece a la sucursal del terminal actual."
+            );
         }
 
         AppContext.setUsuario(usuarioLogueado);
@@ -254,9 +518,6 @@ public class LoginScreen extends JFrame {
         return "CAJERO".equalsIgnoreCase(usuario.getRol().getNombre());
     }
 
-    // ===============================
-    // POST-LOGIN
-    // ===============================
     private void continuarPostLogin() {
         try {
             PostLoginRouter router = new PostLoginRouter();
@@ -305,7 +566,7 @@ public class LoginScreen extends JFrame {
             if (!AppContext.hasSesionCajaActual()) {
                 throw new IllegalStateException(
                         "El usuario operativo no tiene sesión de caja asignada. " +
-                        "Asigna primero una caja desde la gestión de cajas."
+                                "Asigna primero una caja desde la gestión de cajas."
                 );
             }
 
@@ -340,18 +601,37 @@ public class LoginScreen extends JFrame {
         this.requestFocus();
     }
 
-    // =========================
-    // BOTONES RÁPIDOS
-    // =========================
     private void cargarBotonesRapidos() {
         panelBotonesRapidos.removeAll();
 
         List<LoginRapidoButtonDTO> botones =
                 services.sesionCajaService.getBotonesLoginRapido(idCaja);
 
-        for (LoginRapidoButtonDTO dto : botones) {
-            JButton boton = crearBotonLoginRapido(dto);
-            panelBotonesRapidos.add(boton);
+        if (botones.isEmpty()) {
+            panelBotonesRapidos.setLayout(new BorderLayout());
+
+            JLabel empty = new JLabel(
+                    "<html><center>Sin accesos rápidos<br>disponibles</center></html>",
+                    SwingConstants.CENTER
+            );
+            empty.setForeground(InformeUiTheme.TEXT_SECONDARY);
+            empty.setFont(InformeUiTheme.FONT_BODY);
+
+            panelBotonesRapidos.add(empty, BorderLayout.CENTER);
+
+        } else {
+            int columnas = botones.size() <= 2 ? 1 : 2;
+            int filas = (int) Math.ceil(botones.size() / (double) columnas);
+
+            panelBotonesRapidos.setLayout(new GridLayout(filas, columnas, 12, 12));
+            panelBotonesRapidos.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+            for (LoginRapidoButtonDTO dto : botones) {
+                panelBotonesRapidos.add(crearBotonLoginRapido(dto));
+            }
+
+            int altura = Math.min(160, (filas * 70) + 24);
+            panelBotonesRapidos.setPreferredSize(new Dimension(100, altura));
         }
 
         panelBotonesRapidos.revalidate();
@@ -360,33 +640,56 @@ public class LoginScreen extends JFrame {
 
     private JButton crearBotonLoginRapido(LoginRapidoButtonDTO dto) {
         JButton btn = new JButton(dto.getNombreBoton());
-        btn.setFont(new Font("Arial", Font.BOLD, 16));
-        btn.setBackground(new Color(255, 215, 0));
+        btn.setFont(FONT_QUICK_LOGIN);
         btn.setFocusPainted(false);
+        btn.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+        btn.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        btn.setBorder(new CompoundBorder(
+                new LineBorder(InformeUiTheme.BORDER, 1, true),
+                new EmptyBorder(14, 12, 14, 12)
+        ));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(100, 58));
 
         btn.addActionListener(e -> hacerLoginRapido(dto));
-
         return btn;
     }
 
-    // =========================
-    // BOTONES TECLADO
-    // =========================
     private JButton createNumberButton(String number) {
         JButton btn = new JButton(number);
-        btn.setFont(new Font("Arial", Font.BOLD, 50));
+        btn.setFont(FONT_KEYPAD);
+        btn.setFocusPainted(false);
+        btn.setBackground(InformeUiTheme.CARD_BG);
+        btn.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        btn.setBorder(new CompoundBorder(
+                new LineBorder(InformeUiTheme.BORDER, 1, true),
+                new EmptyBorder(12, 10, 12, 10)
+        ));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addActionListener(e -> txtUsuario.setText(txtUsuario.getText() + number));
         return btn;
     }
 
     private JButton createClearButton() {
         JButton btn = new JButton("Clear");
+        btn.setFont(FONT_KEYPAD_SPECIAL);
+        btn.setFocusPainted(false);
+        btn.setBackground(InformeUiTheme.DANGER);
+        btn.setForeground(Color.WHITE);
+        btn.setBorder(new EmptyBorder(12, 10, 12, 10));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addActionListener(e -> txtUsuario.setText(""));
         return btn;
     }
 
     private JButton createBackButton() {
         JButton btn = new JButton("Back");
+        btn.setFont(FONT_KEYPAD_SPECIAL);
+        btn.setFocusPainted(false);
+        btn.setBackground(InformeUiTheme.STARBUCKS_GREEN);
+        btn.setForeground(Color.WHITE);
+        btn.setBorder(new EmptyBorder(12, 10, 12, 10));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.addActionListener(e -> {
             String text = txtUsuario.getText();
             if (!text.isEmpty()) {
@@ -396,9 +699,6 @@ public class LoginScreen extends JFrame {
         return btn;
     }
 
-    // =========================
-    // FICHAJE
-    // =========================
     private void fichar() {
         try {
             String usuario = txtUsuario.getText().trim();
@@ -434,9 +734,11 @@ public class LoginScreen extends JFrame {
 
     private String generarTicket(Fichaje f, String tipo) {
         StringBuilder sb = new StringBuilder();
-        sb.append("=============================\n");
-        sb.append("        FICHAJE EMPLEADO\n");
-        sb.append("=============================\n");
+        sb.append("================================\n");
+        sb.append("         FICHAJE EMPLEADO\n");
+        sb.append("================================\n");
+        sb.append("Caja:       ").append(AppContext.getNombreCajaTerminal()).append("\n");
+        sb.append("Sucursal:   ").append(AppContext.getIdSucursal()).append("\n");
         sb.append("Tipo:       ").append(tipo).append("\n");
         sb.append("ID Usuario: ").append(f.getIdUsuario()).append("\n");
         sb.append("Entrada:    ").append(f.getFechaEntrada()).append("\n");
@@ -446,13 +748,10 @@ public class LoginScreen extends JFrame {
             sb.append("Duración:   ").append(f.getDuracion()).append(" min\n");
         }
 
-        sb.append("=============================\n");
+        sb.append("================================\n");
         return sb.toString();
     }
 
-    // =========================
-    // RELOJ
-    // =========================
     private void iniciarReloj(JLabel label) {
         DateTimeFormatter fechaFormato = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM");
         DateTimeFormatter horaFormato = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -462,7 +761,7 @@ public class LoginScreen extends JFrame {
             label.setText(
                     "<html><div style='text-align: right;'>"
                             + ahora.format(fechaFormato)
-                            + "<br><span style='font-size: 20px; color: white;'>"
+                            + "<br><span style='font-size: 22px; font-weight: bold; color: #F5F2EB;'>"
                             + ahora.format(horaFormato)
                             + "</span></div></html>"
             );

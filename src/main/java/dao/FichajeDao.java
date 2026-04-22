@@ -17,29 +17,29 @@ public class FichajeDao {
 	// INSERTAR NUEVO FICHAJE (ENTRADA)
 	// =========================================
 	public void insert(Fichaje fichaje) {
+	    String sql = """
+	            INSERT INTO fichaje (id_usuario, id_sucursal, fecha_entrada, estado)
+	            VALUES (?, ?, NOW(), ?)
+	            """;
 
-		String sql = """
-				    INSERT INTO fichaje (id_usuario, fecha_entrada, estado)
-				    VALUES (?, NOW(), ?)
-				""";
+	    try (Connection conn = DbPool.getConnection();
+	         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-		try (Connection conn = DbPool.getConnection();
-				PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	        ps.setInt(1, fichaje.getIdUsuario());
+	        ps.setInt(2, fichaje.getIdSucursal());
+	        ps.setString(3, fichaje.getEstado().name());
 
-			ps.setInt(1, fichaje.getIdUsuario());
-			ps.setString(2, fichaje.getEstado().name());
+	        ps.executeUpdate();
 
-			ps.executeUpdate();
+	        try (ResultSet rs = ps.getGeneratedKeys()) {
+	            if (rs.next()) {
+	                fichaje.setIdFichaje(rs.getInt(1));
+	            }
+	        }
 
-			try (ResultSet keys = ps.getGeneratedKeys()) {
-				if (keys.next()) {
-					fichaje.setIdFichaje(keys.getInt(1));
-				}
-			}
-
-		} catch (SQLException e) {
-			throw new RuntimeException("Error insertando fichaje", e);
-		}
+	    } catch (SQLException e) {
+	        throw new RuntimeException("Error insertando fichaje", e);
+	    }
 	}
 
 	// =========================================
@@ -173,6 +173,7 @@ public class FichajeDao {
 
 		f.setDuracion(rs.getObject("duracion", Integer.class));
 		f.setEstado(EstadoFichaje.valueOf(rs.getString("estado")));
+		f.setIdSucursal(rs.getInt("id_sucursal"));
 
 		return f;
 	}

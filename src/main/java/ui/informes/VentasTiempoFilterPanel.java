@@ -155,13 +155,20 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
         boolean franja = tipoInforme == TipoInforme.VENTAS_POR_FRANJA_HORARIA;
         boolean pagos = tipoInforme == TipoInforme.PAGOS_POR_METODO;
 
-        cmbAgrupacion.setEnabled(!ticketMedio && !pagos);
-
-        if (franja) {
+        if (ventasPorDia) {
+            cmbAgrupacion.setSelectedItem(AgrupacionTemporal.DIA);
+            cmbAgrupacion.setEnabled(false);
+        } else if (franja) {
             cmbAgrupacion.setSelectedItem(AgrupacionTemporal.HORA);
             cmbAgrupacion.setEnabled(false);
-        } else if (ventasPorDia || ticketMedio) {
+        } else if (ticketMedio) {
             cmbAgrupacion.setSelectedItem(AgrupacionTemporal.DIA);
+            cmbAgrupacion.setEnabled(false);
+        } else if (pagos) {
+            cmbAgrupacion.setSelectedItem(AgrupacionTemporal.DIA);
+            cmbAgrupacion.setEnabled(false);
+        } else {
+            cmbAgrupacion.setEnabled(true);
         }
 
         rbComparativa.setEnabled(ventasPorDia || ticketMedio || franja);
@@ -242,7 +249,7 @@ public class VentasTiempoFilterPanel extends BaseInformeFilterPanel {
     private void cargarSucursalActual() {
         int idSucursal = AppContext.getIdSucursal();
         if (idSucursal <= 0) {
-            throw new IllegalStateException("AppContext no tiene una sucursal actual válida");
+            throw new IllegalStateException("AppContext no tiene una sucursal actual válida"+ AppContext.getIdSucursal());
         }
 
         Sucursal sucursal = services.sucursalService.findByIdOrThrow(idSucursal);

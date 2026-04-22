@@ -1,10 +1,13 @@
 package service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dao.ColaImpresionDAO;
+import dao.EstacionDao;
 import dao.ProductoEstacionDao;
 import dtoS.ColaItemDescripcionDTO;
 import dtoS.ColaMonitorItemDTO;
 import model.ColaImpresion;
+import model.Estacion;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Service del módulo de cola de impresión / monitor de preparación.
@@ -24,15 +25,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * - consumir el siguiente item pendiente de una estación
  * - transformar el modelo persistente a DTO de UI
  *
- * AJUSTE ACTUAL:
- * - también muestra el café seleccionado en resumenLista y detalleTexto.
+ * Ajuste multisucursal:
+ * - la cola se registra filtrando producto + sucursal
+ * - las estaciones ya no se validan por ids fijos 1/2/3
+ * - los nombres de estación se resuelven desde BD
  */
 public class ColaImpresionService {
 
-    public static final int ESTACION_BEBIDAS_CALIENTES = 1;
-    public static final int ESTACION_BEBIDAS_FRIAS = 2;
-    public static final int ESTACION_COMIDA = 3;
-
+    private final EstacionDao estacionDao;
     private final ColaImpresionDAO colaImpresionDAO;
     private final ProductoEstacionDao productoEstacionDao;
     private final ObjectMapper objectMapper;
@@ -40,14 +40,33 @@ public class ColaImpresionService {
     public ColaImpresionService() {
         this.colaImpresionDAO = new ColaImpresionDAO();
         this.productoEstacionDao = new ProductoEstacionDao();
+        this.estacionDao = new EstacionDao();
         this.objectMapper = new ObjectMapper();
     }
 
     public ColaImpresionService(ColaImpresionDAO colaImpresionDao,
-                                ProductoEstacionDao productoEstacionDao) {
+                                ProductoEstacionDao productoEstacionDao,
+                                EstacionDao estacionDao) {
         this.colaImpresionDAO = colaImpresionDao;
         this.productoEstacionDao = productoEstacionDao;
+        this.estacionDao = estacionDao;
         this.objectMapper = new ObjectMapper();
+    }
+
+    public int requireIdEstacionByCodigoYSucursal(String codigo, int idSucursal) {
+        if (codigo == null || codigo.isBlank()) {
+            throw new IllegalArgumentException("El código de estación no puede estar vacío.");
+        }
+        if (idSucursal <= 0) {
+            throw new IllegalArgumentException("El id de sucursal debe ser mayor que 0.");
+        }
+
+        Estacion estacion = estacionDao.findByCodigoAndSucursal(codigo, idSucursal)
+                .orElseThrow(() -> new IllegalStateException(
+                        "No existe la estación " + codigo + " en la sucursal " + idSucursal
+                ));
+
+        return estacion.getIdEstacion();
     }
 
     // =========================================================
@@ -57,8 +76,8 @@ public class ColaImpresionService {
     public void registrarItemEnCola(int idVenta,
                                     int idItem,
                                     int idProducto,
+                                    int idSucursal,
                                     ColaItemDescripcionDTO descripcionDto) {
-
         if (idVenta <= 0) {
             throw new IllegalArgumentException("idVenta inválido");
         }
@@ -68,13 +87,16 @@ public class ColaImpresionService {
         if (idProducto <= 0) {
             throw new IllegalArgumentException("idProducto inválido");
         }
+        if (idSucursal <= 0) {
+            throw new IllegalArgumentException("idSucursal inválido");
+        }
         if (descripcionDto == null) {
             throw new IllegalArgumentException("descripcionDto no puede ser null");
         }
 
-        List<Integer> idsEstacion = productoEstacionDao.findIdsEstacionByProducto(idProducto);
+        List<Integer> idsEstacion =
+                productoEstacionDao.findIdsEstacionByProductoYSucursal(idProducto, idSucursal);
 
-        // Si un producto no tiene estación asignada, no rompemos la venta.
         if (idsEstacion == null || idsEstacion.isEmpty()) {
             return;
         }
@@ -109,6 +131,7 @@ public class ColaImpresionService {
                     item.getIdVenta(),
                     item.getIdItem(),
                     item.getIdProducto(),
+                    item.getIdSucursal(),
                     item.getDescripcion()
             );
         }
@@ -124,11 +147,7 @@ public class ColaImpresionService {
         LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
         LocalDateTime finDia = inicioDia.plusDays(1);
 
-        List<ColaImpresion> filas = colaImpresionDAO.findPendientesHoyByEstacion(
-                idEstacion,
-                inicioDia,
-                finDia
-        );
+        List<ColaImpresion> filas = colaImpresionDAO.findPendientesHoyByEstacion(idEstacion, inicioDia, finDia);
 
         if (filas == null || filas.isEmpty()) {
             return Collections.emptyList();
@@ -151,11 +170,8 @@ public class ColaImpresionService {
         LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
         LocalDateTime finDia = inicioDia.plusDays(1);
 
-        Optional<ColaImpresion> nextOpt = colaImpresionDAO.findSiguientePendienteHoyByEstacion(
-                idEstacion,
-                inicioDia,
-                finDia
-        );
+        Optional<ColaImpresion> nextOpt =
+                colaImpresionDAO.findSiguientePendienteHoyByEstacion(idEstacion, inicioDia, finDia);
 
         if (nextOpt.isEmpty()) {
             return null;
@@ -164,11 +180,7 @@ public class ColaImpresionService {
         ColaImpresion siguiente = nextOpt.get();
 
         LocalDateTime ahora = LocalDateTime.now();
-        colaImpresionDAO.marcarImpresoYPreparado(
-                siguiente.getIdCola(),
-                ahora,
-                ahora
-        );
+        colaImpresionDAO.marcarImpresoYPreparado(siguiente.getIdCola(), ahora, ahora);
 
         siguiente.setImpreso(true);
         siguiente.setPreparado(true);
@@ -215,7 +227,6 @@ public class ColaImpresionService {
 
     /**
      * Texto corto de la lista del monitor.
-     *
      * Ahora también mete el café si existe.
      */
     private String buildResumenLista(ColaItemDescripcionDTO desc) {
@@ -241,13 +252,9 @@ public class ColaImpresionService {
 
     /**
      * Texto largo del mini-ticket simulado de estación.
-     *
      * Ahora también mete el café si existe.
      */
-    private String buildDetalleTexto(ColaItemDescripcionDTO desc,
-                                     ColaImpresion fila,
-                                     String nombreEstacion) {
-
+    private String buildDetalleTexto(ColaItemDescripcionDTO desc, ColaImpresion fila, String nombreEstacion) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("ESTACIÓN: ").append(nombreEstacion).append("\n");
@@ -266,9 +273,6 @@ public class ColaImpresionService {
         }
         sb.append("\n");
 
-        // =====================================================
-        // NUEVO BLOQUE: café seleccionado
-        // =====================================================
         if (!safe(desc.getTipoCafe(), "").isBlank()) {
             sb.append("CAFÉ: ").append(desc.getTipoCafe()).append("\n");
         }
@@ -330,24 +334,27 @@ public class ColaImpresionService {
     // =========================================================
 
     private void validarEstacion(int idEstacion) {
-        if (idEstacion != ESTACION_BEBIDAS_CALIENTES
-                && idEstacion != ESTACION_BEBIDAS_FRIAS
-                && idEstacion != ESTACION_COMIDA) {
+        if (idEstacion <= 0) {
             throw new IllegalArgumentException("idEstacion no válida: " + idEstacion);
+        }
+
+        boolean exists = estacionDao.findById(idEstacion).isPresent();
+        if (!exists) {
+            throw new IllegalArgumentException("La estación no existe: " + idEstacion);
         }
     }
 
-    private String getNombreEstacionById(Integer idEstacion) {
-        if (idEstacion == null) {
-            return "SIN_ESTACION";
+    public String getNombreEstacionById(int idEstacion) {
+        if (idEstacion <= 0) {
+            throw new IllegalArgumentException("El id de estación debe ser mayor que 0.");
         }
 
-        return switch (idEstacion) {
-            case ESTACION_BEBIDAS_CALIENTES -> "BEBIDAS_CALIENTES";
-            case ESTACION_BEBIDAS_FRIAS -> "BEBIDAS_FRIAS";
-            case ESTACION_COMIDA -> "COMIDA";
-            default -> "ESTACION_" + idEstacion;
-        };
+        Estacion estacion = estacionDao.findById(idEstacion)
+                .orElseThrow(() -> new IllegalStateException(
+                        "No existe la estación con id " + idEstacion
+                ));
+
+        return estacion.getNombre();
     }
 
     private String safe(String value, String fallback) {
@@ -362,6 +369,14 @@ public class ColaImpresionService {
         }
     }
 
+    public List<Estacion> getEstacionesBySucursal(int idSucursal) {
+        if (idSucursal <= 0) {
+            throw new IllegalArgumentException("El id de sucursal debe ser mayor que 0.");
+        }
+
+        return estacionDao.findBySucursal(idSucursal);
+    }
+
     // =========================================================
     // 8. COMMAND AUXILIAR PARA REGISTRO MASIVO
     // =========================================================
@@ -371,15 +386,18 @@ public class ColaImpresionService {
         private final int idVenta;
         private final int idItem;
         private final int idProducto;
+        private final int idSucursal;
         private final ColaItemDescripcionDTO descripcion;
 
         public ColaRegistroItemCommand(int idVenta,
                                        int idItem,
                                        int idProducto,
+                                       int idSucursal,
                                        ColaItemDescripcionDTO descripcion) {
             this.idVenta = idVenta;
             this.idItem = idItem;
             this.idProducto = idProducto;
+            this.idSucursal = idSucursal;
             this.descripcion = descripcion;
         }
 
@@ -393,6 +411,10 @@ public class ColaImpresionService {
 
         public int getIdProducto() {
             return idProducto;
+        }
+
+        public int getIdSucursal() {
+            return idSucursal;
         }
 
         public ColaItemDescripcionDTO getDescripcion() {

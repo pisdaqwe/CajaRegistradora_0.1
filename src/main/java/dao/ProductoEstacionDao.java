@@ -6,6 +6,7 @@ import config.DbPool;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,46 @@ public class ProductoEstacionDao {
         } catch (Exception e) {
             throw new RuntimeException(
                     "Error al buscar estaciones del producto id=" + idProducto, e
+            );
+        }
+
+        return ids;
+    }
+    public List<Integer> findIdsEstacionByProductoYSucursal(int idProducto, int idSucursal) {
+        if (idProducto <= 0) {
+            throw new IllegalArgumentException("El id del producto debe ser mayor que 0.");
+        }
+        if (idSucursal <= 0) {
+            throw new IllegalArgumentException("El id de sucursal debe ser mayor que 0.");
+        }
+
+        String sql = """
+                SELECT pe.id_estacion
+                FROM producto_estacion pe
+                JOIN estacion e ON e.id_estacion = pe.id_estacion
+                WHERE pe.id_producto = ?
+                  AND e.id_sucursal = ?
+                ORDER BY pe.id_estacion
+                """;
+
+        List<Integer> ids = new ArrayList<>();
+
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idProducto);
+            ps.setInt(2, idSucursal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt("id_estacion"));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Error obteniendo estaciones del producto " + idProducto
+                            + " para la sucursal " + idSucursal, e
             );
         }
 

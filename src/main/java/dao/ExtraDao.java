@@ -238,6 +238,34 @@ public class ExtraDao {
             );
         }
     }
+    public List<ExtraDTO> findTodosActivosOrdenados() {
+        String sql = """
+            SELECT
+                id_extra,
+                nombre,
+                precio,
+                tipo
+            FROM extra
+            WHERE activo = 1
+            ORDER BY orden, nombre
+        """;
+
+        List<ExtraDTO> extras = new ArrayList<>();
+
+        try (Connection con = DbPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                extras.add(mapExtraLegacy(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error cargando todos los extras activos para informes", e);
+        }
+
+        return extras;
+    }
     private StockExtraDisponibilidadDTO mapExtraDisponibilidad(ResultSet rs) throws SQLException {
         return new StockExtraDisponibilidadDTO(
                 rs.getInt("id_extra"),

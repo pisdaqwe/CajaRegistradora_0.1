@@ -5,10 +5,20 @@ import java.time.LocalDateTime;
 import enums.EstadoFichaje;
 
 public class Fichaje {
-
+	
+	
     private int idFichaje;
     private int idUsuario;
-    private LocalDateTime fechaEntrada;
+    private int idSucursal;
+    public int getIdSucursal() {
+		return idSucursal;
+	}
+
+	public void setIdSucursal(int idSucursal) {
+		this.idSucursal = idSucursal;
+	}
+
+	private LocalDateTime fechaEntrada;
     private LocalDateTime fechaSalida;
     private Integer duracion; // en minutos (nullable hasta cerrar)
     private EstadoFichaje estado;

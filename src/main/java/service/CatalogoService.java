@@ -116,4 +116,9 @@ public class CatalogoService {
                         "El producto " + idProducto + " no tiene tamaños configurados en producto_tamano"
                 ));
     }
+    
+    //informes//
+    public List<ProductoDTO> getProductosActivosVisiblesParaInformes() {
+        return productoDao.findActivosVisiblesOrdenados();
+    }
 }

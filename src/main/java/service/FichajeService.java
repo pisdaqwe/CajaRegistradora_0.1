@@ -29,7 +29,7 @@ public class FichajeService {
     // =========================
     // FICHAR ENTRADA
     // =========================
-    public Fichaje ficharEntrada(int idUsuario) {
+    public Fichaje ficharEntrada(int idUsuario,int idSucursal) {
         validarIdUsuario(idUsuario);
 
         // No puede fichar si ya tiene uno abierto
@@ -42,6 +42,7 @@ public class FichajeService {
 
         Fichaje nuevo = new Fichaje();
         nuevo.setIdUsuario(idUsuario);
+        nuevo.setIdSucursal(idSucursal);
         nuevo.setEstado(EstadoFichaje.ABIERTO);
         nuevo.setObservaciones(null);
 

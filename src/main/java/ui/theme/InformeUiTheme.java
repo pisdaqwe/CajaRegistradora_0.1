@@ -36,6 +36,13 @@ public final class InformeUiTheme {
     public static final Font FONT_KPI_TITLE = new Font("SansSerif", Font.BOLD, 13);
     public static final Font FONT_KPI_VALUE = new Font("SansSerif", Font.BOLD, 24);
 
+    public static final Font FONT_LOGIN_DISPLAY = new Font("SansSerif", Font.BOLD, 30);
+    public static final Font FONT_KEYPAD = new Font("SansSerif", Font.BOLD, 26);
+    public static final Font FONT_KEYPAD_SPECIAL = new Font("SansSerif", Font.BOLD, 18);
+    public static final Font FONT_LOGIN_CLOCK = new Font("SansSerif", Font.BOLD, 18);
+    public static final Font FONT_LOGIN_CLOCK_HOUR = new Font("SansSerif", Font.BOLD, 24);
+    public static final Font FONT_TICKET = new Font("Monospaced", Font.PLAIN, 13);
+
     public static JPanel createCardPanel(LayoutManager layout) {
         JPanel p = new JPanel(layout);
         p.setBackground(CARD_BG);
@@ -164,6 +171,76 @@ public final class InformeUiTheme {
         header.setPreferredSize(new Dimension(header.getWidth(), 38));
     }
 
+    public static JPanel createTransparentPanel(LayoutManager layout) {
+        JPanel p = new JPanel(layout);
+        p.setOpaque(false);
+        return p;
+    }
+
+    public static void styleDisplayField(JTextField field) {
+        field.setFont(FONT_LOGIN_DISPLAY);
+        field.setHorizontalAlignment(JTextField.CENTER);
+        field.setEditable(false);
+        field.setBackground(CARD_BG_2);
+        field.setForeground(TEXT_PRIMARY);
+        field.setCaretColor(TEXT_PRIMARY);
+        field.setBorder(new CompoundBorder(
+                new LineBorder(BORDER, 1, true),
+                new EmptyBorder(14, 14, 14, 14)
+        ));
+    }
+
+    public static void stylePasswordField(JPasswordField field) {
+        field.setFont(FONT_BODY);
+        field.setBackground(CARD_BG_2);
+        field.setForeground(TEXT_PRIMARY);
+        field.setCaretColor(TEXT_PRIMARY);
+        field.setBorder(new CompoundBorder(
+                new LineBorder(BORDER, 1, true),
+                new EmptyBorder(10, 12, 10, 12)
+        ));
+    }
+
+    public static void styleTextArea(JTextArea area) {
+        area.setFont(FONT_TICKET);
+        area.setBackground(new Color(248, 243, 232));
+        area.setForeground(new Color(35, 35, 35));
+        area.setCaretColor(new Color(35, 35, 35));
+        area.setBorder(new CompoundBorder(
+                new LineBorder(new Color(215, 205, 185), 1, true),
+                new EmptyBorder(10, 10, 10, 10)
+        ));
+    }
+
+    public static void styleKeypadButton(JButton button) {
+        button.setFont(FONT_KEYPAD);
+        button.setFocusPainted(false);
+        button.setBackground(CARD_BG_2);
+        button.setForeground(TEXT_PRIMARY);
+        button.setBorder(new EmptyBorder(18, 12, 18, 12));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    public static void styleKeypadSpecialButton(JButton button, boolean danger) {
+        button.setFont(FONT_KEYPAD_SPECIAL);
+        button.setFocusPainted(false);
+        button.setForeground(Color.WHITE);
+        button.setBackground(danger ? DANGER : STARBUCKS_GREEN_SOFT);
+        button.setBorder(new EmptyBorder(18, 12, 18, 12));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    public static void styleQuickLoginButton(JButton button) {
+        button.setFont(new Font("SansSerif", Font.BOLD, 16));
+        button.setFocusPainted(false);
+        button.setBackground(STARBUCKS_GREEN_SOFT);
+        button.setForeground(TEXT_PRIMARY);
+        button.setBorder(new CompoundBorder(
+                new LineBorder(BORDER, 1, true),
+                new EmptyBorder(16, 14, 16, 14)
+        ));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
     public static void styleScrollPane(JScrollPane scrollPane) {
         scrollPane.getViewport().setBackground(PANEL_BG);
         scrollPane.setBorder(BorderFactory.createLineBorder(BORDER));

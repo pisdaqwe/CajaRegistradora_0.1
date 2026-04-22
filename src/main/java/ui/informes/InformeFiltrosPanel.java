@@ -56,9 +56,9 @@ public class InformeFiltrosPanel extends JPanel {
 
         modules = new EnumMap<>(FamiliaInforme.class);
         modules.put(FamiliaInforme.VENTAS_TIEMPO, new VentasTiempoFilterPanel(services));
-        modules.put(FamiliaInforme.COMERCIAL, new ComercialFilterPanel());
-        modules.put(FamiliaInforme.EQUIPO, new EquipoFilterPanel());
-        modules.put(FamiliaInforme.OPERATIVA, new OperativaFilterPanel());
+        modules.put(FamiliaInforme.COMERCIAL, new ComercialFilterPanel(services));       
+        modules.put(FamiliaInforme.OPERATIVA, new OperativaFilterPanel(services));
+        modules.put(FamiliaInforme.EQUIPO, new EquipoFilterPanel(services));
 
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);

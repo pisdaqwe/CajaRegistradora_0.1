@@ -1,3 +1,5 @@
+
+
 package config;
 
 import java.io.InputStream;
@@ -11,9 +13,6 @@ public final class ConfigLoader {
     private static Properties properties;
     private static boolean loaded = false;
 
-    // =========================================
-    // CONSTRUCTOR PRIVADO
-    // =========================================
     private ConfigLoader() {
         // Evita instanciación
     }
@@ -23,7 +22,9 @@ public final class ConfigLoader {
     // =========================================
     public static void load() {
 
-        if (loaded) return;
+        if (loaded) {
+            return;
+        }
 
         try (InputStream is = ConfigLoader.class
                 .getClassLoader()
@@ -56,6 +57,33 @@ public final class ConfigLoader {
         }
     }
 
+    private static String getRequiredProperty(String key) {
+        checkLoaded();
+
+        String value = properties.getProperty(key);
+
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(
+                    "Falta la propiedad obligatoria en config.properties: " + key
+            );
+        }
+
+        return value.trim();
+    }
+
+    private static int getRequiredIntProperty(String key) {
+        String value = getRequiredProperty(key);
+
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException(
+                    "La propiedad " + key + " debe ser un entero válido. Valor actual: " + value,
+                    e
+            );
+        }
+    }
+
     // =========================================
     // APLICACIÓN
     // =========================================
@@ -79,6 +107,13 @@ public final class ConfigLoader {
     public static String getTimezone() {
         checkLoaded();
         return properties.getProperty("app.timezone", "Europe/Madrid");
+    }
+
+    // =========================================
+    // TERMINAL
+    // =========================================
+    public static int getTerminalIdCaja() {
+        return getRequiredIntProperty("terminal.id_caja");
     }
 
     // =========================================
@@ -199,5 +234,5 @@ public final class ConfigLoader {
                 properties.getProperty("printer.kitchen.enabled", "true")
         );
     }
+  
 }
-

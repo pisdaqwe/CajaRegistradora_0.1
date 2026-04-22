@@ -59,12 +59,6 @@ public class SesionCajaService {
                 .orElseThrow(() ->
                         new IllegalStateException("No hay ninguna sesión de caja abierta"));
     }
-    public List<Caja> findActivasBySucursal(int idSucursal) {
-        if (idSucursal <= 0) {
-            throw new IllegalArgumentException("idSucursal debe ser > 0");
-        }
-        return cajaDao.findActivasBySucursal(idSucursal);
-    }
 
     // =====================================================
     // APERTURA DE SESIÓN
@@ -149,6 +143,12 @@ public class SesionCajaService {
     public BigDecimal calcularEfectivoEsperado(int idSesion) {
         return calcularResumenCierre(idSesion).getEfectivoEsperado();
     }
+    public List<Caja> findActivasBySucursal(int idSucursal) {
+        if (idSucursal <= 0) {
+            throw new IllegalArgumentException("idSucursal debe ser > 0");
+        }
+        return cajaDao.findActivasBySucursal(idSucursal);
+    }
 
     // =====================================================
     // GUARDS
@@ -162,7 +162,7 @@ public class SesionCajaService {
 
     public List<LoginRapidoButtonDTO> getBotonesLoginRapido(int idCaja) {
         if (idCaja <= 0) {
-            throw new IllegalArgumentException("idCaja debe ser > 0");
+            throw new IllegalArgumentException("El id de caja debe ser mayor que 0.");
         }
 
         return sesionCajaDao.selectBotonesLoginRapidoByCaja(idCaja);
@@ -178,4 +178,6 @@ public class SesionCajaService {
                         "No tienes una sesión de caja asignada/abierta. Pide al encargado que te abra una."
                 ));
     }
+    
+    
 }

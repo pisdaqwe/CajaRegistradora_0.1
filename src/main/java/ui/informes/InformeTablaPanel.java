@@ -7,7 +7,29 @@ import ui.theme.InformeUiTheme;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
+import dtoS.InformeCombosVendidosResultDTO;
+import dtoS.InformeDescuentosAplicadosResultDTO;
+import dtoS.InformeDevolucionesProductoResultDTO;
+import dtoS.InformeExtrasVendidosResultDTO;
+import dtoS.InformeMermaPeriodoResultDTO;
+import dtoS.InformeMovimientoStockResultDTO;
+import dtoS.InformeNetoVsDevolucionesResultDTO;
+import dtoS.InformePagosMetodoResultDTO;
+import dtoS.InformeProductosPorEmpleadoResultDTO;
+import dtoS.InformeProductosVendidosResultDTO;
+import dtoS.InformeRankingEmpleadosExtraResultDTO;
+import dtoS.InformeRankingEmpleadosExtrasResultDTO;
+import dtoS.InformeRankingEmpleadosProductoResultDTO;
+import dtoS.InformeRankingEmpleadosVentasResultDTO;
+import dtoS.InformeResumenEjecutivoResultDTO;
+import dtoS.InformeTicketMedioDiaResultDTO;
+import dtoS.InformeTiemposEstacionResultDTO;
+import dtoS.InformeVentasCajaResultDTO;
+import dtoS.InformeVentasExtraEmpleadoResultDTO;
+import dtoS.InformeVentasFranjaResultDTO;
 import dtoS.InformeVentasPorDiaResultDTO;
+import dtoS.InformeVentasProductoEmpleadoResultDTO;
+import dtoS.InformeVentasSesionCajaResultDTO;
 
 import java.awt.*;
 
@@ -331,11 +353,580 @@ public class InformeTablaPanel extends JPanel {
 
         centerLayout.show(centerPanel, "TABLE");
     }
+   
+    public void cargarResumenEjecutivo(InformeResumenEjecutivoResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Resumen ejecutivo.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Resumen ejecutivo");
+
+        String[] cols = {"Indicador", "Valor", "Descripción"};
+        Object[][] rows = new Object[result.getRows().size()][3];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getIndicador();
+            rows[i][1] = formatMoney(row.getValor());
+            rows[i][2] = row.getDescripcion();
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarVentasPorFranjaHoraria(InformeVentasFranjaResultDTO result, ModoVistaInforme modoVista) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ventas por franja horaria.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ventas por franja horaria");
+
+        if (modoVista == ModoVistaInforme.COMPARATIVA) {
+            String[] cols = {"Franja", "Empleado", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"};
+            Object[][] rows = new Object[result.getRows().size()][7];
+
+            for (int i = 0; i < result.getRows().size(); i++) {
+                var row = result.getRows().get(i);
+                rows[i][0] = row.getFranja();
+                rows[i][1] = row.getNombreEmpleado();
+                rows[i][2] = formatMoney(row.getTotalVentas());
+                rows[i][3] = formatMoney(row.getTotalDevoluciones());
+                rows[i][4] = formatMoney(row.getTotalNeto());
+                rows[i][5] = row.getNumeroTickets();
+                rows[i][6] = formatMoney(row.getTicketMedio());
+            }
+
+            model.setDataVector(rows, cols);
+        } else {
+            String[] cols = {"Franja", "Ventas", "Devoluciones", "Neto", "Tickets", "Ticket medio"};
+            Object[][] rows = new Object[result.getRows().size()][6];
+
+            for (int i = 0; i < result.getRows().size(); i++) {
+                var row = result.getRows().get(i);
+                rows[i][0] = row.getFranja();
+                rows[i][1] = formatMoney(row.getTotalVentas());
+                rows[i][2] = formatMoney(row.getTotalDevoluciones());
+                rows[i][3] = formatMoney(row.getTotalNeto());
+                rows[i][4] = row.getNumeroTickets();
+                rows[i][5] = formatMoney(row.getTicketMedio());
+            }
+
+            model.setDataVector(rows, cols);
+        }
+
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarTicketMedioPorDia(InformeTicketMedioDiaResultDTO result, ModoVistaInforme modoVista) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ticket medio por día.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ticket medio por día");
+
+        if (modoVista == ModoVistaInforme.COMPARATIVA) {
+            String[] cols = {"Fecha", "Empleado", "Tickets", "Ventas", "Ticket medio"};
+            Object[][] rows = new Object[result.getRows().size()][5];
+
+            for (int i = 0; i < result.getRows().size(); i++) {
+                var row = result.getRows().get(i);
+                rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+                rows[i][1] = row.getNombreEmpleado();
+                rows[i][2] = row.getNumeroTickets();
+                rows[i][3] = formatMoney(row.getTotalVentas());
+                rows[i][4] = formatMoney(row.getTicketMedio());
+            }
+
+            model.setDataVector(rows, cols);
+        } else {
+            String[] cols = {"Fecha", "Tickets", "Ventas", "Ticket medio"};
+            Object[][] rows = new Object[result.getRows().size()][4];
+
+            for (int i = 0; i < result.getRows().size(); i++) {
+                var row = result.getRows().get(i);
+                rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+                rows[i][1] = row.getNumeroTickets();
+                rows[i][2] = formatMoney(row.getTotalVentas());
+                rows[i][3] = formatMoney(row.getTicketMedio());
+            }
+
+            model.setDataVector(rows, cols);
+        }
+
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarPagosPorMetodo(InformePagosMetodoResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Pagos por método.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Pagos por método");
+
+        String[] cols = {"Método", "Operaciones", "Importe", "% total"};
+        Object[][] rows = new Object[result.getRows().size()][4];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getMetodoPago();
+            rows[i][1] = row.getNumeroOperaciones();
+            rows[i][2] = formatMoney(row.getImporteTotal());
+            rows[i][3] = formatPercent(row.getPorcentajeSobreTotal());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarVentasNetasVsDevoluciones(InformeNetoVsDevolucionesResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ventas netas vs devoluciones.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ventas netas vs devoluciones");
+
+        String[] cols = {"Fecha", "Ventas", "Devoluciones", "Neto", "Ratio devolución"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+            rows[i][1] = formatMoney(row.getTotalVentas());
+            rows[i][2] = formatMoney(row.getTotalDevoluciones());
+            rows[i][3] = formatMoney(row.getTotalNeto());
+            rows[i][4] = formatPercent(row.getRatioDevolucion());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+    
+    public void cargarProductosMasVendidos(InformeProductosVendidosResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Productos más vendidos.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Productos más vendidos");
+
+        String[] cols = {"Producto", "Unidades", "Bruto", "Devoluciones", "Neto"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreProducto();
+            rows[i][1] = row.getUnidadesVendidas();
+            rows[i][2] = formatMoney(row.getImporteBruto());
+            rows[i][3] = formatMoney(row.getImporteDevoluciones());
+            rows[i][4] = formatMoney(row.getImporteNeto());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarExtrasMasVendidos(InformeExtrasVendidosResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Extras más vendidos.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Extras más vendidos");
+
+        String[] cols = {"Extra", "Grupo", "Veces", "Importe"};
+        Object[][] rows = new Object[result.getRows().size()][4];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreExtra();
+            rows[i][1] = row.getGrupoPrincipal();
+            rows[i][2] = row.getVecesVendido();
+            rows[i][3] = formatMoney(row.getImporteGenerado());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarCombosVendidos(InformeCombosVendidosResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Combos vendidos.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Combos vendidos");
+
+        String[] cols = {"Combo", "Veces", "Precio original", "Precio final", "Ahorro"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreCombo();
+            rows[i][1] = row.getVecesVendido();
+            rows[i][2] = formatMoney(row.getPrecioOriginalTotal());
+            rows[i][3] = formatMoney(row.getPrecioFinalTotal());
+            rows[i][4] = formatMoney(row.getAhorroTotal());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarDescuentosAplicados(InformeDescuentosAplicadosResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Descuentos aplicados.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Descuentos aplicados");
+
+        String[] cols = {"Descuento", "Tipo", "Usos", "Base", "Importe descuento"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreDescuento();
+            rows[i][1] = row.getTipoBeneficio();
+            rows[i][2] = row.getNumeroUsos();
+            rows[i][3] = formatMoney(row.getImporteBase());
+            rows[i][4] = formatMoney(row.getImporteDescuento());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarDevolucionesPorProducto(InformeDevolucionesProductoResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Devoluciones por producto.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Devoluciones por producto");
+
+        String[] cols = {"Producto", "Cantidad devuelta", "Reembolso", "Nº devoluciones", "Repone stock"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreProducto();
+            rows[i][1] = row.getCantidadDevuelta();
+            rows[i][2] = formatMoney(row.getImporteReembolsado());
+            rows[i][3] = row.getNumeroDevoluciones();
+            rows[i][4] = row.isReponeStock() ? "Sí" : "No";
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+    
+    public void cargarRankingEmpleadosPorVentas(InformeRankingEmpleadosVentasResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ranking empleados por ventas.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ranking empleados por ventas");
+
+        String[] cols = {"Posición", "Empleado", "Ventas", "Tickets", "Ticket medio"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getPosicion();
+            rows[i][1] = row.getNombreEmpleado();
+            rows[i][2] = formatMoney(row.getTotalVentas());
+            rows[i][3] = row.getNumeroTickets();
+            rows[i][4] = formatMoney(row.getTicketMedio());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarRankingEmpleadosPorExtras(InformeRankingEmpleadosExtrasResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ranking empleados por extras.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ranking empleados por extras");
+
+        String[] cols = {"Posición", "Empleado", "Extras vendidos", "Importe extras"};
+        Object[][] rows = new Object[result.getRows().size()][4];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getPosicion();
+            rows[i][1] = row.getNombreEmpleado();
+            rows[i][2] = row.getTotalExtrasVendidos();
+            rows[i][3] = formatMoney(row.getImporteExtras());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarProductosVendidosPorEmpleado(InformeProductosPorEmpleadoResultDTO result, ModoVistaInforme modoVista) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Productos vendidos por empleado.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Productos vendidos por empleado");
+
+        String[] cols = {"Empleado", "Producto", "Unidades", "Importe"};
+        Object[][] rows = new Object[result.getRows().size()][4];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreEmpleado();
+            rows[i][1] = row.getNombreProducto();
+            rows[i][2] = row.getUnidadesVendidas();
+            rows[i][3] = formatMoney(row.getImporteTotal());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarVentasPorCaja(InformeVentasCajaResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ventas por caja.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ventas por caja");
+
+        String[] cols = {"Caja", "Ventas", "Devoluciones", "Neto", "Tickets"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreCaja();
+            rows[i][1] = formatMoney(row.getTotalVentas());
+            rows[i][2] = formatMoney(row.getTotalDevoluciones());
+            rows[i][3] = formatMoney(row.getTotalNeto());
+            rows[i][4] = row.getNumeroTickets();
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarVentasPorSesionCaja(InformeVentasSesionCajaResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ventas por sesión de caja.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ventas por sesión de caja");
+
+        String[] cols = {"Sesión", "Caja", "Empleado apertura", "Apertura", "Cierre", "Ventas", "Devoluciones", "Neto"};
+        Object[][] rows = new Object[result.getRows().size()][8];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getIdSesion();
+            rows[i][1] = row.getNombreCaja();
+            rows[i][2] = row.getNombreEmpleadoApertura();
+            rows[i][3] = row.getFechaApertura() != null ? row.getFechaApertura().toString() : "";
+            rows[i][4] = row.getFechaCierre() != null ? row.getFechaCierre().toString() : "";
+            rows[i][5] = formatMoney(row.getTotalVentas());
+            rows[i][6] = formatMoney(row.getTotalDevoluciones());
+            rows[i][7] = formatMoney(row.getTotalNeto());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarTiemposPorEstacion(InformeTiemposEstacionResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Tiempos por estación.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Tiempos por estación");
+
+        String[] cols = {"Estación", "Tiempo medio (s)", "Tiempo máximo (s)", "Items procesados"};
+        Object[][] rows = new Object[result.getRows().size()][4];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreEstacion();
+            rows[i][1] = row.getTiempoMedioSegundos();
+            rows[i][2] = row.getTiempoMaximoSegundos();
+            rows[i][3] = row.getItemsProcesados();
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarMermaPorPeriodo(InformeMermaPeriodoResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Merma por período.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Merma por período");
+
+        String[] cols = {"Fecha", "Tipo", "Origen", "Motivo", "Cantidad", "Observaciones"};
+        Object[][] rows = new Object[result.getRows().size()][6];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+            rows[i][1] = row.getTipoMerma();
+            rows[i][2] = row.getOrigen();
+            rows[i][3] = row.getMotivo();
+            rows[i][4] = row.getCantidad();
+            rows[i][5] = row.getObservaciones();
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarMovimientosStockAjustes(InformeMovimientoStockResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Movimientos de stock / ajustes.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Movimientos de stock / ajustes");
+
+        String[] cols = {"Fecha", "Tipo movimiento", "Tipo objeto", "Objeto", "Cantidad", "Motivo", "Referencia"};
+        Object[][] rows = new Object[result.getRows().size()][7];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getFecha() != null ? row.getFecha().toString() : "";
+            rows[i][1] = row.getTipoMovimiento();
+            rows[i][2] = row.getTipoObjeto();
+            rows[i][3] = row.getNombreObjeto();
+            rows[i][4] = row.getCantidad();
+            rows[i][5] = row.getMotivo();
+            rows[i][6] = row.getReferencia();
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+  
+    public void cargarVentasProductoPorEmpleado(InformeVentasProductoEmpleadoResultDTO result, ModoVistaInforme modoVista) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ventas producto por empleado.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ventas producto por empleado");
+
+        String[] cols = {"Empleado", "Producto", "Unidades", "Bruto", "Descuento", "Neto"};
+        Object[][] rows = new Object[result.getRows().size()][6];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreEmpleado();
+            rows[i][1] = row.getNombreProducto();
+            rows[i][2] = row.getUnidadesVendidas();
+            rows[i][3] = formatMoney(row.getImporteBruto());
+            rows[i][4] = formatMoney(row.getImporteDescuento());
+            rows[i][5] = formatMoney(row.getImporteNeto());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarRankingEmpleadosPorProducto(InformeRankingEmpleadosProductoResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ranking empleados por producto.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ranking empleados por producto");
+
+        String[] cols = {"Posición", "Empleado", "Producto", "Unidades", "Neto"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getPosicion();
+            rows[i][1] = row.getNombreEmpleado();
+            rows[i][2] = row.getNombreProducto();
+            rows[i][3] = row.getUnidadesVendidas();
+            rows[i][4] = formatMoney(row.getImporteNeto());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarVentasExtraPorEmpleado(InformeVentasExtraEmpleadoResultDTO result, ModoVistaInforme modoVista) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ventas extra por empleado.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ventas extra por empleado");
+
+        String[] cols = {"Empleado", "Extra", "Tipo", "Veces", "Importe"};
+        Object[][] rows = new Object[result.getRows().size()][5];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getNombreEmpleado();
+            rows[i][1] = row.getNombreExtra();
+            rows[i][2] = row.getTipoExtra();
+            rows[i][3] = row.getVecesVendido();
+            rows[i][4] = formatMoney(row.getImporteGenerado());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+
+    public void cargarRankingEmpleadosPorExtra(InformeRankingEmpleadosExtraResultDTO result) {
+        if (result == null || result.getRows() == null || result.getRows().isEmpty()) {
+            showEmpty("No hay datos para Ranking empleados por extra.");
+            return;
+        }
+
+        lblTitle.setText("Resultado · Ranking empleados por extra");
+
+        String[] cols = {"Posición", "Empleado", "Extra", "Tipo", "Veces", "Importe"};
+        Object[][] rows = new Object[result.getRows().size()][6];
+
+        for (int i = 0; i < result.getRows().size(); i++) {
+            var row = result.getRows().get(i);
+            rows[i][0] = row.getPosicion();
+            rows[i][1] = row.getNombreEmpleado();
+            rows[i][2] = row.getNombreExtra();
+            rows[i][3] = row.getTipoExtra();
+            rows[i][4] = row.getVecesVendido();
+            rows[i][5] = formatMoney(row.getImporteGenerado());
+        }
+
+        model.setDataVector(rows, cols);
+        centerLayout.show(centerPanel, "TABLE");
+    }
+    
 
     private String formatMoney(java.math.BigDecimal value) {
         java.math.BigDecimal safe = value != null ? value : java.math.BigDecimal.ZERO;
         return String.format(java.util.Locale.forLanguageTag("es-ES"), "%,.2f €", safe);
     }
-    
+    private String formatPercent(java.math.BigDecimal value) {
+        java.math.BigDecimal safe = value != null ? value : java.math.BigDecimal.ZERO;
+        return String.format(java.util.Locale.forLanguageTag("es-ES"), "%,.2f %%", safe);
+    }
     
 }

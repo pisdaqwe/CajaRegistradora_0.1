@@ -15,6 +15,7 @@ import dao.DevolucionDao;
 import dao.DevolucionItemDao;
 import dao.DevolucionRegistroDao;
 import dao.DevolucionTicketJsonDao;
+import dao.EstacionDao;
 import dao.ExtraDao;
 import dao.ExtraRecetaReglaDao;
 import dao.FichajeDao;
@@ -36,7 +37,6 @@ import dao.SubcategoriaDao;
 import dao.SucursalDao;
 import dao.TicketJsonDao;
 import dao.UsuarioDao;
-import dao.UsuarioRecordadoDao;
 import dao.VentaDao;
 import dao.VentaItemDao;
 import dao.VentaRegistroDao;
@@ -66,7 +66,6 @@ import service.SesionCajaService;
 import service.StockIngredienteService;
 import service.SucursalService;
 import service.TicketClienteService;
-import service.UsuarioRecordadoService;
 import service.UsuarioService;
 import service.VentaService;
 import service.VentaStockIngredienteService;
@@ -90,9 +89,8 @@ public class MainApp {
         FichajeDao fichajeDao = new FichajeDao();
         SesionCajaDao sesionCajaDao = new SesionCajaDao();
         CajaDao cajaDao = new CajaDao();
-        UsuarioRecordadoDao usuarioRecordadoDao = new UsuarioRecordadoDao();
         SucursalDao sucursalDao = new SucursalDao();
-
+        
         // =====================================================
         // 3) DAOs DE CATÁLOGO / CUSTOMIZACIÓN
         // =====================================================
@@ -110,7 +108,7 @@ public class MainApp {
         VentaRegistroDao ventaRegistroDao = new VentaRegistroDao();
         VentaDao ventaDao = new VentaDao();
         VentaItemDao ventaItemDao = new VentaItemDao();
-
+        EstacionDao estacionDao = new EstacionDao();
         ColaImpresionDAO colaImpresionDAO = new ColaImpresionDAO();
         ProductoEstacionDao productoEstacionDao = new ProductoEstacionDao();
         TicketJsonDao ticketJsonDao = new TicketJsonDao();
@@ -172,7 +170,6 @@ public class MainApp {
         AuthService authService = new AuthService(usuarioDao);
         FichajeService fichajeService = new FichajeService(fichajeDao, sesionCajaDao);
         SesionCajaService sesionCajaService = new SesionCajaService(cajaDao, sesionCajaDao);
-        UsuarioRecordadoService usuarioRecordadoService = new UsuarioRecordadoService(usuarioRecordadoDao);
         UsuarioService usuarioService = new UsuarioService(usuarioDao);
 
         // =====================================================
@@ -244,7 +241,8 @@ public class MainApp {
         ColaImpresionService colaImpresionService =
                 new ColaImpresionService(
                         colaImpresionDAO,
-                        productoEstacionDao
+                        productoEstacionDao,
+                        estacionDao
                 );
 
         TicketClienteService ticketClienteService = new TicketClienteService(ticketJsonDao);
@@ -302,7 +300,6 @@ public class MainApp {
                 fichajeFacade,
                 fichajeService,
                 sesionCajaService,
-                usuarioRecordadoService,
                 cajaFacade,
                 usuarioService,
 
@@ -329,25 +326,30 @@ public class MainApp {
                 sucursalService
                 
         );
+     // =====================================================
+     // 20) CONTEXTO INICIAL DEL TERMINAL
+     // =====================================================
+     int idCajaTerminal = ConfigLoader.getTerminalIdCaja();
 
-        // =====================================================
-        // 20) CONTEXTO INICIAL DE CAJA / SUCURSAL
-        // =====================================================
-        // TODO:
-        // - de momento se deja fijo
-        // - más adelante cargar idCaja desde config.properties
-        //   o desde una configuración central de terminal
-        int idCaja = 1;
+     var cajaTerminal = cajaDao.findById(idCajaTerminal)
+             .orElseThrow(() -> new IllegalStateException(
+                     "La caja configurada en terminal.id_caja no existe: " + idCajaTerminal
+             ));
 
-        AppContext.setIdSucursal(1);
+     AppContext.initTerminal(
+             cajaTerminal.getIdCaja(),
+             cajaTerminal.getIdSucursal(),
+             cajaTerminal.getNombre()
+     );
 
-        // =====================================================
-        // 21) UI
-        // =====================================================
-        SwingUtilities.invokeLater(() -> {
-            LoginScreen screen = new LoginScreen(appServices, idCaja);
-            screen.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            screen.setVisible(true);
-        });
+     // =====================================================
+     // 21) UI
+     // =====================================================
+     SwingUtilities.invokeLater(() -> {
+         LoginScreen screen = new LoginScreen(appServices, idCajaTerminal);
+         screen.setExtendedState(JFrame.MAXIMIZED_BOTH);
+         screen.setVisible(true);
+     });
+      
     }
 }

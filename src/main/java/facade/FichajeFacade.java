@@ -1,5 +1,6 @@
 package facade;
 
+import app.AppContext;
 import dao.UsuarioDao;
 import model.Fichaje;
 import model.Usuario;
@@ -22,8 +23,16 @@ public class FichajeFacade {
     // FICHAR ENTRADA (SIN LOGIN)
     // =========================
     public Fichaje ficharEntradaPorUsuario(String usuario) {
-        int idUsuario = resolverIdUsuario(usuario);
-        return fichajeService.ficharEntrada(idUsuario);
+        Usuario u = usuarioDao.findByUsuario(usuario)
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
+
+        if (u.getIdSucursal() != AppContext.getIdSucursal()) {
+            throw new IllegalStateException(
+                    "El usuario no pertenece a la sucursal de este terminal."
+            );
+        }
+
+        return fichajeService.ficharEntrada(u.getIdUsuario(), AppContext.getIdSucursal());
     }
 
     // =========================

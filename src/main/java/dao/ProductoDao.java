@@ -9,6 +9,7 @@ import enums.ModoDisponibilidadProducto;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -320,7 +321,39 @@ public class ProductoDao {
 
         return out;
     }
+    public List<ProductoDTO> findActivosVisiblesOrdenados() {
+        String sql = """
+            SELECT
+                id_producto,
+                id_subcategoria,
+                nombre,
+                orden,
+                permite_extras,
+                permite_personalizacion,
+                iva_porcentaje,
+                permite_stock_cantidad
+            FROM producto
+            WHERE activo = 1
+              AND visible_tpv = 1
+            ORDER BY nombre
+        """;
 
+        List<ProductoDTO> productos = new ArrayList<>();
+
+        try (Connection con = DbPool.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                productos.add(mapProductoDTO(rs));
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error cargando productos activos visibles para informes", e);
+        }
+
+        return productos;
+    }
     // =====================================================
     // MAPEOS
     // =====================================================

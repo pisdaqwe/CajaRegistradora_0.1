@@ -38,7 +38,6 @@ public class AppServices {
     public final FichajeFacade fichajeFacade;
     public final FichajeService fichajeService;
     public final SesionCajaService sesionCajaService;
-    public final UsuarioRecordadoService usuarioRecordadoService;
     public final CajaFacade cajaFacade;
     public final UsuarioService usuarioService;
 
@@ -134,7 +133,6 @@ public class AppServices {
             FichajeFacade fichajeFacade,
             FichajeService fichajeService,
             SesionCajaService sesionCajaService,
-            UsuarioRecordadoService usuarioRecordadoService,
             CajaFacade cajaFacade,
             UsuarioService usuarioService,
 
@@ -167,7 +165,6 @@ public class AppServices {
         this.fichajeFacade = fichajeFacade;
         this.fichajeService = fichajeService;
         this.sesionCajaService = sesionCajaService;
-        this.usuarioRecordadoService = usuarioRecordadoService;
         this.cajaFacade = cajaFacade;
         this.usuarioService = usuarioService;
 

@@ -1,81 +1,290 @@
 package ui.informes;
 
+import app.AppContext;
+import dtoS.InformeFiltroDTO;
+import enums.AgrupacionTemporal;
+import enums.ModoVistaInforme;
 import enums.TipoInforme;
+import model.Caja;
+import model.Sucursal;
+import model.Usuario;
+import service.AppServices;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class ComercialFilterPanel extends BaseInformeFilterPanel {
+
+    private final AppServices services;
 
     private final JSpinner spFechaDesde;
     private final JSpinner spFechaHasta;
     private final JComboBox<String> cmbSucursal;
     private final JComboBox<String> cmbCaja;
-    private final JComboBox<String> cmbCategoria;
-    private final JComboBox<String> cmbSubcategoria;
-    private final JComboBox<String> cmbProducto;
-    private final JComboBox<String> cmbObjetoComercial;
-    private final JSpinner spTopN;
+    private final JComboBox<String> cmbMetodoPago;
 
-    public ComercialFilterPanel() {
+    private final JCheckBox chkTodosEmpleados;
+    private final DefaultListModel<String> empleadosModel;
+    private final JList<String> lstEmpleados;
+
+    private final JSpinner spTopN;
+    private final JCheckBox chkIncluirDevoluciones;
+
+    private final List<Caja> cajasCargadas = new ArrayList<>();
+    private final List<Usuario> usuariosCargados = new ArrayList<>();
+
+    public ComercialFilterPanel(AppServices services) {
+        this.services = services;
+
         JPanel content = createContentPanel();
 
         spFechaDesde = createDateSpinner(firstDayOfCurrentMonth());
         spFechaHasta = createDateSpinner(new Date());
 
-        cmbSucursal = new JComboBox<>(new String[]{"Todas las sucursales", "Tienda principal"});
-        cmbCaja = new JComboBox<>(new String[]{"Todas las cajas", "Caja 1", "Caja 2"});
-        cmbCategoria = new JComboBox<>(new String[]{"Todas las categorías", "Bebidas", "Comida", "Merch"});
-        cmbSubcategoria = new JComboBox<>(new String[]{"Todas las subcategorías", "Espresso & Café", "Tés & Matcha", "Fríos / Iced"});
-        cmbProducto = new JComboBox<>(new String[]{"Todos los productos", "Latte", "Cappuccino", "Croissant"});
-        cmbObjetoComercial = new JComboBox<>(new String[]{"Todos", "Combo Desayuno", "Descuento Empleado", "Shot Espresso", "Sirope Vainilla"});
-        spTopN = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
-
+        cmbSucursal = new JComboBox<>();
         InformeUiTheme.styleCombo(cmbSucursal);
+        cmbSucursal.setEnabled(false);
+
+        cmbCaja = new JComboBox<>();
         InformeUiTheme.styleCombo(cmbCaja);
-        InformeUiTheme.styleCombo(cmbCategoria);
-        InformeUiTheme.styleCombo(cmbSubcategoria);
-        InformeUiTheme.styleCombo(cmbProducto);
-        InformeUiTheme.styleCombo(cmbObjetoComercial);
+
+        cmbMetodoPago = new JComboBox<>(new String[]{
+                "Todos los métodos",
+                "Efectivo",
+                "Tarjeta",
+                "Vale"
+        });
+        InformeUiTheme.styleCombo(cmbMetodoPago);
+
+        chkTodosEmpleados = new JCheckBox("Todos los empleados");
+        chkTodosEmpleados.setSelected(true);
+        InformeUiTheme.styleCheckBox(chkTodosEmpleados);
+
+        empleadosModel = new DefaultListModel<>();
+        lstEmpleados = new JList<>(empleadosModel);
+        lstEmpleados.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        InformeUiTheme.styleList(lstEmpleados);
+        lstEmpleados.setEnabled(false);
+
+        spTopN = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
         InformeUiTheme.styleSpinner(spTopN);
+
+        chkIncluirDevoluciones = new JCheckBox("Incluir devoluciones");
+        chkIncluirDevoluciones.setSelected(true);
+        InformeUiTheme.styleCheckBox(chkIncluirDevoluciones);
+
+        chkTodosEmpleados.addActionListener(e -> {
+            boolean todos = chkTodosEmpleados.isSelected();
+            lstEmpleados.setEnabled(!todos);
+            if (todos) {
+                lstEmpleados.clearSelection();
+            }
+        });
 
         content.add(createFieldBlock("Fecha desde", spFechaDesde));
         content.add(createFieldBlock("Fecha hasta", spFechaHasta));
         content.add(createFieldBlock("Sucursal", cmbSucursal));
         content.add(createFieldBlock("Caja", cmbCaja));
-        content.add(createFieldBlock("Categoría", cmbCategoria));
-        content.add(createFieldBlock("Subcategoría", cmbSubcategoria));
-        content.add(createFieldBlock("Producto", cmbProducto));
-        content.add(createFieldBlock("Objeto comercial", cmbObjetoComercial));
+        content.add(createFieldBlock("Método de pago", cmbMetodoPago));
         content.add(createFieldBlock("Top N", spTopN));
 
+        JPanel empleadosBlock = new JPanel(new BorderLayout(0, 8));
+        empleadosBlock.setOpaque(false);
+        empleadosBlock.setBorder(BorderFactory.createEmptyBorder(0, 0, 14, 0));
+        empleadosBlock.add(InformeUiTheme.createFieldLabel("Empleados"), BorderLayout.NORTH);
+
+        JPanel empleadosTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        empleadosTop.setOpaque(false);
+        empleadosTop.add(chkTodosEmpleados);
+
+        JScrollPane spEmpleados = new JScrollPane(lstEmpleados);
+        spEmpleados.setPreferredSize(new Dimension(250, 120));
+        InformeUiTheme.styleScrollPane(spEmpleados);
+
+        JPanel empleadosContainer = new JPanel(new BorderLayout(0, 8));
+        empleadosContainer.setOpaque(false);
+        empleadosContainer.add(empleadosTop, BorderLayout.NORTH);
+        empleadosContainer.add(spEmpleados, BorderLayout.CENTER);
+
+        empleadosBlock.add(empleadosContainer, BorderLayout.CENTER);
+        content.add(empleadosBlock);
+
+        content.add(createFieldBlock("Opciones", wrapCheckBox(chkIncluirDevoluciones)));
+
         add(content, BorderLayout.NORTH);
+
+        cargarSucursalActual();
+        cargarCajasPorSucursalActual();
+        cargarUsuariosPorSucursalActual();
     }
 
     @Override
     protected void onTipoInformeChanged(TipoInforme tipoInforme) {
-        switch (tipoInforme) {
-            case PRODUCTOS_MAS_VENDIDOS -> cmbObjetoComercial.setEnabled(false);
-            case EXTRAS_MAS_VENDIDOS, COMBOS_VENDIDOS, DESCUENTOS_APLICADOS -> cmbObjetoComercial.setEnabled(true);
-            case DEVOLUCIONES_POR_PRODUCTO -> cmbObjetoComercial.setEnabled(false);
-            default -> cmbObjetoComercial.setEnabled(true);
-        }
+        spTopN.setEnabled(true);
     }
 
     @Override
     public void reset() {
         spFechaDesde.setValue(firstDayOfCurrentMonth());
         spFechaHasta.setValue(new Date());
-        cmbSucursal.setSelectedIndex(0);
         cmbCaja.setSelectedIndex(0);
-        cmbCategoria.setSelectedIndex(0);
-        cmbSubcategoria.setSelectedIndex(0);
-        cmbProducto.setSelectedIndex(0);
-        cmbObjetoComercial.setSelectedIndex(0);
+        cmbMetodoPago.setSelectedIndex(0);
+        chkTodosEmpleados.setSelected(true);
+        lstEmpleados.clearSelection();
+        lstEmpleados.setEnabled(false);
         spTopN.setValue(10);
+        chkIncluirDevoluciones.setSelected(true);
+
+        cargarSucursalActual();
+        cargarCajasPorSucursalActual();
+        cargarUsuariosPorSucursalActual();
+    }
+
+    @Override
+    public ModoVistaInforme getModoVista() {
+        return ModoVistaInforme.AGREGADA;
+    }
+
+    @Override
+    public String buildSummary() {
+        String empleados;
+        if (chkTodosEmpleados.isSelected()) {
+            empleados = "Todos los empleados";
+        } else if (lstEmpleados.getSelectedValuesList().isEmpty()) {
+            empleados = "Sin empleados seleccionados";
+        } else {
+            empleados = String.join(", ", lstEmpleados.getSelectedValuesList());
+        }
+
+        return String.format(
+                "%s · %s · Top %s",
+                currentTipoInforme != null ? currentTipoInforme.getDisplayName() : "Informe",
+                empleados,
+                spTopN.getValue()
+        );
+    }
+
+    @Override
+    public InformeFiltroDTO buildFiltroDTO() {
+        InformeFiltroDTO dto = new InformeFiltroDTO();
+
+        dto.setTipoInforme(currentTipoInforme);
+        dto.setModoVista(ModoVistaInforme.AGREGADA);
+        dto.setAgrupacionTemporal(AgrupacionTemporal.DIA);
+
+        dto.setFechaDesde(toLocalDate((Date) spFechaDesde.getValue()));
+        dto.setFechaHasta(toLocalDate((Date) spFechaHasta.getValue()));
+
+        dto.setIdSucursal(AppContext.getIdSucursal());
+        dto.setIdCaja(getSelectedCajaId());
+
+        dto.setTodosLosEmpleados(chkTodosEmpleados.isSelected());
+        dto.setIdsEmpleados(buildSelectedEmpleadoIds());
+
+        String metodo = (String) cmbMetodoPago.getSelectedItem();
+        if (metodo != null && !metodo.equalsIgnoreCase("Todos los métodos")) {
+            dto.setMetodoPago(metodo);
+        }
+
+        dto.setTopN((Integer) spTopN.getValue());
+        dto.setIncluirDevoluciones(chkIncluirDevoluciones.isSelected());
+
+        return dto;
+    }
+
+    private void cargarSucursalActual() {
+        int idSucursal = AppContext.getIdSucursal();
+        if (idSucursal <= 0) {
+            throw new IllegalStateException("AppContext no tiene una sucursal actual válida");
+        }
+
+        Sucursal sucursal = services.sucursalService.findByIdOrThrow(idSucursal);
+
+        cmbSucursal.removeAllItems();
+        cmbSucursal.addItem(sucursal.getNombre());
+        cmbSucursal.setSelectedIndex(0);
+        cmbSucursal.setEnabled(false);
+    }
+
+    private void cargarCajasPorSucursalActual() {
+        int idSucursal = AppContext.getIdSucursal();
+
+        cajasCargadas.clear();
+        cmbCaja.removeAllItems();
+        cmbCaja.addItem("Todas las cajas");
+
+        List<Caja> cajas = services.sesionCajaService.findActivasBySucursal(idSucursal);
+        cajasCargadas.addAll(cajas);
+
+        for (Caja caja : cajas) {
+            cmbCaja.addItem(caja.getNombre());
+        }
+
+        cmbCaja.setSelectedIndex(0);
+    }
+
+    private void cargarUsuariosPorSucursalActual() {
+        int idSucursal = AppContext.getIdSucursal();
+
+        usuariosCargados.clear();
+        empleadosModel.clear();
+
+        List<Usuario> usuarios = services.usuarioService.findActivosBySucursal(idSucursal);
+        usuariosCargados.addAll(usuarios);
+
+        for (Usuario usuario : usuarios) {
+            String label = usuario.getNombre() + " (" + usuario.getUsuario() + ")";
+            empleadosModel.addElement(label);
+        }
+
+        chkTodosEmpleados.setSelected(true);
+        lstEmpleados.clearSelection();
+        lstEmpleados.setEnabled(false);
+    }
+
+    private Integer getSelectedCajaId() {
+        int index = cmbCaja.getSelectedIndex();
+
+        if (index <= 0) {
+            return null;
+        }
+
+        int cajaIndex = index - 1;
+        if (cajaIndex >= 0 && cajaIndex < cajasCargadas.size()) {
+            return cajasCargadas.get(cajaIndex).getIdCaja();
+        }
+
+        return null;
+    }
+
+    private List<Integer> buildSelectedEmpleadoIds() {
+        List<Integer> ids = new ArrayList<>();
+
+        if (chkTodosEmpleados.isSelected()) {
+            return ids;
+        }
+
+        for (int selectedIndex : lstEmpleados.getSelectedIndices()) {
+            if (selectedIndex >= 0 && selectedIndex < usuariosCargados.size()) {
+                ids.add(usuariosCargados.get(selectedIndex).getIdUsuario());
+            }
+        }
+
+        return ids;
+    }
+
+    private JPanel wrapCheckBox(JCheckBox checkBox) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        p.setOpaque(false);
+        p.add(checkBox);
+        return p;
     }
 
     private JSpinner createDateSpinner(Date date) {
@@ -93,5 +302,11 @@ public class ComercialFilterPanel extends BaseInformeFilterPanel {
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
+    }
+
+    private LocalDate toLocalDate(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
     }
 }

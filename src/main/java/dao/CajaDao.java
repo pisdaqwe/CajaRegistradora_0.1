@@ -90,6 +90,7 @@ public class CajaDao {
             throw new RuntimeException("Error actualizando ultima_apertura", e);
         }
     }
+    
     public List<Caja> findActivasBySucursal(int idSucursal) {
         String sql = """
             SELECT id_caja,
@@ -143,6 +144,7 @@ public class CajaDao {
 
         return cajas;
     }
+    
     // =====================================================
     // MAPPER
     // =====================================================

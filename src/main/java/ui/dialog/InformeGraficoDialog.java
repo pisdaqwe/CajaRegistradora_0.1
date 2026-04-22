@@ -16,6 +16,52 @@ import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
+import dtoS.InformeCombosVendidosResultDTO;
+import dtoS.InformeCombosVendidosRowDTO;
+import dtoS.InformeDescuentosAplicadosResultDTO;
+import dtoS.InformeDescuentosAplicadosRowDTO;
+import dtoS.InformeDevolucionesProductoResultDTO;
+import dtoS.InformeDevolucionesProductoRowDTO;
+import dtoS.InformeExtrasVendidosResultDTO;
+import dtoS.InformeExtrasVendidosRowDTO;
+import dtoS.InformeMermaPeriodoResultDTO;
+import dtoS.InformeMermaPeriodoRowDTO;
+import dtoS.InformeMovimientoStockResultDTO;
+import dtoS.InformeMovimientoStockRowDTO;
+import dtoS.InformeNetoVsDevolucionesResultDTO;
+import dtoS.InformeNetoVsDevolucionesRowDTO;
+import dtoS.InformePagosMetodoResultDTO;
+import dtoS.InformePagosMetodoRowDTO;
+import dtoS.InformeProductosPorEmpleadoResultDTO;
+import dtoS.InformeProductosPorEmpleadoRowDTO;
+import dtoS.InformeProductosVendidosResultDTO;
+import dtoS.InformeProductosVendidosRowDTO;
+import dtoS.InformeRankingEmpleadosExtraResultDTO;
+import dtoS.InformeRankingEmpleadosExtraRowDTO;
+import dtoS.InformeRankingEmpleadosExtrasResultDTO;
+import dtoS.InformeRankingEmpleadosExtrasRowDTO;
+import dtoS.InformeRankingEmpleadosProductoResultDTO;
+import dtoS.InformeRankingEmpleadosProductoRowDTO;
+import dtoS.InformeRankingEmpleadosVentasResultDTO;
+import dtoS.InformeRankingEmpleadosVentasRowDTO;
+import dtoS.InformeResumenEjecutivoResultDTO;
+import dtoS.InformeTicketMedioDiaResultDTO;
+import dtoS.InformeTicketMedioDiaRowDTO;
+import dtoS.InformeTiemposEstacionResultDTO;
+import dtoS.InformeTiemposEstacionRowDTO;
+import dtoS.InformeVentasCajaResultDTO;
+import dtoS.InformeVentasCajaRowDTO;
+import dtoS.InformeVentasExtraEmpleadoResultDTO;
+import dtoS.InformeVentasExtraEmpleadoRowDTO;
+import dtoS.InformeVentasFranjaResultDTO;
+import dtoS.InformeVentasFranjaRowDTO;
+import dtoS.InformeVentasPorDiaResultDTO;
+import dtoS.InformeVentasPorDiaRowDTO;
+import dtoS.InformeVentasProductoEmpleadoResultDTO;
+import dtoS.InformeVentasProductoEmpleadoRowDTO;
+import dtoS.InformeVentasSesionCajaResultDTO;
+import dtoS.InformeVentasSesionCajaRowDTO;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -23,755 +69,1062 @@ import java.util.List;
 
 public class InformeGraficoDialog extends JDialog {
 
-    private final TipoInforme tipoInforme;
-    private final String filterSummary;
+	private final TipoInforme tipoInforme;
+	private final String filterSummary;
+
+	private final JComboBox<ModoVistaInforme> cmbModoVista;
+	private final JComboBox<String> cmbTipoGrafico;
+	private final JPanel chartContainer;
+
+	private final InformeResumenEjecutivoResultDTO resumenEjecutivoResult;
+	private final InformeVentasPorDiaResultDTO ventasPorDiaResult;
+	private final InformeVentasFranjaResultDTO ventasFranjaResult;
+	private final InformeTicketMedioDiaResultDTO ticketMedioDiaResult;
+	private final InformePagosMetodoResultDTO pagosMetodoResult;
+	private final InformeNetoVsDevolucionesResultDTO netoVsDevolucionesResult;
+
+	private final InformeProductosVendidosResultDTO productosVendidosResult;
+	private final InformeExtrasVendidosResultDTO extrasVendidosResult;
+	private final InformeCombosVendidosResultDTO combosVendidosResult;
+	private final InformeDescuentosAplicadosResultDTO descuentosAplicadosResult;
+	private final InformeDevolucionesProductoResultDTO devolucionesProductoResult;
+
+	private final InformeRankingEmpleadosVentasResultDTO rankingEmpleadosVentasResult;
+	private final InformeRankingEmpleadosExtrasResultDTO rankingEmpleadosExtrasResult;
+	private final InformeProductosPorEmpleadoResultDTO productosPorEmpleadoResult;
+
+	private final InformeVentasCajaResultDTO ventasCajaResult;
+	private final InformeVentasSesionCajaResultDTO ventasSesionCajaResult;
+	private final InformeTiemposEstacionResultDTO tiemposEstacionResult;
+	private final InformeMermaPeriodoResultDTO mermaPeriodoResult;
+	private final InformeMovimientoStockResultDTO movimientosStockResult;
+	private final InformeVentasProductoEmpleadoResultDTO ventasProductoEmpleadoResult;
+	private final InformeRankingEmpleadosProductoResultDTO rankingEmpleadosProductoResult;
+	private final InformeVentasExtraEmpleadoResultDTO ventasExtraEmpleadoResult;
+	private final InformeRankingEmpleadosExtraResultDTO rankingEmpleadosExtraResult;
+	private ChartPanel chartPanel;
+
+	public InformeGraficoDialog(Window owner, TipoInforme tipoInforme, ModoVistaInforme modoVistaInicial,
+			String filterSummary, InformeResumenEjecutivoResultDTO resumenEjecutivoResult,
+			InformeVentasPorDiaResultDTO ventasPorDiaResult, InformeVentasFranjaResultDTO ventasFranjaResult,
+			InformeTicketMedioDiaResultDTO ticketMedioDiaResult, InformePagosMetodoResultDTO pagosMetodoResult,
+			InformeNetoVsDevolucionesResultDTO netoVsDevolucionesResult,
+			InformeProductosVendidosResultDTO productosVendidosResult,
+			InformeExtrasVendidosResultDTO extrasVendidosResult, InformeCombosVendidosResultDTO combosVendidosResult,
+			InformeDescuentosAplicadosResultDTO descuentosAplicadosResult,
+			InformeDevolucionesProductoResultDTO devolucionesProductoResult,
+			InformeRankingEmpleadosVentasResultDTO rankingEmpleadosVentasResult,
+			InformeRankingEmpleadosExtrasResultDTO rankingEmpleadosExtrasResult,
+			InformeProductosPorEmpleadoResultDTO productosPorEmpleadoResult,
+			InformeVentasCajaResultDTO ventasCajaResult, InformeVentasSesionCajaResultDTO ventasSesionCajaResult,
+			InformeTiemposEstacionResultDTO tiemposEstacionResult, InformeMermaPeriodoResultDTO mermaPeriodoResult,
+			InformeMovimientoStockResultDTO movimientosStockResult,
+			InformeVentasProductoEmpleadoResultDTO ventasProductoEmpleadoResult,
+			InformeRankingEmpleadosProductoResultDTO rankingEmpleadosProductoResult,
+			InformeVentasExtraEmpleadoResultDTO ventasExtraEmpleadoResult,
+			InformeRankingEmpleadosExtraResultDTO rankingEmpleadosExtraResult) {
+
+		super(owner, "Visualización de gráfico", ModalityType.APPLICATION_MODAL);
+		this.tipoInforme = tipoInforme;
+		this.filterSummary = filterSummary;
+
+		this.resumenEjecutivoResult = resumenEjecutivoResult;
+		this.ventasPorDiaResult = ventasPorDiaResult;
+		this.ventasFranjaResult = ventasFranjaResult;
+		this.ticketMedioDiaResult = ticketMedioDiaResult;
+		this.pagosMetodoResult = pagosMetodoResult;
+		this.netoVsDevolucionesResult = netoVsDevolucionesResult;
+
+		this.productosVendidosResult = productosVendidosResult;
+		this.extrasVendidosResult = extrasVendidosResult;
+		this.combosVendidosResult = combosVendidosResult;
+		this.descuentosAplicadosResult = descuentosAplicadosResult;
+		this.devolucionesProductoResult = devolucionesProductoResult;
+
+		this.rankingEmpleadosVentasResult = rankingEmpleadosVentasResult;
+		this.rankingEmpleadosExtrasResult = rankingEmpleadosExtrasResult;
+		this.productosPorEmpleadoResult = productosPorEmpleadoResult;
+
+		this.ventasCajaResult = ventasCajaResult;
+		this.ventasSesionCajaResult = ventasSesionCajaResult;
+		this.tiemposEstacionResult = tiemposEstacionResult;
+		this.mermaPeriodoResult = mermaPeriodoResult;
+		this.movimientosStockResult = movimientosStockResult;
+
+		this.ventasProductoEmpleadoResult = ventasProductoEmpleadoResult;
+		this.rankingEmpleadosProductoResult = rankingEmpleadosProductoResult;
+		this.ventasExtraEmpleadoResult = ventasExtraEmpleadoResult;
+		this.rankingEmpleadosExtraResult = rankingEmpleadosExtraResult;
+
+		getContentPane().setBackground(InformeUiTheme.APP_BG);
+		setLayout(new BorderLayout());
+
+		JPanel root = new JPanel(new BorderLayout(16, 16));
+		root.setBackground(InformeUiTheme.APP_BG);
+		root.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+		JPanel top = InformeUiTheme.createCardPanel(new BorderLayout(16, 0));
+
+		JPanel left = new JPanel();
+		left.setOpaque(false);
+		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+		JLabel lblTitle = new JLabel(tipoInforme.getDisplayName());
+		lblTitle.setFont(InformeUiTheme.FONT_TITLE);
+		lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-    private final JComboBox<ModoVistaInforme> cmbModoVista;
-    private final JComboBox<String> cmbTipoGrafico;
-    private final JPanel chartContainer;
+		JLabel lblSummary = new JLabel(filterSummary != null ? filterSummary : "");
+		lblSummary.setFont(InformeUiTheme.FONT_SUBTITLE);
+		lblSummary.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-    private ChartPanel chartPanel;
+		left.add(lblTitle);
+		left.add(Box.createVerticalStrut(4));
+		left.add(lblSummary);
+
+		JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+		right.setOpaque(false);
+
+		cmbModoVista = new JComboBox<>(ModoVistaInforme.values());
+		cmbModoVista.setSelectedItem(modoVistaInicial != null ? modoVistaInicial : ModoVistaInforme.AGREGADA);
+		InformeUiTheme.styleCombo(cmbModoVista);
+
+		cmbTipoGrafico = new JComboBox<>(buildGraphOptions());
+		InformeUiTheme.styleCombo(cmbTipoGrafico);
+
+		refreshGraphOptions();
+
+		if (!supportsComparativeMode(tipoInforme)) {
+			cmbModoVista.setSelectedItem(ModoVistaInforme.AGREGADA);
+			cmbModoVista.setEnabled(false);
+		}
+
+		cmbModoVista.addActionListener(e -> refreshChart());
+		cmbTipoGrafico.addActionListener(e -> refreshChart());
+
+		right.add(cmbModoVista);
+		right.add(cmbTipoGrafico);
+
+		top.add(left, BorderLayout.CENTER);
+		top.add(right, BorderLayout.EAST);
+
+		chartContainer = InformeUiTheme.createCardPanel(new BorderLayout());
+
+		JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+		bottom.setOpaque(false);
+
+		JButton btnCerrar = new JButton("Cerrar");
+		InformeUiTheme.styleDangerButton(btnCerrar);
+		btnCerrar.addActionListener(e -> dispose());
+
+		bottom.add(btnCerrar);
+
+		root.add(top, BorderLayout.NORTH);
+		root.add(chartContainer, BorderLayout.CENTER);
+		root.add(bottom, BorderLayout.SOUTH);
+
+		add(root, BorderLayout.CENTER);
+
+		refreshChart();
+
+		setSize(1100, 700);
+		setLocationRelativeTo(owner);
+	}
 
-    public InformeGraficoDialog(Window owner,
-                                TipoInforme tipoInforme,
-                                ModoVistaInforme modoVistaInicial,
-                                String filterSummary) {
-        super(owner, "Visualización de gráfico", ModalityType.APPLICATION_MODAL);
-        this.tipoInforme = tipoInforme;
-        this.filterSummary = filterSummary;
+	private String[] buildGraphOptions() {
+		List<String> options = new ArrayList<>();
+		options.add("Líneas");
+		options.add("Barras");
+
+		if (supportsPieChart(tipoInforme)) {
+			options.add("Circular");
+		}
+
+		return options.toArray(new String[0]);
+	}
 
-        getContentPane().setBackground(InformeUiTheme.APP_BG);
-        setLayout(new BorderLayout());
+	private boolean supportsPieChart(TipoInforme tipoInforme) {
+		return tipoInforme == TipoInforme.RESUMEN_EJECUTIVO || tipoInforme == TipoInforme.PAGOS_POR_METODO
+				|| tipoInforme == TipoInforme.EXTRAS_MAS_VENDIDOS || tipoInforme == TipoInforme.COMBOS_VENDIDOS
+				|| tipoInforme == TipoInforme.DESCUENTOS_APLICADOS;
+	}
 
-        JPanel root = new JPanel(new BorderLayout(16, 16));
-        root.setBackground(InformeUiTheme.APP_BG);
-        root.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+	private boolean supportsComparativeMode(TipoInforme tipoInforme) {
+		return switch (tipoInforme) {
+		case VENTAS_POR_DIA, TICKET_MEDIO_POR_DIA, VENTAS_POR_FRANJA_HORARIA -> true;
+		default -> false;
+		};
+	}
 
-        JPanel top = InformeUiTheme.createCardPanel(new BorderLayout(16, 0));
+	private void refreshGraphOptions() {
+		cmbTipoGrafico.removeAllItems();
 
-        JPanel left = new JPanel();
-        left.setOpaque(false);
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+		if (tipoInforme == TipoInforme.RESUMEN_EJECUTIVO) {
+			cmbTipoGrafico.addItem("Barras");
+			cmbTipoGrafico.addItem("Circular");
+			cmbTipoGrafico.setSelectedItem("Barras");
+			return;
+		}
 
-        JLabel lblTitle = new JLabel(tipoInforme.getDisplayName());
-        lblTitle.setFont(InformeUiTheme.FONT_TITLE);
-        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
-
-        JLabel lblSummary = new JLabel(filterSummary != null ? filterSummary : "");
-        lblSummary.setFont(InformeUiTheme.FONT_SUBTITLE);
-        lblSummary.setForeground(InformeUiTheme.TEXT_SECONDARY);
-
-        left.add(lblTitle);
-        left.add(Box.createVerticalStrut(4));
-        left.add(lblSummary);
-
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        right.setOpaque(false);
+		if (tipoInforme == TipoInforme.VENTAS_POR_DIA || tipoInforme == TipoInforme.VENTAS_POR_FRANJA_HORARIA
+				|| tipoInforme == TipoInforme.TICKET_MEDIO_POR_DIA
+				|| tipoInforme == TipoInforme.VENTAS_NETAS_VS_DEVOLUCIONES || tipoInforme == TipoInforme.VENTAS_POR_CAJA
+				|| tipoInforme == TipoInforme.TIEMPOS_POR_ESTACION || tipoInforme == TipoInforme.MERMA_POR_PERIODO
+				|| tipoInforme == TipoInforme.MOVIMIENTOS_STOCK_AJUSTES) {
+			cmbTipoGrafico.addItem("Líneas");
+			cmbTipoGrafico.addItem("Barras");
+			cmbTipoGrafico.setSelectedItem("Líneas");
+			return;
+		}
 
-        cmbModoVista = new JComboBox<>(ModoVistaInforme.values());
-        cmbModoVista.setSelectedItem(modoVistaInicial != null ? modoVistaInicial : ModoVistaInforme.AGREGADA);
-        InformeUiTheme.styleCombo(cmbModoVista);
+		if (tipoInforme == TipoInforme.PAGOS_POR_METODO || tipoInforme == TipoInforme.EXTRAS_MAS_VENDIDOS
+				|| tipoInforme == TipoInforme.COMBOS_VENDIDOS || tipoInforme == TipoInforme.DESCUENTOS_APLICADOS) {
+			cmbTipoGrafico.addItem("Barras");
+			cmbTipoGrafico.addItem("Circular");
+			cmbTipoGrafico.setSelectedItem("Barras");
+			return;
+		}
 
-        cmbTipoGrafico = new JComboBox<>(buildGraphOptions());
-        InformeUiTheme.styleCombo(cmbTipoGrafico);
-
-        if (!supportsComparativeMode(tipoInforme)) {
-            cmbModoVista.setSelectedItem(ModoVistaInforme.AGREGADA);
-            cmbModoVista.setEnabled(false);
-        }
-
-        cmbModoVista.addActionListener(e -> refreshChart());
-        cmbTipoGrafico.addActionListener(e -> refreshChart());
-
-        right.add(cmbModoVista);
-        right.add(cmbTipoGrafico);
-
-        top.add(left, BorderLayout.CENTER);
-        top.add(right, BorderLayout.EAST);
-
-        chartContainer = InformeUiTheme.createCardPanel(new BorderLayout());
-
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        bottom.setOpaque(false);
-
-        JButton btnCerrar = new JButton("Cerrar");
-        InformeUiTheme.styleDangerButton(btnCerrar);
-        btnCerrar.addActionListener(e -> dispose());
-
-        bottom.add(btnCerrar);
-
-        root.add(top, BorderLayout.NORTH);
-        root.add(chartContainer, BorderLayout.CENTER);
-        root.add(bottom, BorderLayout.SOUTH);
-
-        add(root, BorderLayout.CENTER);
-
-        refreshChart();
-
-        setSize(1100, 700);
-        setLocationRelativeTo(owner);
-    }
-
-    private String[] buildGraphOptions() {
-        List<String> options = new ArrayList<>();
-        options.add("Líneas");
-        options.add("Barras");
-
-        if (supportsPieChart(tipoInforme)) {
-            options.add("Circular");
-        }
-
-        return options.toArray(new String[0]);
-    }
-
-    private boolean supportsPieChart(TipoInforme tipoInforme) {
-        return switch (tipoInforme) {
-            case PAGOS_POR_METODO,
-                 RESUMEN_EJECUTIVO,
-                 DESCUENTOS_APLICADOS,
-                 COMBOS_VENDIDOS,
-                 EXTRAS_MAS_VENDIDOS -> true;
-            default -> false;
-        };
-    }
-
-    private boolean supportsComparativeMode(TipoInforme tipoInforme) {
-        return switch (tipoInforme) {
-            case VENTAS_POR_DIA,
-                 TICKET_MEDIO_POR_DIA,
-                 VENTAS_POR_FRANJA_HORARIA -> true;
-            default -> false;
-        };
-    }
-
-    private void refreshChart() {
-        String selectedGraph = (String) cmbTipoGrafico.getSelectedItem();
-        ModoVistaInforme modoVista = (ModoVistaInforme) cmbModoVista.getSelectedItem();
-
-        JFreeChart chart;
-
-        if ("Circular".equalsIgnoreCase(selectedGraph) && supportsPieChart(tipoInforme)) {
-            chart = buildPieChartByTipo();
-        } else if ("Barras".equalsIgnoreCase(selectedGraph)) {
-            chart = buildBarChartByTipo(modoVista);
-        } else {
-            chart = buildLineChartByTipo(modoVista);
-        }
-
-        if (chartPanel != null) {
-            chartContainer.remove(chartPanel);
-        }
-
-        chartPanel = new ChartPanel(chart);
-        chartPanel.setMouseWheelEnabled(true);
-        chartPanel.setOpaque(false);
-
-        chartContainer.add(chartPanel, BorderLayout.CENTER);
-        chartContainer.revalidate();
-        chartContainer.repaint();
-    }
-
-    private JFreeChart buildBarChartByTipo(ModoVistaInforme modoVista) {
-        return switch (tipoInforme) {
-            case RESUMEN_EJECUTIVO -> createBarChartResumen();
-            case VENTAS_POR_DIA -> createBarChartVentasPorDia(modoVista);
-            case VENTAS_POR_FRANJA_HORARIA -> createBarChartVentasPorFranja(modoVista);
-            case TICKET_MEDIO_POR_DIA -> createBarChartTicketMedio(modoVista);
-            case PAGOS_POR_METODO -> createBarChartPagos();
-            case VENTAS_NETAS_VS_DEVOLUCIONES -> createBarChartNetasVsDevoluciones();
-            case PRODUCTOS_MAS_VENDIDOS -> createBarChartProductos();
-            case EXTRAS_MAS_VENDIDOS -> createBarChartExtras();
-            case COMBOS_VENDIDOS -> createBarChartCombos();
-            case DESCUENTOS_APLICADOS -> createBarChartDescuentos();
-            case DEVOLUCIONES_POR_PRODUCTO -> createBarChartDevolucionesProducto();
-            case RANKING_EMPLEADOS_POR_VENTAS -> createBarChartRankingVentas();
-            case RANKING_EMPLEADOS_POR_EXTRAS -> createBarChartRankingExtras();
-            case PRODUCTOS_VENDIDOS_POR_EMPLEADO -> createBarChartProductosPorEmpleado();
-            case VENTAS_POR_CAJA -> createBarChartVentasPorCaja();
-            case VENTAS_POR_SESION_CAJA -> createBarChartVentasPorSesion();
-            case TIEMPOS_POR_ESTACION -> createBarChartTiemposEstacion();
-            case MERMA_POR_PERIODO -> createBarChartMerma();
-            case MOVIMIENTOS_STOCK_AJUSTES -> createBarChartMovimientosStock();
-        };
-    }
-
-    private JFreeChart buildLineChartByTipo(ModoVistaInforme modoVista) {
-        return switch (tipoInforme) {
-            case RESUMEN_EJECUTIVO -> createLineChartResumen();
-            case VENTAS_POR_DIA -> createLineChartVentasPorDia(modoVista);
-            case VENTAS_POR_FRANJA_HORARIA -> createLineChartVentasPorFranja(modoVista);
-            case TICKET_MEDIO_POR_DIA -> createLineChartTicketMedio(modoVista);
-            case PAGOS_POR_METODO -> createLineChartPagos();
-            case VENTAS_NETAS_VS_DEVOLUCIONES -> createLineChartNetasVsDevoluciones();
-            case PRODUCTOS_MAS_VENDIDOS -> createLineChartProductos();
-            case EXTRAS_MAS_VENDIDOS -> createLineChartExtras();
-            case COMBOS_VENDIDOS -> createLineChartCombos();
-            case DESCUENTOS_APLICADOS -> createLineChartDescuentos();
-            case DEVOLUCIONES_POR_PRODUCTO -> createLineChartDevolucionesProducto();
-            case RANKING_EMPLEADOS_POR_VENTAS -> createLineChartRankingVentas();
-            case RANKING_EMPLEADOS_POR_EXTRAS -> createLineChartRankingExtras();
-            case PRODUCTOS_VENDIDOS_POR_EMPLEADO -> createLineChartProductosPorEmpleado();
-            case VENTAS_POR_CAJA -> createLineChartVentasPorCaja();
-            case VENTAS_POR_SESION_CAJA -> createLineChartVentasPorSesion();
-            case TIEMPOS_POR_ESTACION -> createLineChartTiemposEstacion();
-            case MERMA_POR_PERIODO -> createLineChartMerma();
-            case MOVIMIENTOS_STOCK_AJUSTES -> createLineChartMovimientosStock();
-        };
-    }
-
-    private JFreeChart buildPieChartByTipo() {
-        return switch (tipoInforme) {
-            case RESUMEN_EJECUTIVO -> createPieChartResumen();
-            case PAGOS_POR_METODO -> createPieChartPagos();
-            case COMBOS_VENDIDOS -> createPieChartCombos();
-            case DESCUENTOS_APLICADOS -> createPieChartDescuentos();
-            case EXTRAS_MAS_VENDIDOS -> createPieChartExtras();
-            default -> createPieChartResumen();
-        };
-    }
-
-    // =====================================================
-    // BARRAS
-    // =====================================================
-
-    private JFreeChart createBarChartResumen() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(6214.10, "Importe", "Ventas");
-        dataset.addValue(145.20, "Importe", "Devoluciones");
-        dataset.addValue(6068.90, "Importe", "Neto");
-        dataset.addValue(415.85, "Importe", "Ahorro");
-        return buildBarChart("Resumen ejecutivo", "€", dataset);
-    }
-
-    private JFreeChart createBarChartVentasPorDia(ModoVistaInforme modoVista) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        if (modoVista == ModoVistaInforme.COMPARATIVA) {
-            dataset.addValue(320.4, "Ana", "01/04");
-            dataset.addValue(280.2, "Luis", "01/04");
-            dataset.addValue(190.0, "Marta", "01/04");
-            dataset.addValue(340.8, "Ana", "02/04");
-            dataset.addValue(295.3, "Luis", "02/04");
-            dataset.addValue(215.4, "Marta", "02/04");
-        } else {
-            dataset.addValue(770.4, "Neto", "01/04");
-            dataset.addValue(883.2, "Neto", "02/04");
-            dataset.addValue(827.9, "Neto", "03/04");
-            dataset.addValue(981.6, "Neto", "04/04");
-            dataset.addValue(1092.4, "Neto", "05/04");
-        }
-
-        return buildBarChart("Ventas por día", "€", dataset);
-    }
-
-    private JFreeChart createBarChartVentasPorFranja(ModoVistaInforme modoVista) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        if (modoVista == ModoVistaInforme.COMPARATIVA) {
-            dataset.addValue(180, "Ana", "08-10h");
-            dataset.addValue(140, "Luis", "08-10h");
-            dataset.addValue(210, "Ana", "10-12h");
-            dataset.addValue(160, "Luis", "10-12h");
-            dataset.addValue(120, "Ana", "12-14h");
-            dataset.addValue(90, "Luis", "12-14h");
-        } else {
-            dataset.addValue(420, "Ventas", "08-10h");
-            dataset.addValue(610, "Ventas", "10-12h");
-            dataset.addValue(540, "Ventas", "12-14h");
-            dataset.addValue(330, "Ventas", "14-16h");
-        }
-
-        return buildBarChart("Ventas por franja horaria", "€", dataset);
-    }
-
-    private JFreeChart createBarChartTicketMedio(ModoVistaInforme modoVista) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        if (modoVista == ModoVistaInforme.COMPARATIVA) {
-            dataset.addValue(10.2, "Ana", "01/04");
-            dataset.addValue(9.1, "Luis", "01/04");
-            dataset.addValue(8.8, "Marta", "01/04");
-            dataset.addValue(10.8, "Ana", "02/04");
-            dataset.addValue(9.4, "Luis", "02/04");
-            dataset.addValue(9.0, "Marta", "02/04");
-        } else {
-            dataset.addValue(9.19, "Ticket medio", "01/04");
-            dataset.addValue(9.43, "Ticket medio", "02/04");
-            dataset.addValue(9.19, "Ticket medio", "03/04");
-            dataset.addValue(9.38, "Ticket medio", "04/04");
-            dataset.addValue(9.36, "Ticket medio", "05/04");
-        }
-
-        return buildBarChart("Ticket medio por día", "€", dataset);
-    }
-
-    private JFreeChart createBarChartPagos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(2848.2, "Importe", "Tarjeta");
-        dataset.addValue(1936.4, "Importe", "Efectivo");
-        dataset.addValue(127.6, "Importe", "Vale");
-        return buildBarChart("Pagos por método", "€", dataset);
-    }
-
-    private JFreeChart createBarChartNetasVsDevoluciones() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(905.2, "Ventas", "02/04");
-        dataset.addValue(22.0, "Devoluciones", "02/04");
-        dataset.addValue(883.2, "Neto", "02/04");
-        dataset.addValue(1012.6, "Ventas", "04/04");
-        dataset.addValue(31.0, "Devoluciones", "04/04");
-        dataset.addValue(981.6, "Neto", "04/04");
-        return buildBarChart("Ventas netas vs devoluciones", "€", dataset);
-    }
-
-    private JFreeChart createBarChartProductos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(148, "Unidades", "Latte");
-        dataset.addValue(123, "Unidades", "Cappuccino");
-        dataset.addValue(112, "Unidades", "Croissant");
-        dataset.addValue(87, "Unidades", "Matcha");
-        return buildBarChart("Productos más vendidos", "Unidades", dataset);
-    }
-
-    private JFreeChart createBarChartExtras() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(96, "Ventas", "Shot extra");
-        dataset.addValue(81, "Ventas", "Sirope vainilla");
-        dataset.addValue(62, "Ventas", "Leche avena");
-        dataset.addValue(41, "Ventas", "Topping caramelo");
-        return buildBarChart("Extras más vendidos", "Veces", dataset);
-    }
-
-    private JFreeChart createBarChartCombos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(22, "Veces", "Desayuno");
-        dataset.addValue(15, "Veces", "Merienda");
-        dataset.addValue(11, "Veces", "Frío+Snack");
-        return buildBarChart("Combos vendidos", "Veces", dataset);
-    }
-
-    private JFreeChart createBarChartDescuentos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(126.00, "Descuento", "Empleado");
-        dataset.addValue(61.50, "Descuento", "Promo QR");
-        dataset.addValue(26.25, "Descuento", "Cupón");
-        return buildBarChart("Descuentos aplicados", "€", dataset);
-    }
-
-    private JFreeChart createBarChartDevolucionesProducto() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(14.95, "Reembolso", "Termo");
-        dataset.addValue(9.95, "Reembolso", "Taza");
-        dataset.addValue(2.30, "Reembolso", "Aquarius");
-        return buildBarChart("Devoluciones por producto", "€", dataset);
-    }
-
-    private JFreeChart createBarChartRankingVentas() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(1840.50, "Ventas", "Ana");
-        dataset.addValue(1620.30, "Ventas", "Luis");
-        dataset.addValue(1488.90, "Ventas", "Marta");
-        return buildBarChart("Ranking empleados por ventas", "€", dataset);
-    }
-
-    private JFreeChart createBarChartRankingExtras() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(82, "Extras", "Ana");
-        dataset.addValue(69, "Extras", "Luis");
-        dataset.addValue(58, "Extras", "Marta");
-        return buildBarChart("Ranking empleados por extras", "Veces", dataset);
-    }
-
-    private JFreeChart createBarChartProductosPorEmpleado() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(118, "Ana", "Latte");
-        dataset.addValue(102, "Ana", "Croissant");
-        dataset.addValue(95, "Luis", "Cappuccino");
-        dataset.addValue(74, "Marta", "Matcha");
-        return buildBarChart("Productos vendidos por empleado", "Unidades", dataset);
-    }
-
-    private JFreeChart createBarChartVentasPorCaja() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(2136.40, "Ventas", "Caja 1");
-        dataset.addValue(1845.20, "Ventas", "Caja 2");
-        return buildBarChart("Ventas por caja", "€", dataset);
-    }
-
-    private JFreeChart createBarChartVentasPorSesion() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(980.40, "Ventas", "Sesión 101");
-        dataset.addValue(1120.20, "Ventas", "Sesión 102");
-        dataset.addValue(875.90, "Ventas", "Sesión 103");
-        return buildBarChart("Ventas por sesión de caja", "€", dataset);
-    }
-
-    private JFreeChart createBarChartTiemposEstacion() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(145, "Segundos", "Calientes");
-        dataset.addValue(122, "Segundos", "Frías");
-        dataset.addValue(210, "Segundos", "Comida");
-        return buildBarChart("Tiempos por estación", "Segundos", dataset);
-    }
-
-    private JFreeChart createBarChartMerma() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(45.0, "Merma", "01/04");
-        dataset.addValue(62.5, "Merma", "02/04");
-        dataset.addValue(38.0, "Merma", "03/04");
-        return buildBarChart("Merma por período", "Unidades / €", dataset);
-    }
-
-    private JFreeChart createBarChartMovimientosStock() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(18, "Cantidad", "Entrada");
-        dataset.addValue(36, "Cantidad", "Salida");
-        dataset.addValue(7, "Cantidad", "Ajuste");
-        dataset.addValue(5, "Cantidad", "Merma");
-        return buildBarChart("Movimientos de stock / ajustes", "Movimientos", dataset);
-    }
-
-    // =====================================================
-    // LÍNEAS
-    // =====================================================
-
-    private JFreeChart createLineChartResumen() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(5200, "Ventas", "Semana 1");
-        dataset.addValue(6100, "Ventas", "Semana 2");
-        dataset.addValue(5800, "Ventas", "Semana 3");
-        dataset.addValue(6400, "Ventas", "Semana 4");
-        return buildLineChart("Resumen ejecutivo", "€", dataset);
-    }
-
-    private JFreeChart createLineChartVentasPorDia(ModoVistaInforme modoVista) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        if (modoVista == ModoVistaInforme.COMPARATIVA) {
-            dataset.addValue(320.4, "Ana", "01/04");
-            dataset.addValue(280.2, "Luis", "01/04");
-            dataset.addValue(190.0, "Marta", "01/04");
-            dataset.addValue(340.8, "Ana", "02/04");
-            dataset.addValue(295.3, "Luis", "02/04");
-            dataset.addValue(215.4, "Marta", "02/04");
-        } else {
-            dataset.addValue(770.4, "Neto", "01/04");
-            dataset.addValue(883.2, "Neto", "02/04");
-            dataset.addValue(827.9, "Neto", "03/04");
-            dataset.addValue(981.6, "Neto", "04/04");
-            dataset.addValue(1092.4, "Neto", "05/04");
-        }
-
-        return buildLineChart("Ventas por día", "€", dataset);
-    }
-
-    private JFreeChart createLineChartVentasPorFranja(ModoVistaInforme modoVista) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        if (modoVista == ModoVistaInforme.COMPARATIVA) {
-            dataset.addValue(180, "Ana", "08-10h");
-            dataset.addValue(140, "Luis", "08-10h");
-            dataset.addValue(210, "Ana", "10-12h");
-            dataset.addValue(160, "Luis", "10-12h");
-            dataset.addValue(120, "Ana", "12-14h");
-            dataset.addValue(90, "Luis", "12-14h");
-        } else {
-            dataset.addValue(420, "Ventas", "08-10h");
-            dataset.addValue(610, "Ventas", "10-12h");
-            dataset.addValue(540, "Ventas", "12-14h");
-            dataset.addValue(330, "Ventas", "14-16h");
-        }
-
-        return buildLineChart("Ventas por franja horaria", "€", dataset);
-    }
-
-    private JFreeChart createLineChartTicketMedio(ModoVistaInforme modoVista) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        if (modoVista == ModoVistaInforme.COMPARATIVA) {
-            dataset.addValue(10.2, "Ana", "01/04");
-            dataset.addValue(9.1, "Luis", "01/04");
-            dataset.addValue(8.8, "Marta", "01/04");
-            dataset.addValue(10.8, "Ana", "02/04");
-            dataset.addValue(9.4, "Luis", "02/04");
-            dataset.addValue(9.0, "Marta", "02/04");
-        } else {
-            dataset.addValue(9.19, "Ticket medio", "01/04");
-            dataset.addValue(9.43, "Ticket medio", "02/04");
-            dataset.addValue(9.19, "Ticket medio", "03/04");
-            dataset.addValue(9.38, "Ticket medio", "04/04");
-            dataset.addValue(9.36, "Ticket medio", "05/04");
-        }
-
-        return buildLineChart("Ticket medio por día", "€", dataset);
-    }
-
-    private JFreeChart createLineChartPagos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(620, "Tarjeta", "01/04");
-        dataset.addValue(580, "Tarjeta", "02/04");
-        dataset.addValue(390, "Efectivo", "01/04");
-        dataset.addValue(410, "Efectivo", "02/04");
-        return buildLineChart("Pagos por método", "€", dataset);
-    }
-
-    private JFreeChart createLineChartNetasVsDevoluciones() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(770.4, "Neto", "01/04");
-        dataset.addValue(12.0, "Devoluciones", "01/04");
-        dataset.addValue(883.2, "Neto", "02/04");
-        dataset.addValue(22.0, "Devoluciones", "02/04");
-        return buildLineChart("Ventas netas vs devoluciones", "€", dataset);
-    }
-
-    private JFreeChart createLineChartProductos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(120, "Latte", "Semana 1");
-        dataset.addValue(132, "Latte", "Semana 2");
-        dataset.addValue(98, "Cappuccino", "Semana 1");
-        dataset.addValue(110, "Cappuccino", "Semana 2");
-        return buildLineChart("Productos más vendidos", "Unidades", dataset);
-    }
-
-    private JFreeChart createLineChartExtras() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(20, "Shot extra", "Semana 1");
-        dataset.addValue(26, "Shot extra", "Semana 2");
-        dataset.addValue(18, "Sirope vainilla", "Semana 1");
-        dataset.addValue(22, "Sirope vainilla", "Semana 2");
-        return buildLineChart("Extras más vendidos", "Veces", dataset);
-    }
-
-    private JFreeChart createLineChartCombos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(6, "Desayuno", "Lunes");
-        dataset.addValue(8, "Desayuno", "Martes");
-        dataset.addValue(4, "Merienda", "Lunes");
-        dataset.addValue(6, "Merienda", "Martes");
-        return buildLineChart("Combos vendidos", "Veces", dataset);
-    }
-
-    private JFreeChart createLineChartDescuentos() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(32, "Usos", "Empleado");
-        dataset.addValue(18, "Usos", "Promo QR");
-        dataset.addValue(9, "Usos", "Cupón");
-        return buildLineChart("Descuentos aplicados", "Usos", dataset);
-    }
-
-    private JFreeChart createLineChartDevolucionesProducto() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(2, "Devoluciones", "Termo");
-        dataset.addValue(1, "Devoluciones", "Taza");
-        dataset.addValue(1, "Devoluciones", "Aquarius");
-        return buildLineChart("Devoluciones por producto", "Veces", dataset);
-    }
-
-    private JFreeChart createLineChartRankingVentas() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(1800, "Ventas", "Ana");
-        dataset.addValue(1620, "Ventas", "Luis");
-        dataset.addValue(1490, "Ventas", "Marta");
-        return buildLineChart("Ranking empleados por ventas", "€", dataset);
-    }
-
-    private JFreeChart createLineChartRankingExtras() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(82, "Extras", "Ana");
-        dataset.addValue(69, "Extras", "Luis");
-        dataset.addValue(58, "Extras", "Marta");
-        return buildLineChart("Ranking empleados por extras", "Veces", dataset);
-    }
-
-    private JFreeChart createLineChartProductosPorEmpleado() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(118, "Ana", "Latte");
-        dataset.addValue(95, "Luis", "Cappuccino");
-        dataset.addValue(74, "Marta", "Matcha");
-        return buildLineChart("Productos vendidos por empleado", "Unidades", dataset);
-    }
-
-    private JFreeChart createLineChartVentasPorCaja() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(520, "Caja 1", "Lunes");
-        dataset.addValue(610, "Caja 1", "Martes");
-        dataset.addValue(450, "Caja 2", "Lunes");
-        dataset.addValue(570, "Caja 2", "Martes");
-        return buildLineChart("Ventas por caja", "€", dataset);
-    }
-
-    private JFreeChart createLineChartVentasPorSesion() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(980, "Ventas", "Sesión 101");
-        dataset.addValue(1120, "Ventas", "Sesión 102");
-        dataset.addValue(875, "Ventas", "Sesión 103");
-        return buildLineChart("Ventas por sesión de caja", "€", dataset);
-    }
-
-    private JFreeChart createLineChartTiemposEstacion() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(145, "Calientes", "09h");
-        dataset.addValue(122, "Frías", "09h");
-        dataset.addValue(210, "Comida", "09h");
-        dataset.addValue(158, "Calientes", "11h");
-        dataset.addValue(130, "Frías", "11h");
-        dataset.addValue(240, "Comida", "11h");
-        return buildLineChart("Tiempos por estación", "Segundos", dataset);
-    }
-
-    private JFreeChart createLineChartMerma() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(45.0, "Merma", "01/04");
-        dataset.addValue(62.5, "Merma", "02/04");
-        dataset.addValue(38.0, "Merma", "03/04");
-        return buildLineChart("Merma por período", "Unidades / €", dataset);
-    }
-
-    private JFreeChart createLineChartMovimientosStock() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(8, "Entradas", "01/04");
-        dataset.addValue(14, "Salidas", "01/04");
-        dataset.addValue(3, "Ajustes", "01/04");
-        dataset.addValue(10, "Entradas", "02/04");
-        dataset.addValue(16, "Salidas", "02/04");
-        dataset.addValue(4, "Ajustes", "02/04");
-        return buildLineChart("Movimientos de stock / ajustes", "Movimientos", dataset);
-    }
-
-    // =====================================================
-    // CIRCULARES
-    // =====================================================
-
-    private JFreeChart createPieChartResumen() {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        dataset.setValue("Ventas netas", 6068.90);
-        dataset.setValue("Devoluciones", 145.20);
-        dataset.setValue("Ahorro", 415.85);
-        return buildPieChart("Resumen ejecutivo", dataset);
-    }
-
-    private JFreeChart createPieChartPagos() {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        dataset.setValue("Tarjeta", 58.0);
-        dataset.setValue("Efectivo", 39.4);
-        dataset.setValue("Vale", 2.6);
-        return buildPieChart("Pagos por método", dataset);
-    }
-
-    private JFreeChart createPieChartCombos() {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        dataset.setValue("Desayuno", 22);
-        dataset.setValue("Merienda", 15);
-        dataset.setValue("Frío+Snack", 11);
-        return buildPieChart("Combos vendidos", dataset);
-    }
-
-    private JFreeChart createPieChartDescuentos() {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        dataset.setValue("Empleado", 126.0);
-        dataset.setValue("Promo QR", 61.5);
-        dataset.setValue("Cupón", 26.25);
-        return buildPieChart("Descuentos aplicados", dataset);
-    }
-
-    private JFreeChart createPieChartExtras() {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        dataset.setValue("Shot extra", 96);
-        dataset.setValue("Sirope vainilla", 81);
-        dataset.setValue("Leche avena", 62);
-        dataset.setValue("Topping caramelo", 41);
-        return buildPieChart("Extras más vendidos", dataset);
-    }
-
-    // =====================================================
-    // HELPERS DE CONSTRUCCIÓN
-    // =====================================================
-
-    private JFreeChart buildBarChart(String title, String rangeLabel, DefaultCategoryDataset dataset) {
-        JFreeChart chart = ChartFactory.createBarChart(title, "", rangeLabel, dataset);
-        styleBarChart(chart);
-        return chart;
-    }
-
-    private JFreeChart buildLineChart(String title, String rangeLabel, DefaultCategoryDataset dataset) {
-        JFreeChart chart = ChartFactory.createLineChart(title, "", rangeLabel, dataset);
-        styleLineChart(chart);
-        return chart;
-    }
-
-    private JFreeChart buildPieChart(String title, DefaultPieDataset<String> dataset) {
-        JFreeChart chart = ChartFactory.createPieChart(title, dataset, true, true, false);
-
-        chart.setBackgroundPaint(InformeUiTheme.CARD_BG);
-        chart.getTitle().setPaint(InformeUiTheme.TEXT_PRIMARY);
-        chart.getTitle().setFont(InformeUiTheme.FONT_SECTION);
-
-        PiePlot<?> plot = (PiePlot<?>) chart.getPlot();
-        plot.setBackgroundPaint(InformeUiTheme.CARD_BG);
-        plot.setOutlineVisible(false);
-        plot.setLabelBackgroundPaint(InformeUiTheme.CARD_BG_2);
-        plot.setLabelOutlinePaint(InformeUiTheme.BORDER);
-        plot.setLabelShadowPaint(null);
-        plot.setLabelPaint(InformeUiTheme.TEXT_PRIMARY);
-        plot.setShadowPaint(null);
-
-        if (chart.getLegend() != null) {
-            chart.getLegend().setBackgroundPaint(InformeUiTheme.CARD_BG);
-            chart.getLegend().setItemPaint(InformeUiTheme.TEXT_PRIMARY);
-        }
-
-        return chart;
-    }
-
-    private void styleBarChart(JFreeChart chart) {
-        chart.setBackgroundPaint(InformeUiTheme.CARD_BG);
-        chart.getTitle().setPaint(InformeUiTheme.TEXT_PRIMARY);
-        chart.getTitle().setFont(InformeUiTheme.FONT_SECTION);
-
-        CategoryPlot plot = chart.getCategoryPlot();
-        plot.setBackgroundPaint(InformeUiTheme.PANEL_BG);
-        plot.setRangeGridlinePaint(InformeUiTheme.BORDER);
-        plot.setOutlineVisible(false);
-
-        CategoryAxis domainAxis = plot.getDomainAxis();
-        domainAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-        domainAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-
-        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        rangeAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-        rangeAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-
-        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, InformeUiTheme.STARBUCKS_GREEN);
-        renderer.setSeriesPaint(1, InformeUiTheme.ACCENT_GOLD);
-        renderer.setSeriesPaint(2, Color.WHITE);
-        renderer.setMaximumBarWidth(0.15);
-    }
-
-    private void styleLineChart(JFreeChart chart) {
-        chart.setBackgroundPaint(InformeUiTheme.CARD_BG);
-        chart.getTitle().setPaint(InformeUiTheme.TEXT_PRIMARY);
-        chart.getTitle().setFont(InformeUiTheme.FONT_SECTION);
-
-        CategoryPlot plot = chart.getCategoryPlot();
-        plot.setBackgroundPaint(InformeUiTheme.PANEL_BG);
-        plot.setRangeGridlinePaint(InformeUiTheme.BORDER);
-        plot.setOutlineVisible(false);
-
-        CategoryAxis domainAxis = plot.getDomainAxis();
-        domainAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-        domainAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-
-        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        rangeAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-        rangeAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
-
-        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, InformeUiTheme.ACCENT_GOLD);
-        renderer.setSeriesPaint(1, InformeUiTheme.STARBUCKS_GREEN);
-        renderer.setSeriesPaint(2, Color.WHITE);
-        renderer.setSeriesStroke(0, new BasicStroke(2.5f));
-        renderer.setSeriesStroke(1, new BasicStroke(2.2f));
-        renderer.setSeriesStroke(2, new BasicStroke(2.2f));
-    }
+		if (tipoInforme == TipoInforme.PRODUCTOS_MAS_VENDIDOS || tipoInforme == TipoInforme.DEVOLUCIONES_POR_PRODUCTO
+				|| tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_VENTAS
+				|| tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_EXTRAS
+				|| tipoInforme == TipoInforme.PRODUCTOS_VENDIDOS_POR_EMPLEADO
+				|| tipoInforme == TipoInforme.VENTAS_POR_SESION_CAJA
+				|| tipoInforme == TipoInforme.VENTAS_PRODUCTO_POR_EMPLEADO
+				|| tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_PRODUCTO
+				|| tipoInforme == TipoInforme.VENTAS_EXTRA_POR_EMPLEADO
+				|| tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_EXTRA) {
+			cmbTipoGrafico.addItem("Barras");
+			cmbTipoGrafico.setSelectedItem("Barras");
+			return;
+		}
+
+		cmbTipoGrafico.addItem("Barras");
+		cmbTipoGrafico.setSelectedItem("Barras");
+	}
+
+
+	private void refreshChart() {
+	    String selectedGraph = (String) cmbTipoGrafico.getSelectedItem();
+	    ModoVistaInforme modoVista = (ModoVistaInforme) cmbModoVista.getSelectedItem();
+
+	    JFreeChart chart;
+
+	    if (tipoInforme == TipoInforme.RESUMEN_EJECUTIVO && resumenEjecutivoResult != null) {
+
+	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	                ? createRealPieChartResumenEjecutivo()
+	                : createRealBarChartResumenEjecutivo();
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_POR_DIA && ventasPorDiaResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartVentasPorDia(modoVista)
+	                : createRealLineChartVentasPorDia(modoVista);
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_POR_FRANJA_HORARIA && ventasFranjaResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartVentasPorFranja(modoVista)
+	                : createRealLineChartVentasPorFranja(modoVista);
+
+	    } else if (tipoInforme == TipoInforme.TICKET_MEDIO_POR_DIA && ticketMedioDiaResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartTicketMedioPorDia(modoVista)
+	                : createRealLineChartTicketMedioPorDia(modoVista);
+
+	    } else if (tipoInforme == TipoInforme.PAGOS_POR_METODO && pagosMetodoResult != null) {
+
+	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	                ? createRealPieChartPagosPorMetodo()
+	                : createRealBarChartPagosPorMetodo();
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_NETAS_VS_DEVOLUCIONES && netoVsDevolucionesResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartVentasNetasVsDevoluciones()
+	                : createRealLineChartVentasNetasVsDevoluciones();
+
+	    } else if (tipoInforme == TipoInforme.PRODUCTOS_MAS_VENDIDOS && productosVendidosResult != null) {
+
+	        chart = createRealBarChartProductosMasVendidos();
+
+	    } else if (tipoInforme == TipoInforme.EXTRAS_MAS_VENDIDOS && extrasVendidosResult != null) {
+
+	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	                ? createRealPieChartExtrasMasVendidos()
+	                : createRealBarChartExtrasMasVendidos();
+
+	    } else if (tipoInforme == TipoInforme.COMBOS_VENDIDOS && combosVendidosResult != null) {
+
+	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	                ? createRealPieChartCombosVendidos()
+	                : createRealBarChartCombosVendidos();
+
+	    } else if (tipoInforme == TipoInforme.DESCUENTOS_APLICADOS && descuentosAplicadosResult != null) {
+
+	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	                ? createRealPieChartDescuentosAplicados()
+	                : createRealBarChartDescuentosAplicados();
+
+	    } else if (tipoInforme == TipoInforme.DEVOLUCIONES_POR_PRODUCTO && devolucionesProductoResult != null) {
+
+	        chart = createRealBarChartDevolucionesPorProducto();
+
+	    } else if (tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_VENTAS && rankingEmpleadosVentasResult != null) {
+
+	        chart = createRealBarChartRankingEmpleadosPorVentas();
+
+	    } else if (tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_EXTRAS && rankingEmpleadosExtrasResult != null) {
+
+	        chart = createRealBarChartRankingEmpleadosPorExtras();
+
+	    } else if (tipoInforme == TipoInforme.PRODUCTOS_VENDIDOS_POR_EMPLEADO && productosPorEmpleadoResult != null) {
+
+	        chart = createRealBarChartProductosVendidosPorEmpleado(modoVista);
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_POR_CAJA && ventasCajaResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartVentasPorCaja()
+	                : createRealLineChartVentasPorCaja();
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_POR_SESION_CAJA && ventasSesionCajaResult != null) {
+
+	        chart = createRealBarChartVentasPorSesionCaja();
+
+	    } else if (tipoInforme == TipoInforme.TIEMPOS_POR_ESTACION && tiemposEstacionResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartTiemposPorEstacion()
+	                : createRealLineChartTiemposPorEstacion();
+
+	    } else if (tipoInforme == TipoInforme.MERMA_POR_PERIODO && mermaPeriodoResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartMermaPorPeriodo()
+	                : createRealLineChartMermaPorPeriodo();
+
+	    } else if (tipoInforme == TipoInforme.MOVIMIENTOS_STOCK_AJUSTES && movimientosStockResult != null) {
+
+	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	                ? createRealBarChartMovimientosStockAjustes()
+	                : createRealLineChartMovimientosStockAjustes();
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_PRODUCTO_POR_EMPLEADO && ventasProductoEmpleadoResult != null) {
+
+	        chart = createRealBarChartVentasProductoPorEmpleado(modoVista);
+
+	    } else if (tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_PRODUCTO && rankingEmpleadosProductoResult != null) {
+
+	        chart = createRealBarChartRankingEmpleadosPorProducto();
+
+	    } else if (tipoInforme == TipoInforme.VENTAS_EXTRA_POR_EMPLEADO && ventasExtraEmpleadoResult != null) {
+
+	        chart = createRealBarChartVentasExtraPorEmpleado(modoVista);
+
+	    } else if (tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_EXTRA && rankingEmpleadosExtraResult != null) {
+
+	        chart = createRealBarChartRankingEmpleadosPorExtra();
+
+	    } else {
+	        throw new IllegalStateException("No hay gráfico real implementado para el informe: " + tipoInforme);
+	    }
+
+	    if (chartPanel != null) {
+	        chartContainer.remove(chartPanel);
+	    }
+
+	    chartPanel = new ChartPanel(chart);
+	    chartPanel.setMouseWheelEnabled(true);
+	    chartPanel.setOpaque(false);
+
+	    chartContainer.add(chartPanel, BorderLayout.CENTER);
+	    chartContainer.revalidate();
+	    chartContainer.repaint();
+	}
+	
+
+	private JFreeChart buildBarChart(String title, String rangeLabel, DefaultCategoryDataset dataset) {
+		JFreeChart chart = ChartFactory.createBarChart(title, "", rangeLabel, dataset);
+		styleBarChart(chart);
+		return chart;
+	}
+
+	private JFreeChart buildLineChart(String title, String rangeLabel, DefaultCategoryDataset dataset) {
+		JFreeChart chart = ChartFactory.createLineChart(title, "", rangeLabel, dataset);
+		styleLineChart(chart);
+		return chart;
+	}
+
+	private JFreeChart buildPieChart(String title, DefaultPieDataset<String> dataset) {
+		JFreeChart chart = ChartFactory.createPieChart(title, dataset, true, true, false);
+
+		chart.setBackgroundPaint(InformeUiTheme.CARD_BG);
+		chart.getTitle().setPaint(InformeUiTheme.TEXT_PRIMARY);
+		chart.getTitle().setFont(InformeUiTheme.FONT_SECTION);
+
+		PiePlot<?> plot = (PiePlot<?>) chart.getPlot();
+		plot.setBackgroundPaint(InformeUiTheme.CARD_BG);
+		plot.setOutlineVisible(false);
+		plot.setLabelBackgroundPaint(InformeUiTheme.CARD_BG_2);
+		plot.setLabelOutlinePaint(InformeUiTheme.BORDER);
+		plot.setLabelShadowPaint(null);
+		plot.setLabelPaint(InformeUiTheme.TEXT_PRIMARY);
+		plot.setShadowPaint(null);
+
+		if (chart.getLegend() != null) {
+			chart.getLegend().setBackgroundPaint(InformeUiTheme.CARD_BG);
+			chart.getLegend().setItemPaint(InformeUiTheme.TEXT_PRIMARY);
+		}
+
+		return chart;
+	}
+
+	private void styleBarChart(JFreeChart chart) {
+		chart.setBackgroundPaint(InformeUiTheme.CARD_BG);
+		chart.getTitle().setPaint(InformeUiTheme.TEXT_PRIMARY);
+		chart.getTitle().setFont(InformeUiTheme.FONT_SECTION);
+
+		CategoryPlot plot = chart.getCategoryPlot();
+		plot.setBackgroundPaint(InformeUiTheme.PANEL_BG);
+		plot.setRangeGridlinePaint(InformeUiTheme.BORDER);
+		plot.setOutlineVisible(false);
+
+		CategoryAxis domainAxis = plot.getDomainAxis();
+		domainAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+		domainAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+
+		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+		rangeAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+		rangeAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+
+		BarRenderer renderer = (BarRenderer) plot.getRenderer();
+		renderer.setSeriesPaint(0, InformeUiTheme.STARBUCKS_GREEN);
+		renderer.setSeriesPaint(1, InformeUiTheme.ACCENT_GOLD);
+		renderer.setSeriesPaint(2, Color.WHITE);
+		renderer.setMaximumBarWidth(0.15);
+	}
+
+	private void styleLineChart(JFreeChart chart) {
+		chart.setBackgroundPaint(InformeUiTheme.CARD_BG);
+		chart.getTitle().setPaint(InformeUiTheme.TEXT_PRIMARY);
+		chart.getTitle().setFont(InformeUiTheme.FONT_SECTION);
+
+		CategoryPlot plot = chart.getCategoryPlot();
+		plot.setBackgroundPaint(InformeUiTheme.PANEL_BG);
+		plot.setRangeGridlinePaint(InformeUiTheme.BORDER);
+		plot.setOutlineVisible(false);
+
+		CategoryAxis domainAxis = plot.getDomainAxis();
+		domainAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+		domainAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+
+		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+		rangeAxis.setTickLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+		rangeAxis.setLabelPaint(InformeUiTheme.TEXT_SECONDARY);
+
+		LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+		renderer.setSeriesPaint(0, InformeUiTheme.ACCENT_GOLD);
+		renderer.setSeriesPaint(1, InformeUiTheme.STARBUCKS_GREEN);
+		renderer.setSeriesPaint(2, Color.WHITE);
+		renderer.setSeriesStroke(0, new BasicStroke(2.5f));
+		renderer.setSeriesStroke(1, new BasicStroke(2.2f));
+		renderer.setSeriesStroke(2, new BasicStroke(2.2f));
+	}
+
+	private JFreeChart createRealBarChartVentasPorDia(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		if (modoVista == ModoVistaInforme.COMPARATIVA) {
+			for (InformeVentasPorDiaRowDTO row : ventasPorDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+				String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, serie,
+						categoria);
+			}
+		} else {
+			for (InformeVentasPorDiaRowDTO row : ventasPorDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+				dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO,
+						"Ventas", categoria);
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+						categoria);
+			}
+		}
+
+		return buildBarChart("Ventas por día", "€", dataset);
+	}
+
+	private JFreeChart createRealLineChartVentasPorDia(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		if (modoVista == ModoVistaInforme.COMPARATIVA) {
+			for (InformeVentasPorDiaRowDTO row : ventasPorDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+				String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, serie,
+						categoria);
+			}
+		} else {
+			for (InformeVentasPorDiaRowDTO row : ventasPorDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+				dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO,
+						"Ventas", categoria);
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+						categoria);
+			}
+		}
+
+		return buildLineChart("Ventas por día", "€", dataset);
+	}
+
+	private JFreeChart createRealBarChartPagosPorMetodo() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformePagosMetodoRowDTO row : pagosMetodoResult.getRows()) {
+			String categoria = row.getMetodoPago() != null ? row.getMetodoPago() : "Método";
+
+			dataset.addValue(row.getImporteTotal() != null ? row.getImporteTotal() : java.math.BigDecimal.ZERO,
+					"Importe", categoria);
+
+			dataset.addValue(row.getNumeroOperaciones() != null ? row.getNumeroOperaciones() : 0, "Operaciones",
+					categoria);
+		}
+
+		return buildBarChart("Pagos por método", "Valor", dataset);
+	}
+
+	private JFreeChart createRealPieChartPagosPorMetodo() {
+		DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+
+		for (InformePagosMetodoRowDTO row : pagosMetodoResult.getRows()) {
+			String metodo = row.getMetodoPago() != null ? row.getMetodoPago() : "Método";
+			dataset.setValue(metodo, row.getImporteTotal() != null ? row.getImporteTotal() : java.math.BigDecimal.ZERO);
+		}
+
+		return buildPieChart("Pagos por método", dataset);
+	}
+
+	private JFreeChart createRealBarChartResumenEjecutivo() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		dataset.addValue(resumenEjecutivoResult.getVentasBrutas() != null ? resumenEjecutivoResult.getVentasBrutas()
+				: java.math.BigDecimal.ZERO, "Importe", "Ventas brutas");
+		dataset.addValue(resumenEjecutivoResult.getDevoluciones() != null ? resumenEjecutivoResult.getDevoluciones()
+				: java.math.BigDecimal.ZERO, "Importe", "Devoluciones");
+		dataset.addValue(
+				resumenEjecutivoResult.getNeto() != null ? resumenEjecutivoResult.getNeto() : java.math.BigDecimal.ZERO,
+				"Importe", "Neto");
+		dataset.addValue(resumenEjecutivoResult.getAhorroTotal() != null ? resumenEjecutivoResult.getAhorroTotal()
+				: java.math.BigDecimal.ZERO, "Importe", "Ahorro combos");
+
+		return buildBarChart("Resumen ejecutivo", "€", dataset);
+	}
+
+	private JFreeChart createRealPieChartResumenEjecutivo() {
+		DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+
+		dataset.setValue("Ventas brutas",
+				resumenEjecutivoResult.getVentasBrutas() != null ? resumenEjecutivoResult.getVentasBrutas()
+						: java.math.BigDecimal.ZERO);
+		dataset.setValue("Devoluciones",
+				resumenEjecutivoResult.getDevoluciones() != null ? resumenEjecutivoResult.getDevoluciones()
+						: java.math.BigDecimal.ZERO);
+		dataset.setValue("Ahorro combos",
+				resumenEjecutivoResult.getAhorroTotal() != null ? resumenEjecutivoResult.getAhorroTotal()
+						: java.math.BigDecimal.ZERO);
+
+		return buildPieChart("Resumen ejecutivo", dataset);
+	}
+
+	private JFreeChart createRealBarChartVentasPorFranja(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		if (modoVista == ModoVistaInforme.COMPARATIVA) {
+			for (InformeVentasFranjaRowDTO row : ventasFranjaResult.getRows()) {
+				String categoria = row.getFranja() != null ? row.getFranja() : "";
+				String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, serie,
+						categoria);
+			}
+		} else {
+			for (InformeVentasFranjaRowDTO row : ventasFranjaResult.getRows()) {
+				String categoria = row.getFranja() != null ? row.getFranja() : "";
+
+				dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO,
+						"Ventas", categoria);
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+						categoria);
+			}
+		}
+
+		return buildBarChart("Ventas por franja horaria", "€", dataset);
+	}
+
+	private JFreeChart createRealLineChartVentasPorFranja(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		if (modoVista == ModoVistaInforme.COMPARATIVA) {
+			for (InformeVentasFranjaRowDTO row : ventasFranjaResult.getRows()) {
+				String categoria = row.getFranja() != null ? row.getFranja() : "";
+				String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, serie,
+						categoria);
+			}
+		} else {
+			for (InformeVentasFranjaRowDTO row : ventasFranjaResult.getRows()) {
+				String categoria = row.getFranja() != null ? row.getFranja() : "";
+
+				dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO,
+						"Ventas", categoria);
+				dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+						categoria);
+			}
+		}
+
+		return buildLineChart("Ventas por franja horaria", "€", dataset);
+	}
+
+	private JFreeChart createRealBarChartTicketMedioPorDia(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		if (modoVista == ModoVistaInforme.COMPARATIVA) {
+			for (InformeTicketMedioDiaRowDTO row : ticketMedioDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+				String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+				dataset.addValue(row.getTicketMedio() != null ? row.getTicketMedio() : java.math.BigDecimal.ZERO, serie,
+						categoria);
+			}
+		} else {
+			for (InformeTicketMedioDiaRowDTO row : ticketMedioDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+
+				dataset.addValue(row.getTicketMedio() != null ? row.getTicketMedio() : java.math.BigDecimal.ZERO,
+						"Ticket medio", categoria);
+			}
+		}
+
+		return buildBarChart("Ticket medio por día", "€", dataset);
+	}
+
+	private JFreeChart createRealLineChartTicketMedioPorDia(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		if (modoVista == ModoVistaInforme.COMPARATIVA) {
+			for (InformeTicketMedioDiaRowDTO row : ticketMedioDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+				String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+				dataset.addValue(row.getTicketMedio() != null ? row.getTicketMedio() : java.math.BigDecimal.ZERO, serie,
+						categoria);
+			}
+		} else {
+			for (InformeTicketMedioDiaRowDTO row : ticketMedioDiaResult.getRows()) {
+				String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+
+				dataset.addValue(row.getTicketMedio() != null ? row.getTicketMedio() : java.math.BigDecimal.ZERO,
+						"Ticket medio", categoria);
+			}
+		}
+
+		return buildLineChart("Ticket medio por día", "€", dataset);
+	}
+
+	private JFreeChart createRealBarChartVentasNetasVsDevoluciones() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeNetoVsDevolucionesRowDTO row : netoVsDevolucionesResult.getRows()) {
+			String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+
+			dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO, "Ventas",
+					categoria);
+			dataset.addValue(
+					row.getTotalDevoluciones() != null ? row.getTotalDevoluciones() : java.math.BigDecimal.ZERO,
+					"Devoluciones", categoria);
+			dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildBarChart("Ventas netas vs devoluciones", "€", dataset);
+	}
+
+	private JFreeChart createRealLineChartVentasNetasVsDevoluciones() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeNetoVsDevolucionesRowDTO row : netoVsDevolucionesResult.getRows()) {
+			String categoria = row.getFecha() != null ? row.getFecha().toString() : "";
+
+			dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO, "Ventas",
+					categoria);
+			dataset.addValue(
+					row.getTotalDevoluciones() != null ? row.getTotalDevoluciones() : java.math.BigDecimal.ZERO,
+					"Devoluciones", categoria);
+			dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildLineChart("Ventas netas vs devoluciones", "€", dataset);
+	}
+
+	private JFreeChart createRealBarChartProductosMasVendidos() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeProductosVendidosRowDTO row : productosVendidosResult.getRows()) {
+			String categoria = row.getNombreProducto() != null ? row.getNombreProducto() : "Producto";
+
+			dataset.addValue(row.getUnidadesVendidas() != null ? row.getUnidadesVendidas() : 0, "Unidades", categoria);
+
+			dataset.addValue(row.getImporteNeto() != null ? row.getImporteNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildBarChart("Productos más vendidos", "Valor", dataset);
+	}
+
+	private JFreeChart createRealBarChartExtrasMasVendidos() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeExtrasVendidosRowDTO row : extrasVendidosResult.getRows()) {
+			String categoria = row.getNombreExtra() != null ? row.getNombreExtra() : "Extra";
+
+			dataset.addValue(row.getVecesVendido() != null ? row.getVecesVendido() : 0, "Veces", categoria);
+
+			dataset.addValue(row.getImporteGenerado() != null ? row.getImporteGenerado() : java.math.BigDecimal.ZERO,
+					"Importe", categoria);
+		}
+
+		return buildBarChart("Extras más vendidos", "Valor", dataset);
+	}
+
+	private JFreeChart createRealPieChartExtrasMasVendidos() {
+		DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+
+		for (InformeExtrasVendidosRowDTO row : extrasVendidosResult.getRows()) {
+			String categoria = row.getNombreExtra() != null ? row.getNombreExtra() : "Extra";
+
+			dataset.setValue(categoria,
+					row.getImporteGenerado() != null ? row.getImporteGenerado() : java.math.BigDecimal.ZERO);
+		}
+
+		return buildPieChart("Extras más vendidos", dataset);
+	}
+
+	private JFreeChart createRealBarChartCombosVendidos() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeCombosVendidosRowDTO row : combosVendidosResult.getRows()) {
+			String categoria = row.getNombreCombo() != null ? row.getNombreCombo() : "Combo";
+
+			dataset.addValue(row.getVecesVendido() != null ? row.getVecesVendido() : 0, "Veces", categoria);
+
+			dataset.addValue(row.getAhorroTotal() != null ? row.getAhorroTotal() : java.math.BigDecimal.ZERO, "Ahorro",
+					categoria);
+		}
+
+		return buildBarChart("Combos vendidos", "Valor", dataset);
+	}
+
+	private JFreeChart createRealPieChartCombosVendidos() {
+		DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+
+		for (InformeCombosVendidosRowDTO row : combosVendidosResult.getRows()) {
+			String categoria = row.getNombreCombo() != null ? row.getNombreCombo() : "Combo";
+
+			dataset.setValue(categoria, row.getVecesVendido() != null ? row.getVecesVendido() : 0);
+		}
+
+		return buildPieChart("Combos vendidos", dataset);
+	}
+
+	private JFreeChart createRealBarChartDescuentosAplicados() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeDescuentosAplicadosRowDTO row : descuentosAplicadosResult.getRows()) {
+			String categoria = row.getNombreDescuento() != null ? row.getNombreDescuento() : "Descuento";
+
+			dataset.addValue(row.getNumeroUsos() != null ? row.getNumeroUsos() : 0, "Usos", categoria);
+
+			dataset.addValue(row.getImporteDescuento() != null ? row.getImporteDescuento() : java.math.BigDecimal.ZERO,
+					"Importe descuento", categoria);
+		}
+
+		return buildBarChart("Descuentos aplicados", "Valor", dataset);
+	}
+
+	private JFreeChart createRealPieChartDescuentosAplicados() {
+		DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+
+		for (InformeDescuentosAplicadosRowDTO row : descuentosAplicadosResult.getRows()) {
+			String categoria = row.getNombreDescuento() != null ? row.getNombreDescuento() : "Descuento";
+
+			dataset.setValue(categoria, row.getNumeroUsos() != null ? row.getNumeroUsos() : 0);
+		}
+
+		return buildPieChart("Descuentos aplicados", dataset);
+	}
+
+	private JFreeChart createRealBarChartDevolucionesPorProducto() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeDevolucionesProductoRowDTO row : devolucionesProductoResult.getRows()) {
+			String categoria = row.getNombreProducto() != null ? row.getNombreProducto() : "Producto";
+
+			dataset.addValue(row.getCantidadDevuelta() != null ? row.getCantidadDevuelta() : 0, "Cantidad devuelta",
+					categoria);
+
+			dataset.addValue(
+					row.getImporteReembolsado() != null ? row.getImporteReembolsado() : java.math.BigDecimal.ZERO,
+					"Reembolso", categoria);
+		}
+
+		return buildBarChart("Devoluciones por producto", "Valor", dataset);
+	}
+
+	private JFreeChart createRealBarChartRankingEmpleadosPorVentas() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeRankingEmpleadosVentasRowDTO row : rankingEmpleadosVentasResult.getRows()) {
+			String categoria = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO, "Ventas",
+					categoria);
+
+			dataset.addValue(row.getNumeroTickets() != null ? row.getNumeroTickets() : 0, "Tickets", categoria);
+		}
+
+		return buildBarChart("Ranking empleados por ventas", "Valor", dataset);
+	}
+
+	private JFreeChart createRealBarChartRankingEmpleadosPorExtras() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeRankingEmpleadosExtrasRowDTO row : rankingEmpleadosExtrasResult.getRows()) {
+			String categoria = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getTotalExtrasVendidos() != null ? row.getTotalExtrasVendidos() : 0, "Extras",
+					categoria);
+
+			dataset.addValue(row.getImporteExtras() != null ? row.getImporteExtras() : java.math.BigDecimal.ZERO,
+					"Importe", categoria);
+		}
+
+		return buildBarChart("Ranking empleados por extras", "Valor", dataset);
+	}
+
+	private JFreeChart createRealBarChartProductosVendidosPorEmpleado(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeProductosPorEmpleadoRowDTO row : productosPorEmpleadoResult.getRows()) {
+			String categoria = row.getNombreProducto() != null ? row.getNombreProducto() : "Producto";
+			String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getUnidadesVendidas() != null ? row.getUnidadesVendidas() : 0, serie, categoria);
+		}
+
+		return buildBarChart("Productos vendidos por empleado", "Unidades", dataset);
+	}
+
+	private JFreeChart createRealBarChartVentasPorCaja() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeVentasCajaRowDTO row : ventasCajaResult.getRows()) {
+			String categoria = row.getNombreCaja() != null ? row.getNombreCaja() : "Caja";
+
+			dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO, "Ventas",
+					categoria);
+
+			dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildBarChart("Ventas por caja", "€", dataset);
+	}
+
+	private JFreeChart createRealLineChartVentasPorCaja() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeVentasCajaRowDTO row : ventasCajaResult.getRows()) {
+			String categoria = row.getNombreCaja() != null ? row.getNombreCaja() : "Caja";
+
+			dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO, "Ventas",
+					categoria);
+
+			dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildLineChart("Ventas por caja", "€", dataset);
+	}
+
+	private JFreeChart createRealBarChartVentasPorSesionCaja() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeVentasSesionCajaRowDTO row : ventasSesionCajaResult.getRows()) {
+			String categoria = row.getIdSesion() != null ? "#" + row.getIdSesion() : "Sesión";
+
+			dataset.addValue(row.getTotalVentas() != null ? row.getTotalVentas() : java.math.BigDecimal.ZERO, "Ventas",
+					categoria);
+
+			dataset.addValue(row.getTotalNeto() != null ? row.getTotalNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildBarChart("Ventas por sesión de caja", "€", dataset);
+	}
+
+	private JFreeChart createRealBarChartTiemposPorEstacion() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeTiemposEstacionRowDTO row : tiemposEstacionResult.getRows()) {
+			String categoria = row.getNombreEstacion() != null ? row.getNombreEstacion() : "Estación";
+
+			dataset.addValue(
+					row.getTiempoMedioSegundos() != null ? row.getTiempoMedioSegundos() : java.math.BigDecimal.ZERO,
+					"Tiempo medio", categoria);
+
+			dataset.addValue(
+					row.getTiempoMaximoSegundos() != null ? row.getTiempoMaximoSegundos() : java.math.BigDecimal.ZERO,
+					"Tiempo máximo", categoria);
+		}
+
+		return buildBarChart("Tiempos por estación", "Segundos", dataset);
+	}
+
+	private JFreeChart createRealLineChartTiemposPorEstacion() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeTiemposEstacionRowDTO row : tiemposEstacionResult.getRows()) {
+			String categoria = row.getNombreEstacion() != null ? row.getNombreEstacion() : "Estación";
+
+			dataset.addValue(
+					row.getTiempoMedioSegundos() != null ? row.getTiempoMedioSegundos() : java.math.BigDecimal.ZERO,
+					"Tiempo medio", categoria);
+
+			dataset.addValue(
+					row.getTiempoMaximoSegundos() != null ? row.getTiempoMaximoSegundos() : java.math.BigDecimal.ZERO,
+					"Tiempo máximo", categoria);
+		}
+
+		return buildLineChart("Tiempos por estación", "Segundos", dataset);
+	}
+
+	private JFreeChart createRealBarChartMermaPorPeriodo() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeMermaPeriodoRowDTO row : mermaPeriodoResult.getRows()) {
+			String categoria = row.getFecha() != null ? row.getFecha().toString() : "Fecha";
+
+			dataset.addValue(row.getCantidad() != null ? row.getCantidad() : java.math.BigDecimal.ZERO, "Cantidad",
+					categoria);
+		}
+
+		return buildBarChart("Merma por período", "Cantidad", dataset);
+	}
+
+	private JFreeChart createRealLineChartMermaPorPeriodo() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeMermaPeriodoRowDTO row : mermaPeriodoResult.getRows()) {
+			String categoria = row.getFecha() != null ? row.getFecha().toString() : "Fecha";
+
+			dataset.addValue(row.getCantidad() != null ? row.getCantidad() : java.math.BigDecimal.ZERO, "Cantidad",
+					categoria);
+		}
+
+		return buildLineChart("Merma por período", "Cantidad", dataset);
+	}
+
+	private JFreeChart createRealBarChartMovimientosStockAjustes() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeMovimientoStockRowDTO row : movimientosStockResult.getRows()) {
+			String categoria = row.getFecha() != null ? row.getFecha().toLocalDate().toString() : "Fecha";
+			String serie = row.getTipoMovimiento() != null ? row.getTipoMovimiento() : "Movimiento";
+
+			dataset.addValue(row.getCantidad() != null ? row.getCantidad() : java.math.BigDecimal.ZERO, serie,
+					categoria);
+		}
+
+		return buildBarChart("Movimientos de stock / ajustes", "Cantidad", dataset);
+	}
+
+	private JFreeChart createRealLineChartMovimientosStockAjustes() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeMovimientoStockRowDTO row : movimientosStockResult.getRows()) {
+			String categoria = row.getFecha() != null ? row.getFecha().toLocalDate().toString() : "Fecha";
+			String serie = row.getTipoMovimiento() != null ? row.getTipoMovimiento() : "Movimiento";
+
+			dataset.addValue(row.getCantidad() != null ? row.getCantidad() : java.math.BigDecimal.ZERO, serie,
+					categoria);
+		}
+
+		return buildLineChart("Movimientos de stock / ajustes", "Cantidad", dataset);
+	}
+
+	private JFreeChart createRealBarChartVentasProductoPorEmpleado(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeVentasProductoEmpleadoRowDTO row : ventasProductoEmpleadoResult.getRows()) {
+			String categoria = row.getNombreProducto() != null ? row.getNombreProducto() : "Producto";
+			String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getUnidadesVendidas() != null ? row.getUnidadesVendidas() : 0, serie, categoria);
+		}
+
+		return buildBarChart("Ventas producto por empleado", "Unidades", dataset);
+	}
+
+	private JFreeChart createRealBarChartRankingEmpleadosPorProducto() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeRankingEmpleadosProductoRowDTO row : rankingEmpleadosProductoResult.getRows()) {
+			String categoria = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getUnidadesVendidas() != null ? row.getUnidadesVendidas() : 0, "Unidades", categoria);
+
+			dataset.addValue(row.getImporteNeto() != null ? row.getImporteNeto() : java.math.BigDecimal.ZERO, "Neto",
+					categoria);
+		}
+
+		return buildBarChart("Ranking empleados por producto", "Valor", dataset);
+	}
+
+	private JFreeChart createRealBarChartVentasExtraPorEmpleado(ModoVistaInforme modoVista) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeVentasExtraEmpleadoRowDTO row : ventasExtraEmpleadoResult.getRows()) {
+			String categoria = row.getNombreExtra() != null ? row.getNombreExtra() : "Extra";
+			String serie = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getVecesVendido() != null ? row.getVecesVendido() : 0, serie, categoria);
+		}
+
+		return buildBarChart("Ventas extra por empleado", "Veces", dataset);
+	}
+
+	private JFreeChart createRealBarChartRankingEmpleadosPorExtra() {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (InformeRankingEmpleadosExtraRowDTO row : rankingEmpleadosExtraResult.getRows()) {
+			String categoria = row.getNombreEmpleado() != null ? row.getNombreEmpleado() : "Empleado";
+
+			dataset.addValue(row.getVecesVendido() != null ? row.getVecesVendido() : 0, "Veces", categoria);
+
+			dataset.addValue(row.getImporteGenerado() != null ? row.getImporteGenerado() : java.math.BigDecimal.ZERO,
+					"Importe", categoria);
+		}
+
+		return buildBarChart("Ranking empleados por extra", "Valor", dataset);
+	}
+
+	private JFreeChart createPlaceholderChart(String title) {
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		dataset.addValue(0, "Pendiente", "Sin datos");
+		return buildBarChart(title, "", dataset);
+	}
 }

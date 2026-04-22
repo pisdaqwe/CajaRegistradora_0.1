@@ -1361,33 +1361,40 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private void registrarColaImpresion(RegistrarVentaResultDTO result) {
-		if (result == null) {
-			return;
-		}
+	    if (result == null) {
+	        return;
+	    }
 
-		List<RegistrarVentaItemResultDTO> itemsPersistidos = result.getItemsPersistidos();
+	    List<RegistrarVentaItemResultDTO> itemsPersistidos = result.getItemsPersistidos();
 
-		if (itemsPersistidos == null || itemsPersistidos.isEmpty()) {
-			return;
-		}
+	    if (itemsPersistidos == null || itemsPersistidos.isEmpty()) {
+	        return;
+	    }
 
-		if (itemsPersistidos.size() != ticketSession.getItems().size()) {
-			throw new IllegalStateException("No coincide el número de items persistidos con los items del ticket.");
-		}
+	    if (itemsPersistidos.size() != ticketSession.getItems().size()) {
+	        throw new IllegalStateException("No coincide el número de items persistidos con los items del ticket.");
+	    }
 
-		List<ColaRegistroItemCommand> commands = new ArrayList<>();
+	    int idSucursal = AppContext.getIdSucursal();
 
-		for (int i = 0; i < ticketSession.getItems().size(); i++) {
-			TicketItem ticketItem = ticketSession.getItems().get(i);
-			RegistrarVentaItemResultDTO persisted = itemsPersistidos.get(i);
+	    List<ColaRegistroItemCommand> commands = new ArrayList<>();
 
-			ColaItemDescripcionDTO descripcion = buildColaItemDescripcion(ticketItem);
+	    for (int i = 0; i < ticketSession.getItems().size(); i++) {
+	        TicketItem ticketItem = ticketSession.getItems().get(i);
+	        RegistrarVentaItemResultDTO persisted = itemsPersistidos.get(i);
 
-			commands.add(new ColaRegistroItemCommand(result.getIdVenta(), persisted.getIdItem(),
-					persisted.getIdProducto(), descripcion));
-		}
+	        ColaItemDescripcionDTO descripcion = buildColaItemDescripcion(ticketItem);
 
-		services.colaImpresionService.registrarItemsEnCola(commands);
+	        commands.add(new ColaRegistroItemCommand(
+	                result.getIdVenta(),
+	                persisted.getIdItem(),
+	                persisted.getIdProducto(),
+	                idSucursal,
+	                descripcion
+	        ));
+	    }
+
+	    services.colaImpresionService.registrarItemsEnCola(commands);
 	}
 
 	private ColaItemDescripcionDTO buildColaItemDescripcion(TicketItem item) {

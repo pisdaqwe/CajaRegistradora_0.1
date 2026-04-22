@@ -5,7 +5,29 @@ import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 
+import dtoS.InformeCombosVendidosResultDTO;
+import dtoS.InformeDescuentosAplicadosResultDTO;
+import dtoS.InformeDevolucionesProductoResultDTO;
+import dtoS.InformeExtrasVendidosResultDTO;
+import dtoS.InformeMermaPeriodoResultDTO;
+import dtoS.InformeMovimientoStockResultDTO;
+import dtoS.InformeNetoVsDevolucionesResultDTO;
+import dtoS.InformePagosMetodoResultDTO;
+import dtoS.InformeProductosPorEmpleadoResultDTO;
+import dtoS.InformeProductosVendidosResultDTO;
+import dtoS.InformeRankingEmpleadosExtraResultDTO;
+import dtoS.InformeRankingEmpleadosExtrasResultDTO;
+import dtoS.InformeRankingEmpleadosProductoResultDTO;
+import dtoS.InformeRankingEmpleadosVentasResultDTO;
+import dtoS.InformeResumenEjecutivoResultDTO;
+import dtoS.InformeTicketMedioDiaResultDTO;
+import dtoS.InformeTiemposEstacionResultDTO;
+import dtoS.InformeVentasCajaResultDTO;
+import dtoS.InformeVentasExtraEmpleadoResultDTO;
+import dtoS.InformeVentasFranjaResultDTO;
 import dtoS.InformeVentasPorDiaResultDTO;
+import dtoS.InformeVentasProductoEmpleadoResultDTO;
+import dtoS.InformeVentasSesionCajaResultDTO;
 
 import java.awt.*;
 
@@ -31,141 +53,11 @@ public class InformeKpiPanel extends JPanel {
         add(card4);
     }
 
-    public void showPlaceholder(TipoInforme tipoInforme) {
-        switch (tipoInforme) {
-            case RESUMEN_EJECUTIVO -> {
-                card1.setData("Ventas", "6.214,10 €");
-                card2.setData("Devoluciones", "-145,20 €");
-                card3.setData("Neto", "6.068,90 €");
-                card4.setData("Ticket medio", "9,42 €");
-            }
-
-            case VENTAS_POR_DIA -> {
-                card1.setData("Ventas", "5.482,70 €");
-                card2.setData("Devoluciones", "-114,20 €");
-                card3.setData("Neto", "5.368,50 €");
-                card4.setData("Ticket medio", "9,14 €");
-            }
-
-            case VENTAS_POR_FRANJA_HORARIA -> {
-                card1.setData("Franja pico", "10-12h");
-                card2.setData("Ventas pico", "610,00 €");
-                card3.setData("Franja baja", "14-16h");
-                card4.setData("Ventas bajas", "330,00 €");
-            }
-
-            case TICKET_MEDIO_POR_DIA -> {
-                card1.setData("Ticket medio", "9,14 €");
-                card2.setData("Mejor día", "02/04");
-                card3.setData("Valor máximo", "9,43 €");
-                card4.setData("Tendencia", "+4,8%");
-            }
-
-            case PAGOS_POR_METODO -> {
-                card1.setData("Tarjeta", "58,0%");
-                card2.setData("Efectivo", "39,4%");
-                card3.setData("Vale", "2,6%");
-                card4.setData("Total", "4.912,20 €");
-            }
-
-            case VENTAS_NETAS_VS_DEVOLUCIONES -> {
-                card1.setData("Ventas", "5.482,70 €");
-                card2.setData("Devoluciones", "114,20 €");
-                card3.setData("Neto", "5.368,50 €");
-                card4.setData("Ratio devolución", "2,08%");
-            }
-
-            case PRODUCTOS_MAS_VENDIDOS -> {
-                card1.setData("Top producto", "Latte");
-                card2.setData("Unidades", "148");
-                card3.setData("Top 3", "383 uds");
-                card4.setData("Neto", "2.277,90 €");
-            }
-
-            case EXTRAS_MAS_VENDIDOS -> {
-                card1.setData("Top extra", "Shot extra");
-                card2.setData("Veces", "96");
-                card3.setData("Upselling", "280,30 €");
-                card4.setData("Top 3", "239 ventas");
-            }
-
-            case COMBOS_VENDIDOS -> {
-                card1.setData("Combos", "48");
-                card2.setData("Ahorro", "304,45 €");
-                card3.setData("Top combo", "Desayuno");
-                card4.setData("Ticket medio", "11,32 €");
-            }
-
-            case DESCUENTOS_APLICADOS -> {
-                card1.setData("Descuento total", "213,75 €");
-                card2.setData("Más usado", "Empleado");
-                card3.setData("Usos", "52");
-                card4.setData("Impacto", "4,9%");
-            }
-
-            case DEVOLUCIONES_POR_PRODUCTO -> {
-                card1.setData("Producto top", "Termo");
-                card2.setData("Reembolsado", "14,95 €");
-                card3.setData("Items devueltos", "3");
-                card4.setData("Ratio", "0,7%");
-            }
-
-            case RANKING_EMPLEADOS_POR_VENTAS -> {
-                card1.setData("Nº1", "Ana");
-                card2.setData("Ventas", "1.840,50 €");
-                card3.setData("Nº2", "Luis");
-                card4.setData("Ventas", "1.620,30 €");
-            }
-
-            case RANKING_EMPLEADOS_POR_EXTRAS -> {
-                card1.setData("Nº1", "Ana");
-                card2.setData("Extras", "82");
-                card3.setData("Nº2", "Luis");
-                card4.setData("Extras", "69");
-            }
-
-            case PRODUCTOS_VENDIDOS_POR_EMPLEADO -> {
-                card1.setData("Empleado", "Ana");
-                card2.setData("Top producto", "Latte");
-                card3.setData("Unidades", "118");
-                card4.setData("Variedad", "12 productos");
-            }
-
-            case VENTAS_POR_CAJA -> {
-                card1.setData("Caja 1", "2.136,40 €");
-                card2.setData("Caja 2", "1.845,20 €");
-                card3.setData("Mejor caja", "Caja 1");
-                card4.setData("Diferencia", "291,20 €");
-            }
-
-            case VENTAS_POR_SESION_CAJA -> {
-                card1.setData("Mejor sesión", "#102");
-                card2.setData("Ventas", "1.120,20 €");
-                card3.setData("Sesiones", "3");
-                card4.setData("Media", "992,17 €");
-            }
-
-            case TIEMPOS_POR_ESTACION -> {
-                card1.setData("Más lenta", "Comida");
-                card2.setData("Tiempo", "210 s");
-                card3.setData("Más rápida", "Frías");
-                card4.setData("Tiempo", "122 s");
-            }
-
-            case MERMA_POR_PERIODO -> {
-                card1.setData("Merma total", "145,50");
-                card2.setData("Peor día", "02/04");
-                card3.setData("Valor pico", "62,50");
-                card4.setData("Tendencia", "Estable");
-            }
-
-            case MOVIMIENTOS_STOCK_AJUSTES -> {
-                card1.setData("Entradas", "18");
-                card2.setData("Salidas", "36");
-                card3.setData("Ajustes", "7");
-                card4.setData("Mermas", "5");
-            }
-        }
+    public void showPlaceholderempty(TipoInforme tipoInforme) {
+        card1.setData("-", "-");
+        card2.setData("-", "-");
+        card3.setData("-", "-");
+        card4.setData("-", "-");
     }
 
     private static class KpiCard extends JPanel {
@@ -207,8 +99,176 @@ public class InformeKpiPanel extends JPanel {
         card4.setData("Ticket medio", formatMoney(result.getTicketMedioGlobal()));
     }
 
+
+   
+    public void cargarResumenEjecutivo(InformeResumenEjecutivoResultDTO result) {
+        card1.setData("Ventas brutas", formatMoney(result.getVentasBrutas()));
+        card2.setData("Devoluciones", formatMoney(result.getDevoluciones()));
+        card3.setData("Neto", formatMoney(result.getNeto()));
+        card4.setData("Ticket medio", formatMoney(result.getTicketMedio()));
+    }
+
+    public void cargarVentasPorFranjaHoraria(InformeVentasFranjaResultDTO result) {
+        card1.setData("Ventas", formatMoney(result.getTotalVentas()));
+        card2.setData("Devoluciones", formatMoney(result.getTotalDevoluciones()));
+        card3.setData("Neto", formatMoney(result.getTotalNeto()));
+        card4.setData("Mejor franja", safeText(result.getMejorFranja()));
+    }
+
+    public void cargarTicketMedioPorDia(InformeTicketMedioDiaResultDTO result) {
+        card1.setData("Ticket medio", formatMoney(result.getTicketMedioGlobal()));
+        card2.setData("Tickets", String.valueOf(result.getTotalTickets()));
+        card3.setData("Ventas", formatMoney(result.getTotalVentas()));
+        card4.setData("Mejor día", result.getMejorDia() != null ? result.getMejorDia().toString() : "-");
+    }
+
+    public void cargarPagosPorMetodo(InformePagosMetodoResultDTO result) {
+        card1.setData("Importe total", formatMoney(result.getTotalImporte()));
+        card2.setData("Operaciones", String.valueOf(result.getTotalOperaciones()));
+        card3.setData("Método top", safeText(result.getMetodoPrincipal()));
+        card4.setData("Importe top", formatMoney(result.getImporteMetodoPrincipal()));
+    }
+
+    public void cargarVentasNetasVsDevoluciones(InformeNetoVsDevolucionesResultDTO result) {
+        card1.setData("Ventas", formatMoney(result.getTotalVentas()));
+        card2.setData("Devoluciones", formatMoney(result.getTotalDevoluciones()));
+        card3.setData("Neto", formatMoney(result.getTotalNeto()));
+        card4.setData("Ratio dev.", formatPercent(result.getRatioGlobalDevolucion()));
+    }
+
+    public void cargarProductosMasVendidos(InformeProductosVendidosResultDTO result) {
+        card1.setData("Unidades", String.valueOf(result.getTotalUnidades()));
+        card2.setData("Neto", formatMoney(result.getTotalNeto()));
+        card3.setData("Producto top", safeText(result.getProductoTop()));
+        card4.setData("Unidades top", String.valueOf(result.getUnidadesProductoTop()));
+    }
+
+    public void cargarExtrasMasVendidos(InformeExtrasVendidosResultDTO result) {
+        card1.setData("Veces", String.valueOf(result.getTotalVeces()));
+        card2.setData("Importe", formatMoney(result.getTotalImporte()));
+        card3.setData("Extra top", safeText(result.getExtraTop()));
+        card4.setData("Veces top", String.valueOf(result.getVecesExtraTop()));
+    }
+
+    public void cargarCombosVendidos(InformeCombosVendidosResultDTO result) {
+        card1.setData("Combos", String.valueOf(result.getTotalCombos()));
+        card2.setData("Ahorro", formatMoney(result.getTotalAhorro()));
+        card3.setData("Combo top", safeText(result.getComboTop()));
+        card4.setData("Veces top", String.valueOf(result.getVecesComboTop()));
+    }
+
+    public void cargarDescuentosAplicados(InformeDescuentosAplicadosResultDTO result) {
+        card1.setData("Usos", String.valueOf(result.getTotalUsos()));
+        card2.setData("Base", formatMoney(result.getTotalBase()));
+        card3.setData("Descuento", formatMoney(result.getTotalImporteDescuento()));
+        card4.setData("Más usado", safeText(result.getDescuentoMasUsado()));
+    }
+
+    public void cargarDevolucionesPorProducto(InformeDevolucionesProductoResultDTO result) {
+        card1.setData("Cantidad", String.valueOf(result.getTotalCantidadDevuelta()));
+        card2.setData("Devoluciones", String.valueOf(result.getTotalDevoluciones()));
+        card3.setData("Reembolso", formatMoney(result.getTotalReembolsado()));
+        card4.setData("Producto top", safeText(result.getProductoMasDevuelto()));
+    }
+    public void cargarRankingEmpleadosPorVentas(InformeRankingEmpleadosVentasResultDTO result) {
+        card1.setData("Ventas", formatMoney(result.getTotalVentas()));
+        card2.setData("Tickets", String.valueOf(result.getTotalTickets()));
+        card3.setData("Mejor empleado", safeText(result.getMejorEmpleado()));
+        card4.setData("Ventas top", formatMoney(result.getVentasMejorEmpleado()));
+    }
+
+    public void cargarRankingEmpleadosPorExtras(InformeRankingEmpleadosExtrasResultDTO result) {
+        card1.setData("Extras", String.valueOf(result.getTotalExtrasVendidos()));
+        card2.setData("Importe", formatMoney(result.getTotalImporteExtras()));
+        card3.setData("Mejor empleado", safeText(result.getMejorEmpleado()));
+        card4.setData("Extras top", String.valueOf(result.getExtrasMejorEmpleado()));
+    }
+
+    public void cargarProductosVendidosPorEmpleado(InformeProductosPorEmpleadoResultDTO result) {
+        card1.setData("Unidades", String.valueOf(result.getTotalUnidades()));
+        card2.setData("Importe", formatMoney(result.getTotalImporte()));
+        card3.setData("Empleado top", safeText(result.getEmpleadoTop()));
+        card4.setData("Producto top", safeText(result.getProductoTop()));
+    }
+
+    public void cargarVentasPorCaja(InformeVentasCajaResultDTO result) {
+        card1.setData("Ventas", formatMoney(result.getTotalVentas()));
+        card2.setData("Devoluciones", formatMoney(result.getTotalDevoluciones()));
+        card3.setData("Neto", formatMoney(result.getTotalNeto()));
+        card4.setData("Mejor caja", safeText(result.getMejorCaja()));
+    }
+
+    public void cargarVentasPorSesionCaja(InformeVentasSesionCajaResultDTO result) {
+        card1.setData("Sesiones", String.valueOf(result.getTotalSesiones()));
+        card2.setData("Ventas", formatMoney(result.getTotalVentas()));
+        card3.setData("Neto", formatMoney(result.getTotalNeto()));
+        card4.setData("Mejor sesión", result.getIdMejorSesion() != null ? "#" + result.getIdMejorSesion() : "-");
+    }
+
+    public void cargarTiemposPorEstacion(InformeTiemposEstacionResultDTO result) {
+        card1.setData("Tiempo medio", formatNumber(result.getTiempoMedioGlobalSegundos()) + " s");
+        card2.setData("Items", String.valueOf(result.getTotalItemsProcesados()));
+        card3.setData("Más lenta", safeText(result.getEstacionMasLenta()));
+        card4.setData("Tiempo", formatNumber(result.getTiempoEstacionMasLenta()) + " s");
+    }
+
+    public void cargarMermaPorPeriodo(InformeMermaPeriodoResultDTO result) {
+        card1.setData("Cantidad", formatNumber(result.getTotalCantidad()));
+        card2.setData("Registros", String.valueOf(result.getTotalRegistros()));
+        card3.setData("Peor día", result.getPeorDia() != null ? result.getPeorDia().toString() : "-");
+        card4.setData("Cantidad pico", formatNumber(result.getCantidadPeorDia()));
+    }
+
+    public void cargarMovimientosStockAjustes(InformeMovimientoStockResultDTO result) {
+        card1.setData("Movimientos", String.valueOf(result.getTotalMovimientos()));
+        card2.setData("Cantidad", formatNumber(result.getTotalCantidad()));
+        card3.setData("Entradas", String.valueOf(result.getTotalEntradas()));
+        card4.setData("Salidas", String.valueOf(result.getTotalSalidas()));
+    }
+    
+    public void cargarVentasProductoPorEmpleado(InformeVentasProductoEmpleadoResultDTO result) {
+        card1.setData("Unidades", String.valueOf(result.getTotalUnidades()));
+        card2.setData("Neto", formatMoney(result.getTotalNeto()));
+        card3.setData("Empleado top", safeText(result.getEmpleadoTop()));
+        card4.setData("Producto top", safeText(result.getProductoTop()));
+    }
+
+    public void cargarRankingEmpleadosPorProducto(InformeRankingEmpleadosProductoResultDTO result) {
+        card1.setData("Unidades", String.valueOf(result.getTotalUnidades()));
+        card2.setData("Neto", formatMoney(result.getTotalImporteNeto()));
+        card3.setData("Empleado top", safeText(result.getEmpleadoTop()));
+        card4.setData("Producto top", safeText(result.getProductoTop()));
+    }
+
+    public void cargarVentasExtraPorEmpleado(InformeVentasExtraEmpleadoResultDTO result) {
+        card1.setData("Veces", String.valueOf(result.getTotalVeces()));
+        card2.setData("Importe", formatMoney(result.getTotalImporte()));
+        card3.setData("Empleado top", safeText(result.getEmpleadoTop()));
+        card4.setData("Extra top", safeText(result.getExtraTop()));
+    }
+
+    public void cargarRankingEmpleadosPorExtra(InformeRankingEmpleadosExtraResultDTO result) {
+        card1.setData("Veces", String.valueOf(result.getTotalVeces()));
+        card2.setData("Importe", formatMoney(result.getTotalImporte()));
+        card3.setData("Empleado top", safeText(result.getEmpleadoTop()));
+        card4.setData("Extra top", safeText(result.getExtraTop()));
+    }
     private String formatMoney(java.math.BigDecimal value) {
         java.math.BigDecimal safe = value != null ? value : java.math.BigDecimal.ZERO;
         return String.format(java.util.Locale.forLanguageTag("es-ES"), "%,.2f €", safe);
     }
+    private String safeText(String value) {
+        return value != null && !value.isBlank() ? value : "-";
+    }
+
+    private String formatPercent(java.math.BigDecimal value) {
+        java.math.BigDecimal safe = value != null ? value : java.math.BigDecimal.ZERO;
+        return String.format(java.util.Locale.forLanguageTag("es-ES"), "%,.2f %%", safe);
+    }
+
+    private String formatNumber(java.math.BigDecimal value) {
+        java.math.BigDecimal safe = value != null ? value : java.math.BigDecimal.ZERO;
+        return String.format(java.util.Locale.forLanguageTag("es-ES"), "%,.2f", safe);
+    }
+    
 }

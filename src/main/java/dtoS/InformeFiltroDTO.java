@@ -45,7 +45,21 @@ public class InformeFiltroDTO {
     private Integer idProducto;
     private Integer idExtra;
     private Integer idCombo;
-    private Integer idDescuento;
+    
+    // =========================================
+    // FLAGS / OPCIONES
+    // =========================================
+    private boolean incluirDevoluciones = true;
+    private boolean incluirAnuladas = false;
+    private Integer topN;
+    
+    private boolean todosLosProductos = true;
+    private List<Integer> idsProductos = new ArrayList<>();
+
+    private boolean todosLosExtras = true;
+    private List<Integer> idsExtras = new ArrayList<>();
+    
+	private Integer idDescuento;
 
     // =========================================
     // OPERATIVA / STOCK
@@ -53,12 +67,37 @@ public class InformeFiltroDTO {
     private Integer idEstacion;
     private String tipoMovimientoStock;
 
-    // =========================================
-    // FLAGS / OPCIONES
-    // =========================================
-    private boolean incluirDevoluciones = true;
-    private boolean incluirAnuladas = false;
-    private Integer topN;
+    public boolean isTodosLosProductos() {
+		return todosLosProductos;
+	}
+
+	public void setTodosLosProductos(boolean todosLosProductos) {
+		this.todosLosProductos = todosLosProductos;
+	}
+
+	public List<Integer> getIdsProductos() {
+		return idsProductos;
+	}
+
+	public void setIdsProductos(List<Integer> idsProductos) {
+		this.idsProductos = idsProductos;
+	}
+
+	public boolean isTodosLosExtras() {
+		return todosLosExtras;
+	}
+
+	public void setTodosLosExtras(boolean todosLosExtras) {
+		this.todosLosExtras = todosLosExtras;
+	}
+
+	public List<Integer> getIdsExtras() {
+		return idsExtras;
+	}
+
+	public void setIdsExtras(List<Integer> idsExtras) {
+		this.idsExtras = idsExtras;
+	}
 
     public TipoInforme getTipoInforme() {
         return tipoInforme;
