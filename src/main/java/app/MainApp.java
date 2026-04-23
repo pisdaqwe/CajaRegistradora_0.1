@@ -30,6 +30,7 @@ import dao.ProductoEstacionDao;
 import dao.ProductoTamanoDao;
 import dao.ProductoTipoCafeDao;
 import dao.RecetaIngredienteDao;
+import dao.RolDao;
 import dao.SesionCajaDao;
 import dao.StockIngredienteDao;
 import dao.StockProductoDao;
@@ -62,6 +63,7 @@ import service.MermaService;
 import service.MovimientoStockService;
 import service.ProductoPersonalizacionService;
 import service.RecipeResolverService;
+import service.RolService;
 import service.SesionCajaService;
 import service.StockIngredienteService;
 import service.SucursalService;
@@ -90,6 +92,7 @@ public class MainApp {
         SesionCajaDao sesionCajaDao = new SesionCajaDao();
         CajaDao cajaDao = new CajaDao();
         SucursalDao sucursalDao = new SucursalDao();
+        RolDao rolDao = new RolDao();
         
         // =====================================================
         // 3) DAOs DE CATÁLOGO / CUSTOMIZACIÓN
@@ -170,7 +173,7 @@ public class MainApp {
         AuthService authService = new AuthService(usuarioDao);
         FichajeService fichajeService = new FichajeService(fichajeDao, sesionCajaDao);
         SesionCajaService sesionCajaService = new SesionCajaService(cajaDao, sesionCajaDao);
-        UsuarioService usuarioService = new UsuarioService(usuarioDao);
+        UsuarioService usuarioService = new UsuarioService(usuarioDao, rolDao, fichajeDao, sesionCajaDao);
 
         // =====================================================
         // 11) SERVICES DE CATÁLOGO / CUSTOMIZACIÓN
@@ -291,6 +294,8 @@ public class MainApp {
         VentaFacade ventaFacade = new VentaFacade(ventaService);
         DevolucionFacade devolucionFacade = new DevolucionFacade(devolucionService);
         MermaFacade mermaFacade = new MermaFacade(mermaService);
+        
+        RolService rolService =  new RolService(rolDao);
 
         // =====================================================
         // 20) APP SERVICES
@@ -323,7 +328,8 @@ public class MainApp {
 
                 mermaFacade,
                 informesService,
-                sucursalService
+                sucursalService, 
+                rolService
                 
         );
      // =====================================================

@@ -1,17 +1,15 @@
 package ui.screens;
 
+import dtoS.CajaEstadoDTO;
+import service.AppServices;
 import ui.common.BaseTpvFrame;
+import ui.common.InformeUiTheme;
 import ui.dialog.AbrirSesionCajaDialog;
 import ui.dialog.CerrarSesionCajaDialog;
 import ui.table.EmpleadosFichadosTableModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.JTableHeader;
-
-import service.AppServices;
-import dtoS.CajaEstadoDTO;
-
 import java.awt.*;
 
 public class GestionCajaFrame extends BaseTpvFrame {
@@ -22,24 +20,21 @@ public class GestionCajaFrame extends BaseTpvFrame {
     private final AppServices services;
     private final Runnable refreshNuevoPedidoVisibility;
 
-    // Empleados fichados (informativo)
     private JTable tablaEmpleados;
     private EmpleadosFichadosTableModel empleadosTableModel;
 
-    // Cajas disponibles (informativo)
     private JPanel panelCajas;
 
     public GestionCajaFrame(
             Runnable onLogoutNavigate,
             Runnable onBack,
             AppServices services,
-            Runnable refreshNuevoPedidoVisivilit
+            Runnable refreshNuevoPedidoVisibility
     ) {
-        super("Gestión de Caja", onLogoutNavigate,services);
+        super("Gestión de Caja", onLogoutNavigate, services);
         this.onBack = onBack;
         this.services = services;
-        this.refreshNuevoPedidoVisibility = refreshNuevoPedidoVisivilit;
-        
+        this.refreshNuevoPedidoVisibility = refreshNuevoPedidoVisibility;
 
         requireAuthenticatedOrExit();
         buildUI();
@@ -48,87 +43,93 @@ public class GestionCajaFrame extends BaseTpvFrame {
         refreshCajasDisponibles();
     }
 
-    // =====================================================
-    // UI GENERAL
-    // =====================================================
-
     private void buildUI() {
-
         JPanel root = new JPanel(new BorderLayout(12, 12));
         root.setBorder(new EmptyBorder(16, 16, 16, 16));
-        root.setBackground(new Color(18, 18, 18));
+        root.setBackground(InformeUiTheme.APP_BG);
 
-        JLabel title = new JLabel("GESTIÓN DE CAJA");
-        title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setForeground(Color.WHITE);
-        root.add(title, BorderLayout.NORTH);
+        root.add(buildHeaderPanel(), BorderLayout.NORTH);
+        root.add(buildCenterPanel(), BorderLayout.CENTER);
+        root.add(buildBottomPanel(), BorderLayout.SOUTH);
 
+        main.add(root, BorderLayout.CENTER);
+    }
+
+    private JPanel buildHeaderPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
+
+        JLabel lblTitulo = new JLabel("Gestión de Caja");
+        lblTitulo.setFont(InformeUiTheme.FONT_TITLE);
+        lblTitulo.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblSubtitulo = new JLabel("Asignación, apertura y cierre de sesiones de caja");
+        lblSubtitulo.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSubtitulo.setForeground(InformeUiTheme.ACCENT_GOLD);
+
+        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 4));
+        textPanel.setOpaque(false);
+        textPanel.add(lblTitulo);
+        textPanel.add(lblSubtitulo);
+
+        panel.add(textPanel, BorderLayout.WEST);
+        return panel;
+    }
+
+    private JComponent buildCenterPanel() {
         JPanel center = new JPanel(new GridLayout(1, 2, 16, 0));
         center.setOpaque(false);
 
         center.add(buildLeftPanel());
         center.add(buildRightPanel());
 
-        root.add(center, BorderLayout.CENTER);
-
-        JButton btnVolver = createSecondaryButton("Volver");
-        btnVolver.addActionListener(e -> {
-            dispose();
-            refreshNuevoPedidoVisibility.run();
-            onBack.run();
-        });
-
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        footer.setOpaque(false);
-        footer.add(btnVolver);
-
-        root.add(footer, BorderLayout.SOUTH);
-
-        main.add(root, BorderLayout.CENTER);
+        return center;
     }
 
-    // =====================================================
-    // PANEL IZQUIERDO (ACCIONES)
-    // =====================================================
-
     private JPanel buildLeftPanel() {
+        JPanel panel = InformeUiTheme.createCardPanel(new BorderLayout(10, 10));
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY),
-                "Estado actual"
-        ));
-        panel.setOpaque(false);
+        JLabel lblSeccion = InformeUiTheme.createSectionTitle("Operativa de caja");
+        panel.add(lblSeccion, BorderLayout.NORTH);
 
-        JLabel estado = new JLabel("Pantalla informativa");
-        estado.setForeground(Color.LIGHT_GRAY);
-        estado.setBorder(new EmptyBorder(8, 8, 8, 8));
+        JPanel content = new JPanel();
+        content.setOpaque(false);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
-        JButton btnAbrir = createPrimaryButton("Asignar / Abrir sesión de caja");
-        btnAbrir.addActionListener(e->abrirDialogoAbrirCaja());
-        JButton btnCerrar = createDangerButton("Cerrar sesión");
-        btnCerrar.setEnabled(true); 
-        btnCerrar.addActionListener(e->abrirDialogoCerrarCaja());
+        JTextArea txtInfo = new JTextArea(
+                "Desde aquí puedes asignar una caja a un empleado fichado, " +
+                "abrir una nueva sesión o cerrar una sesión abierta con validación y conteo."
+        );
+        txtInfo.setEditable(false);
+        txtInfo.setLineWrap(true);
+        txtInfo.setWrapStyleWord(true);
+        txtInfo.setOpaque(false);
+        txtInfo.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        txtInfo.setFont(InformeUiTheme.FONT_BODY);
+        txtInfo.setBorder(null);
 
-        panel.add(estado);
-        panel.add(Box.createVerticalStrut(16));
-        panel.add(btnAbrir);
-        panel.add(Box.createVerticalStrut(8));
-        panel.add(btnCerrar);
+        JButton btnAbrir = new JButton("Asignar / Abrir sesión de caja");
+        InformeUiTheme.stylePrimaryButton(btnAbrir);
+        btnAbrir.addActionListener(e -> abrirDialogoAbrirCaja());
 
+        JButton btnCerrar = new JButton("Cerrar sesión");
+        InformeUiTheme.styleDangerButton(btnCerrar);
+        btnCerrar.addActionListener(e -> abrirDialogoCerrarCaja());
+
+        content.add(txtInfo);
+        content.add(Box.createVerticalStrut(24));
+        content.add(btnAbrir);
+        content.add(Box.createVerticalStrut(10));
+        content.add(btnCerrar);
+
+        panel.add(content, BorderLayout.CENTER);
         return panel;
     }
 
-    // =====================================================
-    // PANEL DERECHO (INFO)
-    // =====================================================
-
     private JPanel buildRightPanel() {
-
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         panel.add(buildEmpleadosFichadosPanel());
         panel.add(Box.createVerticalStrut(16));
@@ -137,47 +138,29 @@ public class GestionCajaFrame extends BaseTpvFrame {
         return panel;
     }
 
-    // =====================================================
-    // EMPLEADOS FICHADOS (INFORMATIVO)
-    // =====================================================
-
     private JPanel buildEmpleadosFichadosPanel() {
+        JPanel panel = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
+        panel.setPreferredSize(new Dimension(400, 240));
 
-        JPanel panel = new JPanel(new BorderLayout(8, 8));
-        panel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.DARK_GRAY),
-                "Empleados fichados"
-        ));
-        panel.setOpaque(false);
+        JLabel title = InformeUiTheme.createSectionTitle("Empleados fichados");
+        panel.add(title, BorderLayout.NORTH);
 
         empleadosTableModel = new EmpleadosFichadosTableModel();
 
         tablaEmpleados = new JTable(empleadosTableModel);
-        tablaEmpleados.setFillsViewportHeight(true);
-        tablaEmpleados.setRowHeight(24);
         tablaEmpleados.setEnabled(false);
-        tablaEmpleados.setBackground(new Color(30, 30, 30));
-        tablaEmpleados.setForeground(Color.WHITE);
-        tablaEmpleados.setGridColor(Color.DARK_GRAY);
-
-        JTableHeader header = tablaEmpleados.getTableHeader();
-        header.setBackground(new Color(50, 50, 50));
-        header.setForeground(Color.WHITE);
+        InformeUiTheme.styleTable(tablaEmpleados);
 
         JScrollPane scroll = new JScrollPane(tablaEmpleados);
-        scroll.setBorder(BorderFactory.createEmptyBorder());
+        InformeUiTheme.styleScrollPane(scroll);
 
         panel.add(scroll, BorderLayout.CENTER);
-        panel.setPreferredSize(new Dimension(400, 220));
-
         return panel;
     }
 
     private void refreshEmpleadosFichados() {
         try {
-            empleadosTableModel.setDatos(
-                    services.fichajeService.findFichajesActivos()
-            );
+            empleadosTableModel.setDatos(services.fichajeService.findFichajesActivos());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(
                     this,
@@ -188,25 +171,21 @@ public class GestionCajaFrame extends BaseTpvFrame {
         }
     }
 
-    // =====================================================
-    // CAJAS DISPONIBLES (INFORMATIVO)
-    // =====================================================
-
     private JPanel buildEstadoCajaPanel() {
+        JPanel wrapper = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
+        wrapper.setPreferredSize(new Dimension(400, 220));
+
+        JLabel title = InformeUiTheme.createSectionTitle("Estado de cajas");
+        wrapper.add(title, BorderLayout.NORTH);
 
         panelCajas = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 12));
-        panelCajas.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.DARK_GRAY),
-                "Cajas disponibles"
-        ));
         panelCajas.setOpaque(false);
-        panelCajas.setPreferredSize(new Dimension(400, 160));
 
-        return panelCajas;
+        wrapper.add(panelCajas, BorderLayout.CENTER);
+        return wrapper;
     }
 
     private void refreshCajasDisponibles() {
-
         panelCajas.removeAll();
 
         try {
@@ -215,7 +194,7 @@ public class GestionCajaFrame extends BaseTpvFrame {
             }
         } catch (Exception ex) {
             JLabel error = new JLabel("Error cargando estado de cajas");
-            error.setForeground(Color.RED);
+            error.setForeground(InformeUiTheme.DANGER);
             panelCajas.add(error);
         }
 
@@ -224,96 +203,89 @@ public class GestionCajaFrame extends BaseTpvFrame {
     }
 
     private JPanel crearTarjetaCaja(CajaEstadoDTO caja) {
-
         JPanel card = new JPanel(new BorderLayout(4, 4));
         card.setPreferredSize(new Dimension(180, 100));
+        card.setBorder(InformeUiTheme.createInnerCardBorder());
 
-        Color bg = caja.isOcupada()
-                ? new Color(120, 40, 40)
-                : new Color(40, 120, 40);
+        Color bg;
+        String estado;
+        String detalle = "";
+
+        if (!caja.isOperativa()) {
+            bg = new Color(70, 70, 70);
+            estado = "Fuera de servicio";
+        } else if (caja.isOcupada()) {
+            bg = new Color(120, 45, 45);
+            estado = "Ocupada";
+            detalle = caja.getEmpleadoAsignado() != null ? caja.getEmpleadoAsignado() : "";
+        } else {
+            bg = InformeUiTheme.STARBUCKS_GREEN_SOFT;
+            estado = "Disponible";
+        }
 
         card.setBackground(bg);
-        card.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 
         JLabel lblNombre = new JLabel(caja.getNombreCaja(), SwingConstants.CENTER);
-        lblNombre.setForeground(Color.WHITE);
-        lblNombre.setFont(new Font("Arial", Font.BOLD, 14));
+        lblNombre.setFont(InformeUiTheme.FONT_LABEL);
+        lblNombre.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblEstado = new JLabel(
-                caja.isOcupada() ? "Ocupada" : "Libre",
-                SwingConstants.CENTER
-        );
-        lblEstado.setForeground(Color.WHITE);
+        JLabel lblEstado = new JLabel(estado, SwingConstants.CENTER);
+        lblEstado.setFont(InformeUiTheme.FONT_BODY);
+        lblEstado.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
         card.add(lblNombre, BorderLayout.NORTH);
         card.add(lblEstado, BorderLayout.CENTER);
 
-        if (caja.isOcupada() && caja.getEmpleadoAsignado() != null) {
-            JLabel lblEmp = new JLabel(
-                    caja.getEmpleadoAsignado(),
-                    SwingConstants.CENTER
-            );
-            lblEmp.setForeground(Color.LIGHT_GRAY);
-            card.add(lblEmp, BorderLayout.SOUTH);
+        if (!detalle.isBlank()) {
+            JLabel lblDetalle = new JLabel(detalle, SwingConstants.CENTER);
+            lblDetalle.setFont(InformeUiTheme.FONT_SUBTITLE);
+            lblDetalle.setForeground(InformeUiTheme.TEXT_SECONDARY);
+            card.add(lblDetalle, BorderLayout.SOUTH);
         }
 
         return card;
     }
 
-    // =====================================================
-    // BOTONES
-    // =====================================================
+    private JPanel buildBottomPanel() {
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        bottom.setOpaque(false);
 
-    private JButton createPrimaryButton(String text) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Arial", Font.BOLD, 14));
-        b.setBackground(new Color(40, 130, 100));
-        b.setForeground(Color.WHITE);
-        b.setFocusPainted(false);
-        return b;
+        JButton btnVolver = new JButton("Volver");
+        InformeUiTheme.styleSecondaryButton(btnVolver);
+        btnVolver.addActionListener(e -> volver());
+
+        JButton btnLogout = new JButton("Cerrar sesión");
+        InformeUiTheme.styleDangerButton(btnLogout);
+        btnLogout.addActionListener(e -> doLogout());
+
+        bottom.add(btnVolver);
+        bottom.add(btnLogout);
+        return bottom;
     }
 
-    private JButton createSecondaryButton(String text) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Arial", Font.PLAIN, 14));
-        b.setBackground(new Color(70, 70, 70));
-        b.setForeground(Color.WHITE);
-        b.setFocusPainted(false);
-        return b;
-    }
-
-    private JButton createDangerButton(String text) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Arial", Font.BOLD, 14));
-        b.setBackground(new Color(160, 50, 50));
-        b.setForeground(Color.WHITE);
-        b.setFocusPainted(false);
-        return b;
-    }
-    // =====================================================
-    // ABRIR DIALOGO DE APERTURA DE CAJA
-    // =====================================================
     private void abrirDialogoAbrirCaja() {
-
-        AbrirSesionCajaDialog dialog =
-                new AbrirSesionCajaDialog(this, services);
-
+        AbrirSesionCajaDialog dialog = new AbrirSesionCajaDialog(this, services);
         dialog.setVisible(true);
 
-        // 👇 cuando se cierra el diálogo, refrescamos TODO
         refreshEmpleadosFichados();
         refreshCajasDisponibles();
-        
-        
     }
-    private void abrirDialogoCerrarCaja() {
-    	CerrarSesionCajaDialog dialog = new CerrarSesionCajaDialog(this, services);
-    	dialog.setVisible(true);
-    	refreshCajasDisponibles();
-    	refreshEmpleadosFichados();
-    	
-    	
-    }
-    
-}
 
+    private void abrirDialogoCerrarCaja() {
+        CerrarSesionCajaDialog dialog = new CerrarSesionCajaDialog(this, services);
+        dialog.setVisible(true);
+
+        refreshEmpleadosFichados();
+        refreshCajasDisponibles();
+    }
+
+    private void volver() {
+        safeDispose();
+        if (refreshNuevoPedidoVisibility != null) {
+            refreshNuevoPedidoVisibility.run();
+        }
+        if (onBack != null) {
+            onBack.run();
+        }
+    }
+}

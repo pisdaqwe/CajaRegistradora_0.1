@@ -21,7 +21,29 @@ public class SesionCajaDao {
 
     private static final List<String> METODOS_REEMBOLSO_EFECTIVO = List.of("EFECTIVO");
     private static final List<String> METODOS_REEMBOLSO_TARJETA = List.of("TARJETA");
+   
+    
+    public boolean existsSesionAbiertaByUsuario(int idUsuario) {
+        String sql =
+                "SELECT 1 " +
+                "FROM sesion_caja " +
+                "WHERE id_usuario_apertura = ? " +
+                "  AND estado = 'ABIERTA' " +
+                "LIMIT 1";
 
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idUsuario);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al comprobar sesión de caja abierta del usuario.", e);
+        }
+    }
     // =====================================================
     // SESIONES ABIERTAS
     // =====================================================

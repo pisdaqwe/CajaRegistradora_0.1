@@ -4,8 +4,8 @@ public class Rol {
 
     private int idRol;
     private String nombre;
+    private String descripcion;
 
-    // Getters y setters
     public int getIdRol() {
         return idRol;
     }
@@ -20,5 +20,18 @@ public class Rol {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    @Override
+    public String toString() {
+        return nombre != null ? nombre : ("Rol #" + idRol);
     }
 }

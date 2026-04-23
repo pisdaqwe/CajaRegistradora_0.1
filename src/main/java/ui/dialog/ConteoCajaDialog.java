@@ -1,7 +1,6 @@
 package ui.dialog;
 
-import java.awt.*;
-import java.math.BigDecimal;
+import ui.common.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -9,237 +8,183 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
+import java.awt.*;
+import java.math.BigDecimal;
 
-/**
- * Diálogo modal para el conteo de efectivo de una caja.
- *
- * Responsabilidad ÚNICA: - Permitir introducir un importe decimal válido (máx.
- * 2 decimales) - Devolver el importe como BigDecimal
- *
- * NO conoce: - cajas - sesiones - empleados - lógica de negocio
- *
- * Cancelar → devuelve null Aceptar → devuelve BigDecimal
- */
 public class ConteoCajaDialog extends JDialog {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	// ===============================
-	// Componentes UI
-	// ===============================
-	private JTextField txtCantidadContada;
+    private JTextField txtCantidadContada;
+    private BigDecimal importeSeleccionado;
 
-	// ===============================
-	// Resultado del diálogo
-	// ===============================
-	private BigDecimal importeSeleccionado; // null si se cancela
+    public ConteoCajaDialog(Window owner) {
+        super(owner, "Conteo de caja", ModalityType.APPLICATION_MODAL);
 
-	// ===============================
-	// CONSTRUCTOR
-	// ===============================
-	public ConteoCajaDialog(Window owner) {
-		super(owner, "Conteo de Caja", ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setSize(400, 620);
+        setResizable(false);
+        setLocationRelativeTo(owner);
 
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setSize(380, 600);
-		setResizable(false);
-		setLocationRelativeTo(owner);
+        buildUI();
+    }
 
-		buildUI();
-	}
+    private void buildUI() {
+        JPanel root = new JPanel(new BorderLayout(12, 12));
+        root.setBorder(new EmptyBorder(15, 15, 15, 15));
+        root.setBackground(InformeUiTheme.APP_BG);
+        setContentPane(root);
 
-	// ===============================
-	// CONSTRUCCIÓN UI
-	// ===============================
-	private void buildUI() {
+        JLabel lblTitulo = new JLabel("CONTEO DE CAJA", SwingConstants.CENTER);
+        lblTitulo.setFont(InformeUiTheme.FONT_TITLE);
+        lblTitulo.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        root.add(lblTitulo, BorderLayout.NORTH);
 
-		JPanel root = new JPanel(new BorderLayout(12, 12));
-		root.setBorder(new EmptyBorder(15, 15, 15, 15));
-		setContentPane(root);
+        JPanel panelCentral = new JPanel();
+        panelCentral.setOpaque(false);
+        panelCentral.setLayout(new BoxLayout(panelCentral, BoxLayout.Y_AXIS));
 
-		// -------- CABECERA --------
-		JLabel lblTitulo = new JLabel("CONTEO DE CAJA", SwingConstants.CENTER);
-		lblTitulo.setFont(new Font("Monospaced", Font.BOLD, 22));
-		root.add(lblTitulo, BorderLayout.NORTH);
+        txtCantidadContada = new JTextField();
+        txtCantidadContada.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(InformeUiTheme.BORDER),
+                "Efectivo contado (€)"
+        ));
+        txtCantidadContada.setMaximumSize(new Dimension(Integer.MAX_VALUE, 68));
+        txtCantidadContada.setFont(new Font("Monospaced", Font.BOLD, 28));
+        txtCantidadContada.setHorizontalAlignment(JTextField.RIGHT);
+        txtCantidadContada.setBackground(InformeUiTheme.CARD_BG_2);
+        txtCantidadContada.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        txtCantidadContada.setCaretColor(InformeUiTheme.TEXT_PRIMARY);
 
-		// -------- CUERPO --------
-		JPanel panelCentral = new JPanel();
-		panelCentral.setLayout(new BoxLayout(panelCentral, BoxLayout.Y_AXIS));
+        ((AbstractDocument) txtCantidadContada.getDocument()).setDocumentFilter(new MoneyDocumentFilter());
 
-		// Campo de importe con filtro de dinero
-		txtCantidadContada = new JTextField();
-		txtCantidadContada.setBorder(BorderFactory.createTitledBorder("Efectivo contado (€)"));
-		txtCantidadContada.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
-		txtCantidadContada.setFont(new Font("Monospaced", Font.BOLD, 28));
-		txtCantidadContada.setHorizontalAlignment(JTextField.RIGHT);
+        panelCentral.add(txtCantidadContada);
+        panelCentral.add(Box.createVerticalStrut(20));
 
-		// Filtro: solo números y máximo 2 decimales
-		((AbstractDocument) txtCantidadContada.getDocument()).setDocumentFilter(new MoneyDocumentFilter());
+        JPanel keypad = new JPanel(new GridLayout(4, 3, 8, 8));
+        keypad.setOpaque(false);
 
-		panelCentral.add(txtCantidadContada);
-		panelCentral.add(Box.createVerticalStrut(20));
+        String[] keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "←"};
+        for (String key : keys) {
+            keypad.add(createKeypadButton(key));
+        }
 
-		// -------- TECLADO NUMÉRICO --------
-		JPanel keypad = new JPanel(new GridLayout(4, 3, 8, 8));
+        panelCentral.add(keypad);
+        root.add(panelCentral, BorderLayout.CENTER);
 
-		String[] keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "←" };
+        JPanel panelBotones = new JPanel(new GridLayout(1, 2, 12, 0));
+        panelBotones.setOpaque(false);
+        panelBotones.setBorder(new EmptyBorder(20, 0, 0, 0));
 
-		for (String key : keys) {
-			keypad.add(createKeypadButton(key));
-		}
+        JButton btnCancelar = new JButton("Cancelar");
+        InformeUiTheme.styleSecondaryButton(btnCancelar);
 
-		panelCentral.add(keypad);
-		root.add(panelCentral, BorderLayout.CENTER);
+        JButton btnAceptar = new JButton("Aceptar");
+        InformeUiTheme.stylePrimaryButton(btnAceptar);
 
-		// -------- PIE --------
-		JPanel panelBotones = new JPanel(new GridLayout(1, 2, 12, 0));
-		panelBotones.setBorder(new EmptyBorder(20, 0, 0, 0));
+        btnCancelar.addActionListener(e -> dispose());
+        btnAceptar.addActionListener(e -> procesarAceptar());
 
-		JButton btnCancelar = new JButton("CANCELAR");
-		JButton btnAceptar = new JButton("ACEPTAR");
+        panelBotones.add(btnCancelar);
+        panelBotones.add(btnAceptar);
 
-		btnCancelar.setFont(new Font("Monospaced", Font.BOLD, 18));
-		btnAceptar.setFont(new Font("Monospaced", Font.BOLD, 18));
+        root.add(panelBotones, BorderLayout.SOUTH);
 
-		btnCancelar.setBackground(new Color(220, 180, 180));
-		btnAceptar.setBackground(new Color(180, 220, 180));
+        getRootPane().setDefaultButton(btnAceptar);
+        SwingUtilities.invokeLater(() -> txtCantidadContada.requestFocusInWindow());
+    }
 
-		btnCancelar.addActionListener(e -> dispose());
-		btnAceptar.addActionListener(e -> procesarAceptar());
+    private JButton createKeypadButton(String label) {
+        JButton b = new JButton(label);
+        b.setFont(new Font("Monospaced", Font.BOLD, 24));
+        b.setFocusable(false);
+        InformeUiTheme.styleSecondaryButton(b);
 
-		panelBotones.add(btnCancelar);
-		panelBotones.add(btnAceptar);
+        b.addActionListener(e -> {
+            if ("←".equals(label)) {
+                int len = txtCantidadContada.getText().length();
+                if (len > 0) {
+                    try {
+                        txtCantidadContada.getDocument().remove(len - 1, 1);
+                    } catch (Exception ignored) {
+                    }
+                }
+                return;
+            }
 
-		root.add(panelBotones, BorderLayout.SOUTH);
+            if (".".equals(label) && txtCantidadContada.getText().isEmpty()) {
+                txtCantidadContada.setText("0.");
+                return;
+            }
 
-		getRootPane().setDefaultButton(btnAceptar);
+            txtCantidadContada.replaceSelection(label);
+        });
 
-		SwingUtilities.invokeLater(() -> txtCantidadContada.requestFocusInWindow());
-	}
+        return b;
+    }
 
-	// ===============================
-	// BOTONES DEL TECLADO
-	// ===============================
-	private JButton createKeypadButton(String label) {
+    private void procesarAceptar() {
+        String texto = txtCantidadContada.getText().trim();
 
-		JButton b = new JButton(label);
-		b.setFont(new Font("Monospaced", Font.BOLD, 24));
-		b.setFocusable(false);
+        if (texto.isEmpty() || ".".equals(texto)) {
+            JOptionPane.showMessageDialog(this,
+                    "Debe introducir un importe válido",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-		b.addActionListener(e -> {
+        try {
+            BigDecimal valor = new BigDecimal(texto);
 
-			if ("←".equals(label)) {
-				// Backspace
-				int len = txtCantidadContada.getText().length();
-				if (len > 0) {
-					try {
-						txtCantidadContada.getDocument().remove(len - 1, 1);
-					} catch (Exception ignored) {
-					}
-				}
-				return;
-			}
+            if (valor.compareTo(BigDecimal.ZERO) < 0) {
+                throw new NumberFormatException();
+            }
 
-			if (".".equals(label) && txtCantidadContada.getText().isEmpty()) {
-				// UX: si pulsa "." al inicio → "0."
-				txtCantidadContada.setText("0.");
-				return;
-			}
+            importeSeleccionado = valor;
+            dispose();
 
-			txtCantidadContada.replaceSelection(label);
-		});
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Importe no válido (máx. 2 decimales)",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
-		return b;
-	}
+    public BigDecimal showDialog() {
+        setVisible(true);
+        return importeSeleccionado;
+    }
 
-	// ===============================
-	// ACEPTAR
-	// ===============================
-	private void procesarAceptar() {
+    private static class MoneyDocumentFilter extends DocumentFilter {
 
-		String texto = txtCantidadContada.getText().trim();
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                throws BadLocationException {
+            if (isValid(fb.getDocument().getText(0, fb.getDocument().getLength()), string, offset)) {
+                super.insertString(fb, offset, string, attr);
+            }
+        }
 
-		// No permitir vacío o solo "."
-		if (texto.isEmpty() || ".".equals(texto)) {
-			JOptionPane.showMessageDialog(this, "Debe introducir un importe válido", "Error",
-					JOptionPane.ERROR_MESSAGE);
-			return;
-		}
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                throws BadLocationException {
+            if (isValidAfterReplace(fb.getDocument().getText(0, fb.getDocument().getLength()), offset, length, text)) {
+                super.replace(fb, offset, length, text, attrs);
+            }
+        }
 
-		try {
-			BigDecimal valor = new BigDecimal(texto);
+        private boolean isValid(String currentText, String insert, int offset) {
+            StringBuilder sb = new StringBuilder(currentText);
+            sb.insert(offset, insert);
+            return sb.toString().matches("\\d*(\\.\\d{0,2})?");
+        }
 
-			// Seguridad extra
-			if (valor.compareTo(BigDecimal.ZERO) < 0) {
-				throw new NumberFormatException();
-			}
-
-			importeSeleccionado = valor;
-			dispose();
-
-		} catch (NumberFormatException ex) {
-			JOptionPane.showMessageDialog(this, "Importe no válido (máx. 2 decimales)", "Error",
-					JOptionPane.ERROR_MESSAGE);
-		}
-	}
-
-	// ===============================
-	// API PÚBLICA
-	// ===============================
-
-	/**
-	 * Muestra el diálogo y devuelve el importe contado.
-	 *
-	 * @return BigDecimal si se acepta, null si se cancela
-	 */
-	public BigDecimal showDialog() {
-		setVisible(true);
-		return importeSeleccionado;
-	}
-
-	// ===============================
-	// FILTRO DE DOCUMENTO (DINERO)
-	// ===============================
-	private static class MoneyDocumentFilter extends DocumentFilter {
-
-		@Override
-		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-				throws BadLocationException {
-
-			if (isValid(fb.getDocument().getText(0, fb.getDocument().getLength()),
-						string, 
-						offset)) {
-				super.insertString(fb, offset, string, attr);
-			}
-		}
-
-		@Override
-		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException {
-
-			if (isValid(fb.getDocument().getText(0, fb.getDocument().getLength()), 
-						text, 
-						offset)) {
-				super.replace(fb, offset, length, text, attrs);
-			}
-		}
-
-		/**
-		 * Valida: - solo números - un solo punto - máximo 2 decimales
-		 */
-		private boolean isValid(String currentText, String newText, int offset) {
-
-			if (!newText.matches("[0-9.]*"))
-				return false;
-
-			String result = new StringBuilder(currentText).insert(offset, newText).toString();
-
-			// Solo un punto
-			if (result.chars().filter(c -> c == '.').count() > 1)
-				return false;
-
-			// Máx. 2 decimales
-			return result.matches("\\d*(\\.\\d{0,2})?");
-		}
-	}
+        private boolean isValidAfterReplace(String currentText, int offset, int length, String replacement) {
+            StringBuilder sb = new StringBuilder(currentText);
+            sb.replace(offset, offset + length, replacement == null ? "" : replacement);
+            return sb.toString().matches("\\d*(\\.\\d{0,2})?");
+        }
+    }
 }

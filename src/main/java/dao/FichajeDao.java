@@ -2,44 +2,132 @@ package dao;
 
 import config.DbPool;
 import dtoS.FichajeActivoDTO;
+import dtoS.FichajeEmpleadoRowDTO;
 import enums.EstadoFichaje;
 import model.Fichaje;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class FichajeDao {
+	public List<FichajeEmpleadoRowDTO> findRowsByFiltro(Integer idSucursal, Integer idUsuario, String textoBusqueda,
+			String estado, LocalDate fechaDesde, LocalDate fechaHasta) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT ").append("f.id_fichaje, f.id_usuario, u.nombre AS nombre_empleado, ")
+				.append("f.id_sucursal, s.nombre AS nombre_sucursal, ")
+				.append("f.fecha_entrada, f.fecha_salida, f.duracion, f.estado, f.observaciones ")
+				.append("FROM fichaje f ").
+				append("JOIN usuario u ON u.id_usuario = f.id_usuario ")
+				.append("JOIN sucursal s ON s.id_sucursal = f.id_sucursal ")
+				.append("WHERE 1=1 ");
+
+		List<Object> params = new ArrayList<>();
+
+		if (idSucursal != null) {
+			sql.append("AND f.id_sucursal = ? ");
+			params.add(idSucursal);
+		}
+
+		if (idUsuario != null) {
+			sql.append("AND f.id_usuario = ? ");
+			params.add(idUsuario);
+		}
+
+		if (textoBusqueda != null && !textoBusqueda.trim().isEmpty()) {
+			sql.append("AND (u.nombre LIKE ? OR u.usuario LIKE ?) ");
+			String like = "%" + textoBusqueda.trim() + "%";
+			params.add(like);
+			params.add(like);
+		}
+
+		if (estado != null && !estado.trim().isEmpty() && !"TODOS".equalsIgnoreCase(estado)) {
+			sql.append("AND f.estado = ? ");
+			params.add(estado.trim());
+		}
+
+		if (fechaDesde != null) {
+			sql.append("AND DATE(f.fecha_entrada) >= ? ");
+			params.add(Date.valueOf(fechaDesde));
+		}
+
+		if (fechaHasta != null) {
+			sql.append("AND DATE(f.fecha_entrada) <= ? ");
+			params.add(Date.valueOf(fechaHasta));
+		}
+
+		sql.append("ORDER BY f.fecha_entrada DESC, f.id_fichaje DESC");
+
+		List<FichajeEmpleadoRowDTO> rows = new ArrayList<>();
+
+		try (Connection conn = DbPool.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+			for (int i = 0; i < params.size(); i++) {
+				ps.setObject(i + 1, params.get(i));
+			}
+
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					FichajeEmpleadoRowDTO dto = new FichajeEmpleadoRowDTO();
+					dto.setIdFichaje(rs.getInt("id_fichaje"));
+					dto.setIdUsuario(rs.getInt("id_usuario"));
+					dto.setNombreEmpleado(rs.getString("nombre_empleado"));
+					dto.setIdSucursal(rs.getInt("id_sucursal"));
+					dto.setNombreSucursal(rs.getString("nombre_sucursal"));
+
+					Timestamp tsEntrada = rs.getTimestamp("fecha_entrada");
+					dto.setFechaEntrada(tsEntrada != null ? tsEntrada.toLocalDateTime() : null);
+
+					Timestamp tsSalida = rs.getTimestamp("fecha_salida");
+					dto.setFechaSalida(tsSalida != null ? tsSalida.toLocalDateTime() : null);
+
+					int duracion = rs.getInt("duracion");
+					dto.setDuracionMinutos(rs.wasNull() ? null : duracion);
+
+					dto.setEstado(rs.getString("estado"));
+					dto.setObservaciones(rs.getString("observaciones"));
+
+					rows.add(dto);
+				}
+			}
+
+		} catch (SQLException e) {
+			throw new RuntimeException("Error al buscar fichajes filtrados.", e);
+		}
+
+		return rows;
+	}
 
 	// =========================================
 	// INSERTAR NUEVO FICHAJE (ENTRADA)
 	// =========================================
 	public void insert(Fichaje fichaje) {
-	    String sql = """
-	            INSERT INTO fichaje (id_usuario, id_sucursal, fecha_entrada, estado)
-	            VALUES (?, ?, NOW(), ?)
-	            """;
+		String sql = """
+				INSERT INTO fichaje (id_usuario, id_sucursal, fecha_entrada, estado)
+				VALUES (?, ?, NOW(), ?)
+				""";
 
-	    try (Connection conn = DbPool.getConnection();
-	         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+		try (Connection conn = DbPool.getConnection();
+				PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-	        ps.setInt(1, fichaje.getIdUsuario());
-	        ps.setInt(2, fichaje.getIdSucursal());
-	        ps.setString(3, fichaje.getEstado().name());
+			ps.setInt(1, fichaje.getIdUsuario());
+			ps.setInt(2, fichaje.getIdSucursal());
+			ps.setString(3, fichaje.getEstado().name());
 
-	        ps.executeUpdate();
+			ps.executeUpdate();
 
-	        try (ResultSet rs = ps.getGeneratedKeys()) {
-	            if (rs.next()) {
-	                fichaje.setIdFichaje(rs.getInt(1));
-	            }
-	        }
+			try (ResultSet rs = ps.getGeneratedKeys()) {
+				if (rs.next()) {
+					fichaje.setIdFichaje(rs.getInt(1));
+				}
+			}
 
-	    } catch (SQLException e) {
-	        throw new RuntimeException("Error insertando fichaje", e);
-	    }
+		} catch (SQLException e) {
+			throw new RuntimeException("Error insertando fichaje", e);
+		}
 	}
 
 	// =========================================

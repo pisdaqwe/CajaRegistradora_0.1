@@ -45,6 +45,7 @@ import model.Usuario;
 import service.AppServices;
 import service.ColaImpresionService.ColaRegistroItemCommand;
 import ui.common.BaseTpvFrame;
+import ui.common.InformeUiTheme;
 import ui.dialog.AskMeDialog;
 import ui.dialog.AskMeDialogResult;
 import ui.dialog.BuscarProductoDialog;
@@ -204,205 +205,225 @@ public class VentasFrame extends BaseTpvFrame {
 
 	private void buildUI(Runnable onBack) {
 
-		JPanel root = new JPanel(new BorderLayout(12, 12));
-		root.setBackground(new Color(20, 20, 20));
-		root.setBorder(new EmptyBorder(12, 12, 12, 12));
+	    JPanel root = new JPanel(new BorderLayout(12, 12));
+	    root.setOpaque(true);
+	    root.setBackground(InformeUiTheme.APP_BG);
+	    root.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-		// -------------------------------------------------
-		// NORTH: barra de categorías
-		// -------------------------------------------------
-		categoriasBarPanel = new CategoriasBarPanel();
-		root.add(categoriasBarPanel, BorderLayout.NORTH);
+	    // -------------------------------------------------
+	    // NORTH: barra de categorías
+	    // -------------------------------------------------
+	    categoriasBarPanel = new CategoriasBarPanel();
+	    root.add(wrapInCard(categoriasBarPanel, new Dimension(0, 112)), BorderLayout.NORTH);
+	    // -------------------------------------------------
+	    // CENTER: catálogo / custom / pago / opciones / descuentos
+	    // -------------------------------------------------
+	    centerPanel = new VentasCenterPanel(
+	            services,
+	            ticketSession,
+	            this::onProductoClicked,
+	            new NombrePedidoPanel.NombrePedidoListener() {
+	                @Override
+	                public void onContinuar(String nombrePedido, TipoServicio servicio) {
+	                    onNombrePedidoContinuar(nombrePedido, servicio);
+	                }
 
-		// -------------------------------------------------
-		// CENTER: catálogo / custom / pago / opciones / descuentos
-		// -------------------------------------------------
-		centerPanel = new VentasCenterPanel(services, ticketSession, this::onProductoClicked,
-				new NombrePedidoPanel.NombrePedidoListener() {
-					@Override
-					public void onContinuar(String nombrePedido, TipoServicio servicio) {
-						onNombrePedidoContinuar(nombrePedido, servicio);
-					}
+	                @Override
+	                public void onVolver() {
+	                    onVolverDesdeNombrePedido();
+	                }
+	            },
+	            new PagoPanel.PagoPanelListener() {
+	                @Override
+	                public void onVolver() {
+	                    onVolverDesdePago();
+	                }
 
-					@Override
-					public void onVolver() {
-						onVolverDesdeNombrePedido();
-					}
-				}, new PagoPanel.PagoPanelListener() {
-					@Override
-					public void onVolver() {
-						onVolverDesdePago();
-					}
+	                @Override
+	                public void onCobroEfectivo(BigDecimal importeRecibido) {
+	                    onPagoEfectivo(importeRecibido);
+	                }
 
-					@Override
-					public void onCobroEfectivo(BigDecimal importeRecibido) {
-						onPagoEfectivo(importeRecibido);
-					}
+	                @Override
+	                public void onCobroEfectivoExacto() {
+	                    onPagoEfectivoExacto();
+	                }
+	            }
+	    );
 
-					@Override
-					public void onCobroEfectivoExacto() {
-						onPagoEfectivoExacto();
-					}
-				});
-		root.add(centerPanel, BorderLayout.CENTER);
+	    centerPanel.setCustomizationActionListener(new CustomizationCenterPanel.CustomizationActionListener() {
+	        @Override
+	        public void onExtraClicked(ExtraDTO extra) {
+	            onCenterExtraClicked(extra);
+	        }
 
-		centerPanel.setCustomizationActionListener(new CustomizationCenterPanel.CustomizationActionListener() {
-			@Override
-			public void onExtraClicked(ExtraDTO extra) {
-				onCenterExtraClicked(extra);
-			}
+	        @Override
+	        public void onPersonalizacionClicked(PersonalizacionDTO personalizacion) {
+	            onCenterPersonalizacionClicked(personalizacion);
+	        }
 
-			@Override
-			public void onPersonalizacionClicked(PersonalizacionDTO personalizacion) {
-				onCenterPersonalizacionClicked(personalizacion);
-			}
+	        @Override
+	        public void onTipoCafeClicked(TipoCafeDTO tipoCafe) {
+	            onCenterTipoCafeClicked(tipoCafe);
+	        }
 
-			/**
-			 * NUEVO: callback cuando el usuario pulsa un tipo de café en la nueva card CAFE
-			 * del panel central.
-			 */
-			@Override
-			public void onTipoCafeClicked(TipoCafeDTO tipoCafe) {
-				onCenterTipoCafeClicked(tipoCafe);
-			}
+	        @Override
+	        public void onAskMeClicked() {
+	            VentasFrame.this.onAskMeClicked();
+	        }
+	    });
 
-			@Override
-			public void onAskMeClicked() {
-				VentasFrame.this.onAskMeClicked();
-			}
-		});
+	    centerPanel.setOpcionesActionListener(new OpcionesActionListener() {
+	        @Override
+	        public void onDuplicarClicked() {
+	            onDuplicar();
+	        }
 
-		centerPanel.setOpcionesActionListener(new OpcionesActionListener() {
-			@Override
-			public void onDuplicarClicked() {
-				onDuplicar();
-			}
+	        @Override
+	        public void onSkuClicked() {
+	            onSku();
+	        }
 
-			@Override
-			public void onSkuClicked() {
-				onSku();
-			}
+	        @Override
+	        public void onBuscarProductoClicked() {
+	            onBuscarProducto();
+	        }
 
-			@Override
-			public void onBuscarProductoClicked() {
-				onBuscarProducto();
-			}
+	        @Override
+	        public void onDisponibilidadClicked() {
+	            onDisponibilidad();
+	        }
 
-			@Override
-			public void onDisponibilidadClicked() {
-				onDisponibilidad();
-			}
+	        @Override
+	        public void onStockClicked() {
+	            onStock();
+	        }
 
-			@Override
-			public void onStockClicked() {
-				onStock();
-			}
+	        @Override
+	        public void onDescuentosClicked() {
+	            onDescuentos();
+	        }
 
-			@Override
-			public void onDescuentosClicked() {
-				onDescuentos();
-			}
+	        @Override
+	        public void onReimprimirClicked() {
+	            onReimprimir();
+	        }
 
-			@Override
-			public void onReimprimirClicked() {
-				onReimprimir();
-			}
+	        @Override
+	        public void onUltimosTicketsClicked() {
+	            onUltimosTickets();
+	        }
 
-			@Override
-			public void onUltimosTicketsClicked() {
-				onUltimosTickets();
-			}
+	        @Override
+	        public void onDevolucionesClicked() {
+	            onDevoluciones();
+	        }
 
-			@Override
-			public void onDevolucionesClicked() {
-				onDevoluciones();
-			}
+	        @Override
+	        public void onVolverAdminClicked() {
+	            onVolverAdmin();
+	        }
 
-			@Override
-			public void onVolverAdminClicked() {
-				onVolverAdmin();
-			}
+	        @Override
+	        public void onVolverClicked() {
+	            onVolverDesdeOpciones();
+	        }
 
-			@Override
-			public void onVolverClicked() {
-				onVolverDesdeOpciones();
-			}
+	        @Override
+	        public void onNuevoPedidoClicked() {
+	            onNuevoPedido();
+	        }
 
-			@Override
-			public void onNuevoPedidoClicked() {
-				onNuevoPedido();
-			}
+	        @Override
+	        public void onCerrarSesionClicked() {
+	            onCerrarSesion();
+	        }
 
-			@Override
-			public void onCerrarSesionClicked() {
-				onCerrarSesion();
-			}
+	        @Override
+	        public void onMermaClicked() {
+	            onMerma();
+	        }
+	    });
 
-			@Override
-			public void onMermaClicked() {
-				onMerma();
-			}
-		});
+	    centerPanel.setDescuentoActionListener(new DescuentoPanel.DescuentoActionListener() {
+	        @Override
+	        public void onAplicarCodigoPromocionalClicked() {
+	            onAplicarCodigoPromocional();
+	        }
 
-		centerPanel.setDescuentoActionListener(new DescuentoPanel.DescuentoActionListener() {
-			@Override
-			public void onAplicarCodigoPromocionalClicked() {
-				onAplicarCodigoPromocional();
-			}
+	        @Override
+	        public void onAplicarDescuentoEmpleadoClicked() {
+	            onAplicarDescuentoEmpleado();
+	        }
 
-			@Override
-			public void onAplicarDescuentoEmpleadoClicked() {
-				onAplicarDescuentoEmpleado();
-			}
+	        @Override
+	        public void onQuitarDescuentoClicked() {
+	            onQuitarDescuentoActual();
+	        }
 
-			@Override
-			public void onQuitarDescuentoClicked() {
-				onQuitarDescuentoActual();
-			}
+	        @Override
+	        public void onVolverClicked() {
+	            onVolverDesdeDescuentos();
+	        }
+	    });
 
-			@Override
-			public void onVolverClicked() {
-				onVolverDesdeDescuentos();
-			}
-		});
+	    root.add(wrapInCard(centerPanel, null), BorderLayout.CENTER);
 
-		// -------------------------------------------------
-		// EAST: customización lateral + ticket
-		// -------------------------------------------------
-		JPanel east = new JPanel(new BorderLayout(12, 12));
-		east.setOpaque(false);
-		east.setPreferredSize(new Dimension(520, 0));
+	    // -------------------------------------------------
+	    // EAST: customización lateral + ticket
+	    // -------------------------------------------------
+	    ticketPanel = new TicketPanel(ticketSession, this::onTicketSelectionChanged);
 
-		ticketPanel = new TicketPanel(ticketSession, this::onTicketSelectionChanged);
+	    customizationPanel = new CustomizationPanel(
+	            ticketSession,
+	            services,
+	            card -> centerPanel.showCustomCard(card),
+	            this::onTamanoSelected
+	    );
 
-		customizationPanel = new CustomizationPanel(ticketSession, services, card -> centerPanel.showCustomCard(card),
-				this::onTamanoSelected);
+	    root.add(buildEastPanel(), BorderLayout.EAST);
 
-		JPanel customWrap = new JPanel(new BorderLayout());
-		customWrap.setOpaque(false);
-		customWrap.setPreferredSize(new Dimension(170, 0));
-		customWrap.add(customizationPanel, BorderLayout.CENTER);
+	    // -------------------------------------------------
+	    // SOUTH: barra inferior de acciones
+	    // -------------------------------------------------
+	    bottomBarPanel = new BottomBarPanel(
+	            ticketSession,
+	            modoOperacion,
+	            this::onCobrar,
+	            this::onCancelar,
+	            this::onOpciones,
+	            this::onDescuentos,
+	            this::onEliminar
+	    );
 
-		east.add(customWrap, BorderLayout.WEST);
-		east.add(ticketPanel, BorderLayout.CENTER);
+	    root.add(wrapInCard(bottomBarPanel, null), BorderLayout.SOUTH);
 
-		root.add(east, BorderLayout.EAST);
+	    main.add(root, BorderLayout.CENTER);
+	}
+	private JPanel wrapInCard(JComponent content, Dimension preferredSize) {
+	    JPanel wrapper = InformeUiTheme.createCardPanel(new BorderLayout());
+	    wrapper.add(content, BorderLayout.CENTER);
 
-		// -------------------------------------------------
-		// SOUTH: barra inferior de acciones
-		// -------------------------------------------------
-		bottomBarPanel = new BottomBarPanel(
-		        ticketSession,
-		        modoOperacion,
-		        this::onCobrar,
-		        this::onCancelar,
-		        this::onOpciones,
-		        this::onDescuentos,
-		        this::onEliminar
-		);
-		root.add(bottomBarPanel, BorderLayout.SOUTH);
+	    if (preferredSize != null) {
+	        wrapper.setPreferredSize(preferredSize);
+	    }
 
-		main.add(root, BorderLayout.CENTER);
+	    return wrapper;
+	}
+	private JPanel buildEastPanel() {
+	    JPanel east = new JPanel(new BorderLayout(12, 12));
+	    east.setOpaque(false);
+	    east.setPreferredSize(new Dimension(540, 0));
+
+	    JPanel customWrap = wrapInCard(customizationPanel, null);
+	    customWrap.setPreferredSize(new Dimension(180, 0));
+
+	    JPanel ticketWrap = wrapInCard(ticketPanel, null);
+
+	    east.add(customWrap, BorderLayout.WEST);
+	    east.add(ticketWrap, BorderLayout.CENTER);
+
+	    return east;
 	}
 
 	// =====================================================
@@ -1825,13 +1846,36 @@ public class VentasFrame extends BaseTpvFrame {
 	// =====================================================
 
 	private void refreshAll() {
-		ticketPanel.refreshFromTicket();
-		customizationPanel.refresh();
-		bottomBarPanel.refresh();
+	    ticketPanel.refreshFromTicket();
+	    customizationPanel.refresh();
+	    bottomBarPanel.refresh();
 
-		if (centerPanel != null && centerPanel.getDescuentoPanel() != null) {
-			centerPanel.getDescuentoPanel().refresh();
-		}
+	    if (centerPanel != null && centerPanel.getDescuentoPanel() != null) {
+	        centerPanel.getDescuentoPanel().refresh();
+	    }
+
+	    if (centerPanel != null) {
+	        centerPanel.revalidate();
+	        centerPanel.repaint();
+	    }
+
+	    if (ticketPanel != null) {
+	        ticketPanel.revalidate();
+	        ticketPanel.repaint();
+	    }
+
+	    if (customizationPanel != null) {
+	        customizationPanel.revalidate();
+	        customizationPanel.repaint();
+	    }
+
+	    if (bottomBarPanel != null) {
+	        bottomBarPanel.revalidate();
+	        bottomBarPanel.repaint();
+	    }
+
+	    main.revalidate();
+	    main.repaint();
 	}
 
 	private boolean isAdminActual() {

@@ -173,9 +173,10 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	}
 
 	private void onEmpleados() {
-		this.setVisible(false);
-		EmpleadoMenuFrame frame = new EmpleadoMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
-		frame.setVisible(true);
+		
+		 EmpleadoMenuFrame frame = new EmpleadoMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services );
+		    frame.setVisible(true);
+		    setVisible(false);
 	}
 
 	private void onConfig() {

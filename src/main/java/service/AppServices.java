@@ -123,10 +123,16 @@ public class AppServices {
    
     public final InformesService informesService;
     public final SucursalService sucursalService;
+    
+    
+    public final RolService rolService;
+    
 
     // =====================================================
     // 9) CONSTRUCTOR
     // =====================================================
+    
+    
 
     public AppServices(
             AuthService authService,
@@ -156,7 +162,8 @@ public class AppServices {
 
             MermaFacade mermaFacade,
             InformesService informesService,
-            SucursalService sucursalService
+            SucursalService sucursalService,
+            RolService rolService
     ) {
         // -----------------------------
         // 1) Servicios generales
@@ -213,6 +220,8 @@ public class AppServices {
         // -----------------------------
         this.informesService = informesService;
         this.sucursalService = sucursalService;
+        
+        this.rolService = rolService;
     }
 
     // =====================================================
@@ -241,4 +250,6 @@ public class AppServices {
     public List<ComboDefinition> getCombosActivosCache() {
         return Collections.unmodifiableList(combosActivosCache);
     }
+    
+    
 }

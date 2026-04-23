@@ -1,71 +1,48 @@
 package ui.dialog;
 
-import java.awt.*;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-
 import app.AppContext;
 import dtoS.CajaEstadoDTO;
 import dtoS.CierreCajaResumenDTO;
 import model.SesionCaja;
 import model.Usuario;
 import service.AppServices;
+import ui.common.InformeUiTheme;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 
 public class CerrarSesionCajaDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
+    private static final DecimalFormat MONEY = new DecimalFormat("#,##0.00");
 
-    // ==================================================
-    // Infraestructura
-    // ==================================================
     private final AppServices appServices;
 
-    // ==================================================
-    // Estado de negocio (flujo)
-    // ==================================================
     private CajaEstadoDTO cajaSeleccionada;
     private SesionCaja sesionAbierta;
     private Usuario empleadoValidado;
     private CierreCajaResumenDTO resumenCierre;
 
-    private static final DecimalFormat MONEY = new DecimalFormat("#,##0.00");
-
     private BigDecimal importeContado;
     private BigDecimal importeEsperado;
     private BigDecimal desfase;
 
-    // ==================================================
-    // Componentes UI
-    // ==================================================
-
-    // --- Cajas ---
     private JPanel panelCajas;
     private ButtonGroup grupoCajas;
 
-    private static final Color COLOR_CAJA_OCUPADA = new Color(170, 60, 60);
-    private static final Color COLOR_CAJA_SELECCIONADA = new Color(210, 120, 60);
-
-    // --- Empleado ---
     private JTextField txtCodigoEmpleado;
     private JLabel lblEmpleadoValidado;
 
-    // --- Conteo ---
     private JTextField txtImporteContado;
     private JButton btnComprobar;
 
-    // --- Mini-ticket ---
     private JPanel panelResumen;
 
-    // --- Footer ---
     private JButton btnConfirmar;
-    private JButton btnCancelar;
 
-    // ==================================================
-    // CONSTRUCTOR
-    // ==================================================
     public CerrarSesionCajaDialog(Window owner, AppServices appServices) {
         super(owner, "Cerrar sesión de caja", ModalityType.APPLICATION_MODAL);
         this.appServices = appServices;
@@ -73,18 +50,14 @@ public class CerrarSesionCajaDialog extends JDialog {
         buildUI();
         cargarEstadoInicial();
 
-        setSize(900, 650);
+        setSize(980, 890);
         setLocationRelativeTo(owner);
     }
 
-    // ==================================================
-    // CONSTRUCCIÓN UI
-    // ==================================================
-
     private void buildUI() {
-        JPanel root = new JPanel(new BorderLayout(16, 16));
+        JPanel root = new JPanel(new BorderLayout(12, 12));
         root.setBorder(new EmptyBorder(16, 16, 16, 16));
-        root.setBackground(new Color(25, 25, 25));
+        root.setBackground(InformeUiTheme.APP_BG);
         setContentPane(root);
 
         root.add(buildHeader(), BorderLayout.NORTH);
@@ -93,16 +66,26 @@ public class CerrarSesionCajaDialog extends JDialog {
     }
 
     private JComponent buildHeader() {
-        JLabel titulo = new JLabel("CERRAR SESIÓN DE CAJA");
-        titulo.setFont(new Font("Arial", Font.BOLD, 20));
-        titulo.setForeground(Color.WHITE);
-        return titulo;
+        JPanel panel = new JPanel(new GridLayout(2, 1, 0, 4));
+        panel.setOpaque(false);
+
+        JLabel title = new JLabel("Cerrar sesión de caja");
+        title.setFont(InformeUiTheme.FONT_TITLE);
+        title.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel subtitle = new JLabel("Valida al empleado, cuenta efectivo y confirma el cierre");
+        subtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
+        subtitle.setForeground(InformeUiTheme.ACCENT_GOLD);
+
+        panel.add(title);
+        panel.add(subtitle);
+        return panel;
     }
 
     private JComponent buildCenter() {
         JPanel center = new JPanel();
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
         center.setOpaque(false);
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 
         center.add(buildCajasPanel());
         center.add(Box.createVerticalStrut(12));
@@ -115,14 +98,11 @@ public class CerrarSesionCajaDialog extends JDialog {
         return center;
     }
 
-    // ==================================================
-    // PANEL CAJAS
-    // ==================================================
-
     private JComponent buildCajasPanel() {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBorder(BorderFactory.createTitledBorder("Cajas con sesión abierta"));
-        wrapper.setOpaque(false);
+        JPanel wrapper = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
+
+        JLabel title = InformeUiTheme.createSectionTitle("Cajas con sesión abierta");
+        wrapper.add(title, BorderLayout.NORTH);
 
         panelCajas = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 12));
         panelCajas.setOpaque(false);
@@ -131,16 +111,13 @@ public class CerrarSesionCajaDialog extends JDialog {
         return wrapper;
     }
 
-    // ==================================================
-    // PANEL EMPLEADO
-    // ==================================================
-
     private JComponent buildEmpleadoPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
-        panel.setBorder(BorderFactory.createTitledBorder("Validación del empleado"));
-        panel.setOpaque(false);
+        JPanel panel = InformeUiTheme.createCardPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+
+        panel.add(InformeUiTheme.createFieldLabel("Código empleado:"));
 
         txtCodigoEmpleado = new JTextField(10);
+        InformeUiTheme.styleTextField(txtCodigoEmpleado);
         txtCodigoEmpleado.setEditable(false);
         txtCodigoEmpleado.setEnabled(false);
 
@@ -154,63 +131,51 @@ public class CerrarSesionCajaDialog extends JDialog {
         });
 
         lblEmpleadoValidado = new JLabel(" ");
-        lblEmpleadoValidado.setFont(new Font("Monospaced", Font.BOLD, 14));
-        lblEmpleadoValidado.setForeground(Color.GRAY);
+        lblEmpleadoValidado.setFont(InformeUiTheme.FONT_BODY);
+        lblEmpleadoValidado.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        panel.add(new JLabel("Código empleado:"));
         panel.add(txtCodigoEmpleado);
         panel.add(lblEmpleadoValidado);
 
         return panel;
     }
 
-    // ==================================================
-    // PANEL CONTEO
-    // ==================================================
-
     private JComponent buildConteoPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
-        panel.setBorder(BorderFactory.createTitledBorder("Conteo de caja"));
-        panel.setOpaque(false);
+        JPanel panel = InformeUiTheme.createCardPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+
+        panel.add(InformeUiTheme.createFieldLabel("Importe contado (€):"));
 
         txtImporteContado = new JTextField(10);
+        InformeUiTheme.styleTextField(txtImporteContado);
         txtImporteContado.setEnabled(false);
 
         btnComprobar = new JButton("Comprobar");
+        InformeUiTheme.stylePrimaryButton(btnComprobar);
         btnComprobar.setEnabled(false);
         btnComprobar.addActionListener(e -> abrirDialogoConteo());
 
-        panel.add(new JLabel("Importe contado (€):"));
         panel.add(txtImporteContado);
         panel.add(btnComprobar);
 
         return panel;
     }
 
-    // ==================================================
-    // PANEL RESUMEN
-    // ==================================================
-
     private JComponent buildResumenPanel() {
-        panelResumen = new JPanel();
-        panelResumen.setBorder(BorderFactory.createTitledBorder("Resumen de cierre"));
-        panelResumen.setOpaque(false);
+        panelResumen = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
         panelResumen.setVisible(false);
         return panelResumen;
     }
-
-    // ==================================================
-    // FOOTER
-    // ==================================================
 
     private JComponent buildFooter() {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
         footer.setOpaque(false);
 
-        btnCancelar = new JButton("Cancelar");
+        JButton btnCancelar = new JButton("Cancelar");
+        InformeUiTheme.styleSecondaryButton(btnCancelar);
         btnCancelar.addActionListener(e -> dispose());
 
         btnConfirmar = new JButton("Confirmar cierre");
+        InformeUiTheme.styleDangerButton(btnConfirmar);
         btnConfirmar.setEnabled(false);
         btnConfirmar.addActionListener(e -> confirmarCierreCaja());
 
@@ -219,48 +184,12 @@ public class CerrarSesionCajaDialog extends JDialog {
         return footer;
     }
 
-    // ==================================================
-    // ESTADO INICIAL
-    // ==================================================
-
     private void cargarEstadoInicial() {
-        resetEstadoDialogo();
-        cargarCajasOcupadas();
-    }
-
-    private void resetEstadoDialogo() {
-        cajaSeleccionada = null;
-        sesionAbierta = null;
-        empleadoValidado = null;
-        resumenCierre = null;
-
-        importeContado = null;
-        importeEsperado = null;
-        desfase = null;
-
-        txtCodigoEmpleado.setText("");
-        txtCodigoEmpleado.setEnabled(false);
-
-        txtImporteContado.setText("");
-        txtImporteContado.setEnabled(false);
-
-        btnComprobar.setEnabled(false);
-        btnConfirmar.setEnabled(false);
-
-        panelResumen.setVisible(false);
-        lblEmpleadoValidado.setText(" ");
-    }
-
-    // ==================================================
-    // CARGA Y SELECCIÓN DE CAJAS
-    // ==================================================
-
-    private void cargarCajasOcupadas() {
         panelCajas.removeAll();
         grupoCajas = new ButtonGroup();
+        cajaSeleccionada = null;
 
-        appServices.sesionCajaService.getEstadoCajas()
-                .stream()
+        appServices.sesionCajaService.getEstadoCajas().stream()
                 .filter(CajaEstadoDTO::isOcupada)
                 .forEach(caja -> {
                     JToggleButton btn = crearBotonCaja(caja);
@@ -268,26 +197,28 @@ public class CerrarSesionCajaDialog extends JDialog {
                     panelCajas.add(btn);
                 });
 
-        panelCajas.revalidate();
         if (panelCajas.getComponentCount() == 0) {
             JLabel lbl = new JLabel("No hay sesiones de caja abiertas");
-            lbl.setForeground(Color.LIGHT_GRAY);
+            lbl.setForeground(InformeUiTheme.TEXT_SECONDARY);
             panelCajas.add(lbl);
         }
 
+        panelCajas.revalidate();
         panelCajas.repaint();
     }
 
     private JToggleButton crearBotonCaja(CajaEstadoDTO caja) {
         JToggleButton btn = new JToggleButton();
-        btn.setPreferredSize(new Dimension(170, 75));
+        btn.setPreferredSize(new Dimension(185, 82));
         btn.setFocusPainted(false);
-        btn.setForeground(Color.WHITE);
-        btn.setBackground(COLOR_CAJA_OCUPADA);
+        btn.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        btn.setFont(InformeUiTheme.FONT_BODY);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBackground(new Color(140, 56, 56));
+        btn.setBorder(InformeUiTheme.createInnerCardBorder());
 
         String texto = "<html><center><b>" + caja.getNombreCaja() + "</b><br/>"
-                + "Ocupada<br/>("
-                + caja.getEmpleadoAsignado() + ")</center></html>";
+                + "Ocupada<br/>(" + safe(caja.getEmpleadoAsignado()) + ")</center></html>";
         btn.setText(texto);
 
         btn.addActionListener(e -> onCajaSeleccionada(caja, btn));
@@ -299,10 +230,10 @@ public class CerrarSesionCajaDialog extends JDialog {
 
         for (Component c : panelCajas.getComponents()) {
             if (c instanceof JToggleButton btn) {
-                btn.setBackground(COLOR_CAJA_OCUPADA);
+                btn.setBackground(new Color(140, 56, 56));
             }
         }
-        botonSeleccionado.setBackground(COLOR_CAJA_SELECCIONADA);
+        botonSeleccionado.setBackground(new Color(189, 110, 65));
 
         sesionAbierta = null;
         empleadoValidado = null;
@@ -321,12 +252,14 @@ public class CerrarSesionCajaDialog extends JDialog {
         panelResumen.setVisible(false);
     }
 
-    // ==================================================
-    // VALIDACIÓN EMPLEADO
-    // ==================================================
-
     private void abrirTecladoEmpleado() {
-        PinDialogResult result = abrirDialogoPin();
+        PinDialog dialog = new PinDialog(
+                (JFrame) SwingUtilities.getWindowAncestor(this),
+                PinDialog.PinDialogMode.LOGIN_RAPIDO,
+                "Empleado sesión"
+        );
+
+        PinDialogResult result = dialog.showDialog();
         if (result == null) {
             return;
         }
@@ -338,15 +271,6 @@ public class CerrarSesionCajaDialog extends JDialog {
 
         txtCodigoEmpleado.setText(codigo);
         validarEmpleadoSesion(codigo);
-    }
-
-    private PinDialogResult abrirDialogoPin() {
-        PinDialog dialog = new PinDialog(
-                (JFrame) SwingUtilities.getWindowAncestor(this),
-                PinDialog.PinDialogMode.LOGIN_RAPIDO,
-                "Empleado sesión"
-        );
-        return dialog.showDialog();
     }
 
     private void validarEmpleadoSesion(String codigo) {
@@ -364,14 +288,20 @@ public class CerrarSesionCajaDialog extends JDialog {
             }
 
             empleadoValidado = usuario;
-            mostrarEmpleadoValidado();
-            habilitarConteoCaja();
+            lblEmpleadoValidado.setText(
+                    "✔ Empleado validado: " + empleadoValidado.getNombre() +
+                    " (" + empleadoValidado.getUsuario() + ")"
+            );
+            lblEmpleadoValidado.setForeground(new Color(105, 197, 125));
+
+            txtImporteContado.setEnabled(true);
+            btnComprobar.setEnabled(true);
 
         } catch (Exception ex) {
             empleadoValidado = null;
             txtCodigoEmpleado.setText("");
             lblEmpleadoValidado.setText("✖ " + ex.getMessage());
-            lblEmpleadoValidado.setForeground(Color.RED);
+            lblEmpleadoValidado.setForeground(InformeUiTheme.DANGER);
 
             JOptionPane.showMessageDialog(
                     this,
@@ -380,19 +310,6 @@ public class CerrarSesionCajaDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE
             );
         }
-    }
-
-    private void mostrarEmpleadoValidado() {
-        lblEmpleadoValidado.setText(
-                "✔ Empleado validado: " + empleadoValidado.getNombre()
-                        + " (" + empleadoValidado.getUsuario() + ")"
-        );
-        lblEmpleadoValidado.setForeground(new Color(0, 180, 0));
-    }
-
-    private void habilitarConteoCaja() {
-        txtImporteContado.setEnabled(true);
-        btnComprobar.setEnabled(true);
     }
 
     private void abrirDialogoConteo() {
@@ -414,35 +331,31 @@ public class CerrarSesionCajaDialog extends JDialog {
 
     private void mostrarResultadoConteo() {
         panelResumen.removeAll();
-        panelResumen.setLayout(new BorderLayout());
+        panelResumen.setLayout(new BorderLayout(8, 8));
+
+        JLabel title = InformeUiTheme.createSectionTitle(
+                desfase.compareTo(BigDecimal.ZERO) == 0
+                        ? "Resumen de cierre"
+                        : "Resumen de cierre (descuadre)"
+        );
 
         JTextArea areaTicket = new JTextArea(generarTicketCierre());
         areaTicket.setEditable(false);
         areaTicket.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        areaTicket.setBackground(new Color(245, 245, 245));
-        areaTicket.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        if (desfase.compareTo(BigDecimal.ZERO) != 0) {
-            areaTicket.setForeground(Color.RED);
-            panelResumen.setBorder(
-                    BorderFactory.createTitledBorder(
-                            BorderFactory.createLineBorder(Color.RED, 2),
-                            "Resumen de cierre (DESCUADRE)"
-                    )
-            );
-        } else {
-            areaTicket.setForeground(new Color(0, 140, 0));
-            panelResumen.setBorder(
-                    BorderFactory.createTitledBorder("Resumen de cierre")
-            );
-        }
+        areaTicket.setBackground(InformeUiTheme.CARD_BG_2);
+        areaTicket.setForeground(
+                desfase.compareTo(BigDecimal.ZERO) == 0
+                        ? InformeUiTheme.TEXT_PRIMARY
+                        : new Color(255, 190, 190)
+        );
+        areaTicket.setBorder(InformeUiTheme.createInnerCardBorder());
 
         JScrollPane scroll = new JScrollPane(areaTicket);
-        scroll.setBorder(null);
+        InformeUiTheme.styleScrollPane(scroll);
 
+        panelResumen.add(title, BorderLayout.NORTH);
         panelResumen.add(scroll, BorderLayout.CENTER);
         panelResumen.setVisible(true);
-
         panelResumen.revalidate();
         panelResumen.repaint();
     }
@@ -452,19 +365,10 @@ public class CerrarSesionCajaDialog extends JDialog {
 
         sb.append("CIERRE DE CAJA\n");
         sb.append("================================\n");
-
-        sb.append("Caja: ")
-          .append(cajaSeleccionada.getNombreCaja())
-          .append("\n");
-
-        sb.append("Empleado sesión: ")
-          .append(empleadoValidado.getNombre())
-          .append(" (").append(empleadoValidado.getUsuario()).append(")\n");
-
-        sb.append("Apertura: ")
-          .append(sesionAbierta.getFechaApertura())
-          .append("\n");
-
+        sb.append("Caja: ").append(cajaSeleccionada.getNombreCaja()).append("\n");
+        sb.append("Empleado sesión: ").append(empleadoValidado.getNombre())
+                .append(" (").append(empleadoValidado.getUsuario()).append(")\n");
+        sb.append("Apertura: ").append(sesionAbierta.getFechaApertura()).append("\n");
         sb.append("--------------------------------\n");
         sb.append("IMPORTE INICIAL:      ").append(fmt(resumenCierre.getImporteInicial())).append(" €\n");
         sb.append("VENTAS EFECTIVO:      ").append(fmt(resumenCierre.getVentasEfectivo())).append(" €\n");
@@ -491,12 +395,10 @@ public class CerrarSesionCajaDialog extends JDialog {
 
     private void confirmarCierreCaja() {
         if (importeContado == null || resumenCierre == null) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(this,
                     "Debe comprobar el conteo antes de cerrar la caja.",
                     "Cierre de caja",
-                    JOptionPane.WARNING_MESSAGE
-            );
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -520,22 +422,22 @@ public class CerrarSesionCajaDialog extends JDialog {
                     AppContext.getUsuarioId()
             );
 
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(this,
                     "Caja cerrada correctamente",
                     "Cierre de caja",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+                    JOptionPane.INFORMATION_MESSAGE);
 
             dispose();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
                     "Error al cerrar caja",
-                    JOptionPane.ERROR_MESSAGE
-            );
+                    JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 }
