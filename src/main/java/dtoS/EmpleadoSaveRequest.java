@@ -4,8 +4,10 @@ package dtoS;
  * DTO usado para alta y edición de empleados.
  *
  * Responsabilidades:
- * - Recoger los datos del formulario.
- * - Permitir al service distinguir entre ALTA y EDICIÓN.
+ * - recoger los datos del formulario
+ * - permitir al service distinguir entre ALTA y EDICIÓN
+ * - transportar el admin/encargado que ejecuta la acción
+ * - transportar la sucursal desde la que se realiza
  */
 public class EmpleadoSaveRequest {
 
@@ -18,6 +20,9 @@ public class EmpleadoSaveRequest {
     private int idSucursal;
     private boolean activo;
 
+    private int idUsuarioAdmin;
+    private int idSucursalAdmin;
+
     public EmpleadoSaveRequest() {
     }
 
@@ -28,7 +33,9 @@ public class EmpleadoSaveRequest {
                                String confirmarPin,
                                int idRol,
                                int idSucursal,
-                               boolean activo) {
+                               boolean activo,
+                               int idUsuarioAdmin,
+                               int idSucursalAdmin) {
         this.idUsuario = idUsuario;
         this.nombre = nombre;
         this.usuario = usuario;
@@ -37,6 +44,8 @@ public class EmpleadoSaveRequest {
         this.idRol = idRol;
         this.idSucursal = idSucursal;
         this.activo = activo;
+        this.idUsuarioAdmin = idUsuarioAdmin;
+        this.idSucursalAdmin = idSucursalAdmin;
     }
 
     public Integer getIdUsuario() {
@@ -103,6 +112,22 @@ public class EmpleadoSaveRequest {
         this.activo = activo;
     }
 
+    public int getIdUsuarioAdmin() {
+        return idUsuarioAdmin;
+    }
+
+    public void setIdUsuarioAdmin(int idUsuarioAdmin) {
+        this.idUsuarioAdmin = idUsuarioAdmin;
+    }
+
+    public int getIdSucursalAdmin() {
+        return idSucursalAdmin;
+    }
+
+    public void setIdSucursalAdmin(int idSucursalAdmin) {
+        this.idSucursalAdmin = idSucursalAdmin;
+    }
+
     public boolean isAlta() {
         return idUsuario == null || idUsuario <= 0;
     }
@@ -120,6 +145,8 @@ public class EmpleadoSaveRequest {
                 ", idRol=" + idRol +
                 ", idSucursal=" + idSucursal +
                 ", activo=" + activo +
+                ", idUsuarioAdmin=" + idUsuarioAdmin +
+                ", idSucursalAdmin=" + idSucursalAdmin +
                 '}';
     }
 }

@@ -13,22 +13,21 @@ import model.Rol;
 import model.Usuario;
 import util.HashUtil;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * Service de gestión de usuarios / empleados.
  *
  * Responsabilidades:
- * - Búsqueda y filtrado de empleados.
- * - Obtención de detalle ampliado.
- * - Alta y edición de empleados.
- * - Activación / desactivación.
- * - Reset de PIN.
- *
- * NO debe:
- * - Contener lógica de UI.
- * - Construir SQL.
+ * - búsqueda y filtrado de empleados
+ * - detalle ampliado
+ * - alta y edición
+ * - activación / desactivación
+ * - reset de PIN
+ * - auditoría de acciones administrativas
  */
 public class UsuarioService {
 
@@ -36,19 +35,22 @@ public class UsuarioService {
     private final RolDao rolDao;
     private final FichajeDao fichajeDao;
     private final SesionCajaDao sesionCajaDao;
+    private final AuditoriaService auditoriaService;
 
     public UsuarioService(UsuarioDao usuarioDao,
                           RolDao rolDao,
                           FichajeDao fichajeDao,
-                          SesionCajaDao sesionCajaDao) {
+                          SesionCajaDao sesionCajaDao,
+                          AuditoriaService auditoriaService) {
         this.usuarioDao = usuarioDao;
         this.rolDao = rolDao;
         this.fichajeDao = fichajeDao;
         this.sesionCajaDao = sesionCajaDao;
+        this.auditoriaService = auditoriaService;
     }
 
     /**
-     * Método legado / reutilizable si ya lo usabas en login o en otras zonas.
+     * Método reutilizable en login y otros flujos.
      */
     public Optional<Usuario> findByCodigo(String codigo) {
         if (codigo == null || codigo.trim().isEmpty()) {
@@ -57,9 +59,6 @@ public class UsuarioService {
         return usuarioDao.findByUsuario(codigo.trim());
     }
 
-    /**
-     * Método legado / reutilizable.
-     */
     public List<Usuario> findActivosBySucursal(int idSucursal) {
         if (idSucursal <= 0) {
             throw new IllegalArgumentException("La sucursal no es válida.");
@@ -67,9 +66,6 @@ public class UsuarioService {
         return usuarioDao.findActivosBySucursal(idSucursal);
     }
 
-    /**
-     * Listado filtrado para la tabla principal de gestión.
-     */
     public List<EmpleadoRowDTO> buscarEmpleados(EmpleadoFiltroDTO filtro) {
         if (filtro == null) {
             filtro = new EmpleadoFiltroDTO();
@@ -77,9 +73,6 @@ public class UsuarioService {
         return usuarioDao.findRowsByFiltro(filtro);
     }
 
-    /**
-     * Detalle ampliado del empleado seleccionado.
-     */
     public Optional<EmpleadoDetalleDTO> getDetalleEmpleado(int idUsuario) {
         if (idUsuario <= 0) {
             return Optional.empty();
@@ -87,16 +80,10 @@ public class UsuarioService {
         return usuarioDao.findDetalleById(idUsuario);
     }
 
-    /**
-     * Roles disponibles para formularios.
-     */
     public List<Rol> getRoles() {
         return rolDao.findAll();
     }
 
-    /**
-     * Alta de empleado.
-     */
     public int crearEmpleado(EmpleadoSaveRequest request) {
         validarRequestAlta(request);
 
@@ -111,38 +98,50 @@ public class UsuarioService {
         usuario.setIdSucursal(request.getIdSucursal());
         usuario.setActivo(request.isActivo());
 
-        return usuarioDao.insert(usuario);
+        int idUsuarioCreado = usuarioDao.insert(usuario);
+
+        auditarSeguro(
+                request.getIdUsuarioAdmin(),
+                request.getIdSucursalAdmin(),
+                "USUARIO_ALTA_OK",
+                detallesAlta(idUsuarioCreado, request, rol)
+        );
+
+        return idUsuarioCreado;
     }
 
-    /**
-     * Edición de empleado.
-     */
     public void actualizarEmpleado(EmpleadoSaveRequest request) {
         validarRequestEdicion(request);
 
         Usuario actual = usuarioDao.findById(request.getIdUsuario())
                 .orElseThrow(() -> new IllegalArgumentException("No existe el empleado a editar."));
 
-        Rol rol = rolDao.findById(request.getIdRol())
+        Rol rolNuevo = rolDao.findById(request.getIdRol())
                 .orElseThrow(() -> new IllegalArgumentException("No existe el rol seleccionado."));
+
+        Rol rolAnterior = actual.getRol();
+        String nombreAnterior = actual.getNombre();
+        String usuarioAnterior = actual.getUsuario();
+        Integer idSucursalAnterior = actual.getIdSucursal();
+        boolean activoAnterior = actual.isActivo();
 
         actual.setNombre(request.getNombre().trim());
         actual.setUsuario(request.getUsuario().trim());
-        actual.setRol(rol);
+        actual.setRol(rolNuevo);
         actual.setIdSucursal(request.getIdSucursal());
         actual.setActivo(request.isActivo());
 
         usuarioDao.update(actual);
+
+        auditarSeguro(
+                request.getIdUsuarioAdmin(),
+                request.getIdSucursalAdmin(),
+                "USUARIO_EDICION_OK",
+                detallesEdicion(actual, nombreAnterior, usuarioAnterior, idSucursalAnterior, activoAnterior, rolAnterior, rolNuevo)
+        );
     }
 
-    /**
-     * Activa o desactiva un empleado.
-     *
-     * Regla actual:
-     * - No se puede desactivar si tiene sesión de caja abierta.
-     * - No se puede desactivar si tiene fichaje abierto.
-     */
-    public void cambiarEstadoActivo(int idUsuario, boolean nuevoActivo) {
+    public void cambiarEstadoActivo(int idUsuario, boolean nuevoActivo, int idUsuarioAdmin, int idSucursalAdmin) {
         Usuario usuario = usuarioDao.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("No existe el empleado."));
 
@@ -158,12 +157,28 @@ public class UsuarioService {
             }
         }
 
+        boolean estadoAnterior = usuario.isActivo();
         usuarioDao.updateActivo(usuario.getIdUsuario(), nuevoActivo);
+
+        auditarSeguro(
+                idUsuarioAdmin,
+                idSucursalAdmin,
+                nuevoActivo ? "USUARIO_ACTIVADO_OK" : "USUARIO_DESACTIVADO_OK",
+                detallesCambioEstado(usuario, estadoAnterior, nuevoActivo)
+        );
     }
 
     /**
-     * Resetea el PIN de un empleado.
+     * Variante legacy si en alguna parte ya la usabas.
+     * Internamente audita con el propio usuario objetivo si no hay admin explícito.
      */
+    public void cambiarEstadoActivo(int idUsuario, boolean nuevoActivo) {
+        Usuario usuario = usuarioDao.findById(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("No existe el empleado."));
+
+        cambiarEstadoActivo(idUsuario, nuevoActivo, usuario.getIdUsuario(), usuario.getIdSucursal() != null ? usuario.getIdSucursal() : 0);
+    }
+
     public void resetPin(ResetPinEmpleadoRequest request) {
         validarResetPin(request);
 
@@ -172,10 +187,17 @@ public class UsuarioService {
 
         String nuevoHash = hashPin(request.getNuevoPin().trim());
         usuarioDao.updatePinHash(usuario.getIdUsuario(), nuevoHash);
+
+        auditarSeguro(
+                request.getIdUsuarioAdmin(),
+                request.getIdSucursalAdmin(),
+                "USUARIO_RESET_PIN_OK",
+                detallesResetPin(usuario)
+        );
     }
 
     // =========================================================
-    // VALIDACIONES PRIVADAS
+    // VALIDACIONES
     // =========================================================
 
     private void validarRequestAlta(EmpleadoSaveRequest request) {
@@ -264,15 +286,92 @@ public class UsuarioService {
     // HASH PIN
     // =========================================================
 
-    /**
-     * Sustituye este método por la utilidad real de hash que ya uses en tu proyecto.
-     *
-     * Ejemplos posibles:
-     * - return HashUtil.sha256(pinPlano);
-     * - return PinHasher.hash(pinPlano);
-     * - return PasswordUtils.hash(pinPlano);
-     */
     private String hashPin(String pinPlano) {
         return HashUtil.sha256(pinPlano);
+    }
+
+    // =========================================================
+    // DETALLES AUDITORÍA
+    // =========================================================
+
+    private Map<String, Object> detallesAlta(int idUsuarioCreado, EmpleadoSaveRequest request, Rol rol) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idUsuarioObjetivo", idUsuarioCreado);
+        data.put("nombre", request.getNombre());
+        data.put("usuario", request.getUsuario());
+        data.put("idRol", rol.getIdRol());
+        data.put("rol", rol.getNombre());
+        data.put("idSucursalObjetivo", request.getIdSucursal());
+        data.put("activo", request.isActivo());
+        return data;
+    }
+
+    private Map<String, Object> detallesEdicion(Usuario actual,
+                                                String nombreAnterior,
+                                                String usuarioAnterior,
+                                                Integer idSucursalAnterior,
+                                                boolean activoAnterior,
+                                                Rol rolAnterior,
+                                                Rol rolNuevo) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idUsuarioObjetivo", actual.getIdUsuario());
+
+        data.put("nombreAnterior", nombreAnterior);
+        data.put("nombreNuevo", actual.getNombre());
+
+        data.put("usuarioAnterior", usuarioAnterior);
+        data.put("usuarioNuevo", actual.getUsuario());
+
+        data.put("idSucursalAnterior", idSucursalAnterior);
+        data.put("idSucursalNueva", actual.getIdSucursal());
+
+        data.put("activoAnterior", activoAnterior);
+        data.put("activoNuevo", actual.isActivo());
+
+        data.put("idRolAnterior", rolAnterior != null ? rolAnterior.getIdRol() : null);
+        data.put("rolAnterior", rolAnterior != null ? rolAnterior.getNombre() : null);
+        data.put("idRolNuevo", rolNuevo != null ? rolNuevo.getIdRol() : null);
+        data.put("rolNuevo", rolNuevo != null ? rolNuevo.getNombre() : null);
+
+        return data;
+    }
+
+    private Map<String, Object> detallesCambioEstado(Usuario usuario, boolean estadoAnterior, boolean estadoNuevo) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idUsuarioObjetivo", usuario.getIdUsuario());
+        data.put("nombre", usuario.getNombre());
+        data.put("usuario", usuario.getUsuario());
+        data.put("activoAnterior", estadoAnterior);
+        data.put("activoNuevo", estadoNuevo);
+        data.put("idSucursalObjetivo", usuario.getIdSucursal());
+        return data;
+    }
+
+    private Map<String, Object> detallesResetPin(Usuario usuario) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idUsuarioObjetivo", usuario.getIdUsuario());
+        data.put("nombre", usuario.getNombre());
+        data.put("usuario", usuario.getUsuario());
+        data.put("idSucursalObjetivo", usuario.getIdSucursal());
+        return data;
+    }
+
+    // =========================================================
+    // AUDITORÍA SEGURA
+    // =========================================================
+
+    private void auditarSeguro(int idUsuario,
+                               int idSucursal,
+                               String accion,
+                               Map<String, Object> detalles) {
+        if (idUsuario <= 0 || idSucursal <= 0) {
+            return;
+        }
+
+        try {
+            auditoriaService.registrarEvento(idUsuario, idSucursal, accion, detalles);
+        } catch (Exception ex) {
+            System.err.println("[AUDITORIA] No se pudo registrar evento " + accion + ": " + ex.getMessage());
+        }
     }
 }

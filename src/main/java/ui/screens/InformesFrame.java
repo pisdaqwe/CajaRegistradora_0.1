@@ -11,7 +11,6 @@ import dtoS.InformeVentasPorDiaResultDTO;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import service.AppServices;
-import service.InformePdfService;
 import ui.common.BaseTpvFrame;
 import ui.dialog.InformeGraficoDialog;
 import ui.informes.InformeFiltrosPanel;
@@ -87,7 +86,6 @@ public class InformesFrame extends BaseTpvFrame {
     private InformeRankingEmpleadosExtraResultDTO currentRankingEmpleadosExtraResult;
 
     private ModoVistaInforme currentGeneratedModoVista;
-    private final InformePdfService informePdfService = new InformePdfService();
     
     
     public InformesFrame(Runnable onLogoutNavigate,
@@ -898,7 +896,7 @@ public class InformesFrame extends BaseTpvFrame {
             request.setFechaGeneracion(LocalDateTime.now());
             request.setResult(currentResult);
 
-            File pdfGenerado = informePdfService.exportarInforme(request, selectedFile);
+            File pdfGenerado = services.informePdfService.exportarInforme(request, selectedFile);
 
             JOptionPane.showMessageDialog(
                     this,

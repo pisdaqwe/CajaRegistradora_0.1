@@ -217,6 +217,10 @@ public class EmpleadoFormDialog extends JDialog {
         request.setIdSucursal(idSucursal);
         request.setActivo(chkActivo.isSelected());
 
+        // NUEVO: datos del admin para auditoría
+        request.setIdUsuarioAdmin(AppContext.getUsuarioId());
+        request.setIdSucursalAdmin(AppContext.getIdSucursal());
+
         return request;
     }
 

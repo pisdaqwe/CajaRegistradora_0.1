@@ -70,6 +70,7 @@ public final class InformeUiTheme {
         lbl.setForeground(TEXT_PRIMARY);
         return lbl;
     }
+    
 
     public static JLabel createFieldLabel(String text) {
         JLabel lbl = new JLabel(text);

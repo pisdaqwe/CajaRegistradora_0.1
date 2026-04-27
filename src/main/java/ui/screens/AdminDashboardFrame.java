@@ -193,9 +193,15 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	}
 
 	private void onHerramientas() {
-		this.setVisible(false);
-		SistemaMenuFrame frame = new SistemaMenuFrame(onLogoutNavigate, () -> this.setVisible(true),services);
-		frame.setVisible(true);
+		 SistemaTecnicoFrame frame = new SistemaTecnicoFrame(appServices, () -> {
+		        AdminDashboardFrame dashboard = new AdminDashboardFrame(onLogoutNavigate, appServices);
+		        dashboard.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		        dashboard.setVisible(true);
+		    });
+
+		    frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		    frame.setVisible(true);
+		    safeDispose();
 	}
 
 	// =====================================================

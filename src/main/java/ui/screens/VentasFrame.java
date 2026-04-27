@@ -2030,6 +2030,7 @@ public class VentasFrame extends BaseTpvFrame {
 	}
 
 	private MermaRequest buildMermaRequestFromDialog() {
+		System.out.print(AppContext.getIdSucursal());
 		if (mermaDialogResult == null || !mermaDialogResult.isConfirmed()) {
 			throw new IllegalStateException("No hay contexto válido de merma.");
 		}
@@ -2039,6 +2040,8 @@ public class VentasFrame extends BaseTpvFrame {
 		}
 
 		MermaRequest request = new MermaRequest();
+		request.setIdSucursal(AppContext.getIdSucursal());
+		request.setIdUsuario(AppContext.getUsuarioId());
 		request.setTipoMerma("PRODUCTO_TERMINADO");
 		request.setOrigen("VENTAS");
 		request.setMotivo(mermaDialogResult.getMotivo());

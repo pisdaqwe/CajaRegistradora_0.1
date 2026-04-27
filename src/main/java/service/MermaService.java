@@ -15,7 +15,9 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service principal del caso de uso "registrar merma".
@@ -27,11 +29,7 @@ import java.util.List;
  * - resolver receta final cuando usarReceta = true
  * - descontar stock de ingredientes
  * - registrar movimientos de stock enlazados con merma y merma_item
- *
- * IMPORTANTE:
- * - NO registra ventas
- * - NO registra pagos
- * - NO genera ticket comercial
+ * - registrar auditoría al finalizar correctamente
  */
 public class MermaService {
 
@@ -40,12 +38,14 @@ public class MermaService {
     private final RecipeResolverService recipeResolverService;
     private final StockIngredienteService stockIngredienteService;
     private final MovimientoStockService movimientoStockService;
+    private final AuditoriaService auditoriaService;
 
     public MermaService(MermaDao mermaDao,
                         MermaItemDao mermaItemDao,
                         RecipeResolverService recipeResolverService,
                         StockIngredienteService stockIngredienteService,
-                        MovimientoStockService movimientoStockService) {
+                        MovimientoStockService movimientoStockService,
+                        AuditoriaService auditoriaService) {
 
         if (mermaDao == null) {
             throw new IllegalArgumentException("mermaDao no puede ser null");
@@ -62,12 +62,16 @@ public class MermaService {
         if (movimientoStockService == null) {
             throw new IllegalArgumentException("movimientoStockService no puede ser null");
         }
+        if (auditoriaService == null) {
+            throw new IllegalArgumentException("auditoriaService no puede ser null");
+        }
 
         this.mermaDao = mermaDao;
         this.mermaItemDao = mermaItemDao;
         this.recipeResolverService = recipeResolverService;
         this.stockIngredienteService = stockIngredienteService;
         this.movimientoStockService = movimientoStockService;
+        this.auditoriaService = auditoriaService;
     }
 
     /**
@@ -104,6 +108,14 @@ public class MermaService {
                 MermaResultDTO result = new MermaResultDTO();
                 result.setIdMerma(idMerma);
                 result.setItemsPersistidos(itemsPersistidos);
+
+                auditarSeguro(
+                        request.getIdUsuario(),
+                        request.getIdSucursal(),
+                        "MERMA_REGISTRADA_OK",
+                        detallesMerma(request, result)
+                );
+
                 return result;
 
             } catch (Exception e) {
@@ -153,11 +165,6 @@ public class MermaService {
      *
      * Este bloque queda preparado para futuras mermas
      * de producto retail / empaquetado / producto simple.
-     *
-     * Aquí más adelante podrás:
-     * - validar stock_producto
-     * - descontar stock_producto
-     * - registrar movimiento_stock con idProducto
      */
     private void procesarItemSinReceta(Connection con,
                                        MermaRequest request,
@@ -168,18 +175,6 @@ public class MermaService {
         // 1) validar stock_producto si aplica
         // 2) descontar stock_producto
         // 3) registrar salida producto enlazada a merma
-
-        // Ejemplo futuro:
-        // movimientoStockService.registrarSalidaProductoMerma(
-        //         con,
-        //         request.getIdSucursal(),
-        //         item.getIdProducto(),
-        //         item.getCantidad(),
-        //         idMerma,
-        //         idMermaItem,
-        //         buildReferenciaMerma(idMerma, item),
-        //         buildMotivoMovimiento(request)
-        // );
     }
 
     private void registrarMovimientosIngredientesMerma(Connection con,
@@ -272,6 +267,47 @@ public class MermaService {
             throw new IllegalArgumentException(
                     "Si usarReceta=true, el item de merma debe tener idTamano."
             );
+        }
+    }
+
+    private Map<String, Object> detallesMerma(MermaRequest request, MermaResultDTO result) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idMerma", result.getIdMerma());
+        data.put("idUsuario", request.getIdUsuario());
+        data.put("idSucursal", request.getIdSucursal());
+        data.put("tipoMerma", request.getTipoMerma());
+        data.put("origen", request.getOrigen());
+        data.put("motivo", request.getMotivo());
+        data.put("observaciones", request.getObservaciones());
+        data.put("numItems", request.getItems() != null ? request.getItems().size() : 0);
+        data.put("itemsPersistidos", result.getItemsPersistidos() != null ? result.getItemsPersistidos().size() : 0);
+
+        List<Map<String, Object>> items = new ArrayList<>();
+        if (request.getItems() != null) {
+            for (MermaItemRequest item : request.getItems()) {
+                Map<String, Object> itemData = new LinkedHashMap<>();
+                itemData.put("idProducto", item.getIdProducto());
+                itemData.put("cantidad", item.getCantidad());
+                itemData.put("usarReceta", item.isUsarReceta());
+                itemData.put("idTamano", item.getIdTamano());
+                itemData.put("nombreProductoSnapshot", item.getNombreProductoSnapshot());
+                itemData.put("nombreTamanoSnapshot", item.getNombreTamanoSnapshot());
+                items.add(itemData);
+            }
+        }
+
+        data.put("items", items);
+        return data;
+    }
+
+    private void auditarSeguro(int idUsuario,
+                               int idSucursal,
+                               String accion,
+                               Map<String, Object> detalles) {
+        try {
+            auditoriaService.registrarEvento(idUsuario, idSucursal, accion, detalles);
+        } catch (Exception ex) {
+            System.err.println("[AUDITORIA] No se pudo registrar evento " + accion + ": " + ex.getMessage());
         }
     }
 }

@@ -1,18 +1,17 @@
 package ui.common;
 
-import ui.common.BaseTpvFrame;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import service.AppServices;
+import ui.screens.SistemaTecnicoFrame;
 
 import java.awt.*;
 
 /**
- * Placeholder: menú Sistema/Herramientas (ADMIN/TECNICO).
+ * Menú Sistema/Herramientas (ADMIN/TECNICO).
  * - Reloj + usuario/rol arriba (BaseTpvFrame)
- * - Botones grandes (sin BD todavía)
+ * - Acceso a herramientas técnicas
  * - Volver al Dashboard
  * - Logout correcto
  */
@@ -20,11 +19,12 @@ public class SistemaMenuFrame extends BaseTpvFrame {
 
     private final Runnable onBack;
     private final AppServices appServices;
-    public SistemaMenuFrame(Runnable onLogoutNavigate, Runnable onBack,AppServices services) {
-        super("Sistema / Herramientas", onLogoutNavigate,services);
+
+    public SistemaMenuFrame(Runnable onLogoutNavigate, Runnable onBack, AppServices services) {
+        super("Sistema / Herramientas", onLogoutNavigate, services);
         this.onBack = onBack;
         this.appServices = services;
-        	
+
         requireAuthenticatedOrExit();
         buildUI();
         refreshHeader();
@@ -46,7 +46,7 @@ public class SistemaMenuFrame extends BaseTpvFrame {
 
         btnConfig.addActionListener(e -> placeholder("Configuración"));
         btnAuditoria.addActionListener(e -> placeholder("Auditoría"));
-        btnEstado.addActionListener(e -> placeholder("Estado del Sistema"));
+        btnEstado.addActionListener(e -> abrirHerramientasTecnico());
         btnImpresion.addActionListener(e -> placeholder("Cola de Impresión"));
 
         grid.add(btnConfig);
@@ -72,16 +72,28 @@ public class SistemaMenuFrame extends BaseTpvFrame {
         main.add(root, BorderLayout.CENTER);
     }
 
+    private void abrirHerramientasTecnico() {
+        SistemaTecnicoFrame frame = new SistemaTecnicoFrame(appServices, () -> {
+            SistemaMenuFrame menu = new SistemaMenuFrame(onLogoutNavigate, onBack, appServices);
+            menu.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            menu.setVisible(true);
+        });
+
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        frame.setVisible(true);
+        safeDispose();
+    }
+
     private void placeholder(String nombre) {
         JOptionPane.showMessageDialog(this, nombre + " (pendiente)");
     }
 
     private void volver() {
         safeDispose();
-        if (onBack != null) onBack.run();
+        if (onBack != null) {
+            onBack.run();
+        }
     }
-
-    // ===== Estilo botones =====
 
     private JButton createBigButton(String text) {
         JButton b = new JButton(text);

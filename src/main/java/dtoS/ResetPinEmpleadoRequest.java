@@ -4,7 +4,10 @@ package dtoS;
  * DTO para el reseteo de PIN de un empleado.
  *
  * Responsabilidades:
- * - Transportar el empleado objetivo y el nuevo PIN.
+ * - transportar el empleado objetivo
+ * - transportar el nuevo PIN
+ * - transportar el usuario admin que realiza la acción
+ * - transportar la sucursal desde la que se ejecuta
  */
 public class ResetPinEmpleadoRequest {
 
@@ -12,13 +15,22 @@ public class ResetPinEmpleadoRequest {
     private String nuevoPin;
     private String confirmarPin;
 
+    private int idUsuarioAdmin;
+    private int idSucursalAdmin;
+
     public ResetPinEmpleadoRequest() {
     }
 
-    public ResetPinEmpleadoRequest(int idUsuarioObjetivo, String nuevoPin, String confirmarPin) {
+    public ResetPinEmpleadoRequest(int idUsuarioObjetivo,
+                                   String nuevoPin,
+                                   String confirmarPin,
+                                   int idUsuarioAdmin,
+                                   int idSucursalAdmin) {
         this.idUsuarioObjetivo = idUsuarioObjetivo;
         this.nuevoPin = nuevoPin;
         this.confirmarPin = confirmarPin;
+        this.idUsuarioAdmin = idUsuarioAdmin;
+        this.idSucursalAdmin = idSucursalAdmin;
     }
 
     public int getIdUsuarioObjetivo() {
@@ -45,10 +57,28 @@ public class ResetPinEmpleadoRequest {
         this.confirmarPin = confirmarPin;
     }
 
+    public int getIdUsuarioAdmin() {
+        return idUsuarioAdmin;
+    }
+
+    public void setIdUsuarioAdmin(int idUsuarioAdmin) {
+        this.idUsuarioAdmin = idUsuarioAdmin;
+    }
+
+    public int getIdSucursalAdmin() {
+        return idSucursalAdmin;
+    }
+
+    public void setIdSucursalAdmin(int idSucursalAdmin) {
+        this.idSucursalAdmin = idSucursalAdmin;
+    }
+
     @Override
     public String toString() {
         return "ResetPinEmpleadoRequest{" +
                 "idUsuarioObjetivo=" + idUsuarioObjetivo +
+                ", idUsuarioAdmin=" + idUsuarioAdmin +
+                ", idSucursalAdmin=" + idSucursalAdmin +
                 '}';
     }
 }

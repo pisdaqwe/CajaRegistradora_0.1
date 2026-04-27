@@ -5,6 +5,7 @@ import javax.swing.SwingUtilities;
 
 import config.ConfigLoader;
 import config.DbPool;
+import dao.AuditoriaDao;
 import dao.CajaDao;
 import dao.CategoriaDao;
 import dao.ColaImpresionDAO;
@@ -47,6 +48,7 @@ import facade.FichajeFacade;
 import facade.MermaFacade;
 import facade.VentaFacade;
 import service.AppServices;
+import service.AuditoriaService;
 import service.AuthService;
 import service.CatalogoService;
 import service.ColaImpresionService;
@@ -58,6 +60,7 @@ import service.DevolucionTicketService;
 import service.DisponibilidadExtraService;
 import service.DisponibilidadProductoService;
 import service.FichajeService;
+import service.InformePdfService;
 import service.InformesService;
 import service.MermaService;
 import service.MovimientoStockService;
@@ -65,6 +68,7 @@ import service.ProductoPersonalizacionService;
 import service.RecipeResolverService;
 import service.RolService;
 import service.SesionCajaService;
+import service.SistemaTecnicoService;
 import service.StockIngredienteService;
 import service.SucursalService;
 import service.TicketClienteService;
@@ -93,7 +97,8 @@ public class MainApp {
         CajaDao cajaDao = new CajaDao();
         SucursalDao sucursalDao = new SucursalDao();
         RolDao rolDao = new RolDao();
-        
+        AuditoriaDao auditoriaDao = new AuditoriaDao();
+
         // =====================================================
         // 3) DAOs DE CATÁLOGO / CUSTOMIZACIÓN
         // =====================================================
@@ -150,33 +155,30 @@ public class MainApp {
         DevolucionItemDao devolucionItemDao = new DevolucionItemDao();
         DevolucionTicketJsonDao devolucionTicketJsonDao = new DevolucionTicketJsonDao();
 
-        /**
-         * Ajuste ya existente:
-         * - DevolucionRegistroDao también repone stock de producto dentro de la transacción.
-         */
         DevolucionRegistroDao devolucionRegistroDao = new DevolucionRegistroDao(
                 devolucionDao,
                 devolucionItemDao,
                 devolucionTicketJsonDao,
                 stockProductoDao
         );
-        
+
         // =====================================================
-        // 10) DAOs DE DEVOLUCIONES
+        // 10) DAOs DE INFORMES
         // =====================================================
-        
         InformesDao informesDao = new InformesDao();
 
         // =====================================================
         // 11) SERVICES GENERALES
         // =====================================================
+        AuditoriaService auditoriaService = new AuditoriaService(auditoriaDao);
         AuthService authService = new AuthService(usuarioDao);
-        FichajeService fichajeService = new FichajeService(fichajeDao, sesionCajaDao);
-        SesionCajaService sesionCajaService = new SesionCajaService(cajaDao, sesionCajaDao);
-        UsuarioService usuarioService = new UsuarioService(usuarioDao, rolDao, fichajeDao, sesionCajaDao);
+        FichajeService fichajeService = new FichajeService(fichajeDao, sesionCajaDao, auditoriaService);
+        SesionCajaService sesionCajaService = new SesionCajaService(cajaDao, sesionCajaDao,auditoriaService);
+        UsuarioService usuarioService = new UsuarioService(usuarioDao, rolDao, fichajeDao, sesionCajaDao,auditoriaService);
+        SistemaTecnicoService sistemaTecnicoService = new SistemaTecnicoService(cajaDao);
 
         // =====================================================
-        // 11) SERVICES DE CATÁLOGO / CUSTOMIZACIÓN
+        // 12) SERVICES DE CATÁLOGO / CUSTOMIZACIÓN
         // =====================================================
         CatalogoService catalogoService = new CatalogoService(
                 categoriaDao,
@@ -223,19 +225,14 @@ public class MainApp {
                 mermaDao,
                 mermaItemDao,
                 recipeResolverService,
-                stockIngredienteService, 
-                movimientoStockService
+                stockIngredienteService,
+                movimientoStockService,
+                auditoriaService
         );
 
         // =====================================================
         // 15) SERVICES DE VENTAS / IMPRESIÓN / TICKETS
         // =====================================================
-        /**
-         * AJUSTE NUEVO IMPORTANTE:
-         * - VentaService ya no deja la transacción en el DAO.
-         * - Ahora orquesta la transacción completa y usa también
-         *   VentaStockIngredienteService para receta + stock + movimientos.
-         */
         VentaService ventaService = new VentaService(
                 ventaRegistroDao,
                 ventaStockIngredienteService
@@ -245,7 +242,7 @@ public class MainApp {
                 new ColaImpresionService(
                         colaImpresionDAO,
                         productoEstacionDao,
-                        estacionDao
+                        estacionDao,auditoriaService
                 );
 
         TicketClienteService ticketClienteService = new TicketClienteService(ticketJsonDao);
@@ -254,10 +251,10 @@ public class MainApp {
         // 16) SERVICES DE DISPONIBILIDAD / STOCK PRODUCTO
         // =====================================================
         DisponibilidadProductoService disponibilidadProductoService =
-                new DisponibilidadProductoService(stockProductoDao);
+                new DisponibilidadProductoService(stockProductoDao,auditoriaService);
 
         DisponibilidadExtraService disponibilidadExtraService =
-                new DisponibilidadExtraService(extraDao);
+                new DisponibilidadExtraService(extraDao,auditoriaService);
 
         // =====================================================
         // 17) SERVICES DE COMBOS / DESCUENTOS
@@ -272,22 +269,22 @@ public class MainApp {
         DevolucionService devolucionService = new DevolucionService(
                 ventaDao,
                 ventaItemDao,
-                devolucionRegistroDao
+                devolucionRegistroDao,auditoriaService
         );
 
-        /**
-         * Servicio lector del ticket de devolución.
-         */
         DevolucionTicketService devolucionTicketService =
                 new DevolucionTicketService(devolucionTicketJsonDao);
+
+        // =====================================================
+        // 19) SERVICES DE INFORMES / AUXILIARES
+        // =====================================================
+        InformesService informesService = new InformesService(informesDao);
+        SucursalService sucursalService = new SucursalService(sucursalDao);
+        RolService rolService = new RolService(rolDao);
+        InformePdfService informePdfService = new InformePdfService(auditoriaService);
         
         // =====================================================
-        // 19) SERVICES DE DEVOLUCIONES
-        // =====================================================
-        	InformesService informesService = new InformesService(informesDao );
-        	SucursalService sucursalService = new SucursalService(sucursalDao);
-        // =====================================================
-        // 19) FACADES
+        // 20) FACADES
         // =====================================================
         FichajeFacade fichajeFacade = new FichajeFacade(usuarioDao, fichajeService);
         CajaFacade cajaFacade = new CajaFacade(sesionCajaService);
@@ -295,10 +292,8 @@ public class MainApp {
         DevolucionFacade devolucionFacade = new DevolucionFacade(devolucionService);
         MermaFacade mermaFacade = new MermaFacade(mermaService);
         
-        RolService rolService =  new RolService(rolDao);
-
         // =====================================================
-        // 20) APP SERVICES
+        // 21) APP SERVICES
         // =====================================================
         AppServices appServices = new AppServices(
                 authService,
@@ -328,34 +323,36 @@ public class MainApp {
 
                 mermaFacade,
                 informesService,
-                sucursalService, 
-                rolService
-                
+                sucursalService,
+                rolService,
+                sistemaTecnicoService,
+                auditoriaService,
+                informePdfService
         );
-     // =====================================================
-     // 20) CONTEXTO INICIAL DEL TERMINAL
-     // =====================================================
-     int idCajaTerminal = ConfigLoader.getTerminalIdCaja();
 
-     var cajaTerminal = cajaDao.findById(idCajaTerminal)
-             .orElseThrow(() -> new IllegalStateException(
-                     "La caja configurada en terminal.id_caja no existe: " + idCajaTerminal
-             ));
+        // =====================================================
+        // 22) CONTEXTO INICIAL DEL TERMINAL
+        // =====================================================
+        int idCajaTerminal = ConfigLoader.getTerminalIdCaja();
 
-     AppContext.initTerminal(
-             cajaTerminal.getIdCaja(),
-             cajaTerminal.getIdSucursal(),
-             cajaTerminal.getNombre()
-     );
+        var cajaTerminal = cajaDao.findById(idCajaTerminal)
+                .orElseThrow(() -> new IllegalStateException(
+                        "La caja configurada en terminal.id_caja no existe: " + idCajaTerminal
+                ));
 
-     // =====================================================
-     // 21) UI
-     // =====================================================
-     SwingUtilities.invokeLater(() -> {
-         LoginScreen screen = new LoginScreen(appServices, idCajaTerminal);
-         screen.setExtendedState(JFrame.MAXIMIZED_BOTH);
-         screen.setVisible(true);
-     });
-      
+        AppContext.initTerminal(
+                cajaTerminal.getIdCaja(),
+                cajaTerminal.getIdSucursal(),
+                cajaTerminal.getNombre()
+        );
+
+        // =====================================================
+        // 23) UI
+        // =====================================================
+        SwingUtilities.invokeLater(() -> {
+            LoginScreen screen = new LoginScreen(appServices, idCajaTerminal);
+            screen.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            screen.setVisible(true);
+        });
     }
 }

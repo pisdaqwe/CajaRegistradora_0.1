@@ -1,5 +1,6 @@
 package service;
 
+import app.AppContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dao.ColaImpresionDAO;
 import dao.EstacionDao;
@@ -13,7 +14,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -29,18 +32,26 @@ import java.util.Optional;
  * - la cola se registra filtrando producto + sucursal
  * - las estaciones ya no se validan por ids fijos 1/2/3
  * - los nombres de estación se resuelven desde BD
+ *
+ * Auditoría:
+ * - NO audita el registro automático tras la venta
+ * - SÍ audita acciones manuales:
+ *   - imprimir siguiente
+ *   - cancelar item
  */
 public class ColaImpresionService {
 
     private final EstacionDao estacionDao;
     private final ColaImpresionDAO colaImpresionDAO;
     private final ProductoEstacionDao productoEstacionDao;
+    private final AuditoriaService auditoriaService;
     private final ObjectMapper objectMapper;
 
     public ColaImpresionService() {
         this.colaImpresionDAO = new ColaImpresionDAO();
         this.productoEstacionDao = new ProductoEstacionDao();
         this.estacionDao = new EstacionDao();
+        this.auditoriaService = null;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -50,6 +61,18 @@ public class ColaImpresionService {
         this.colaImpresionDAO = colaImpresionDao;
         this.productoEstacionDao = productoEstacionDao;
         this.estacionDao = estacionDao;
+        this.auditoriaService = null;
+        this.objectMapper = new ObjectMapper();
+    }
+
+    public ColaImpresionService(ColaImpresionDAO colaImpresionDao,
+                                ProductoEstacionDao productoEstacionDao,
+                                EstacionDao estacionDao,
+                                AuditoriaService auditoriaService) {
+        this.colaImpresionDAO = colaImpresionDao;
+        this.productoEstacionDao = productoEstacionDao;
+        this.estacionDao = estacionDao;
+        this.auditoriaService = auditoriaService;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -187,7 +210,14 @@ public class ColaImpresionService {
         siguiente.setFechaImpresion(ahora);
         siguiente.setFechaPreparado(ahora);
 
-        return toMonitorDto(siguiente);
+        ColaMonitorItemDTO dto = toMonitorDto(siguiente);
+
+        auditarSeguro(
+                "COLA_IMPRESION_IMPRIMIR_SIGUIENTE",
+                detallesImprimirSiguiente(siguiente, dto)
+        );
+
+        return dto;
     }
 
     // =========================================================
@@ -198,7 +228,13 @@ public class ColaImpresionService {
         if (idCola <= 0) {
             throw new IllegalArgumentException("idCola inválido");
         }
+
         colaImpresionDAO.marcarCancelado(idCola);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idCola", idCola);
+
+        auditarSeguro("COLA_IMPRESION_CANCELAR_ITEM", data);
     }
 
     // =========================================================
@@ -375,6 +411,41 @@ public class ColaImpresionService {
         }
 
         return estacionDao.findBySucursal(idSucursal);
+    }
+
+    private Map<String, Object> detallesImprimirSiguiente(ColaImpresion fila, ColaMonitorItemDTO dto) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idCola", fila.getIdCola());
+        data.put("idVenta", fila.getIdVenta());
+        data.put("idItem", fila.getIdItem());
+        data.put("idEstacion", fila.getIdEstacion());
+        data.put("nombreEstacion", dto != null ? dto.getNombreEstacion() : getNombreEstacionById(fila.getIdEstacion()));
+        data.put("fechaImpresion", fila.getFechaImpresion() != null ? fila.getFechaImpresion().toString() : null);
+        return data;
+    }
+
+    private void auditarSeguro(String accion, Map<String, Object> detalles) {
+        if (auditoriaService == null) {
+            return;
+        }
+
+        int idUsuario = AppContext.getUsuarioId();
+        int idSucursal = AppContext.getIdSucursal();
+
+        if (idUsuario <= 0 || idSucursal <= 0) {
+            return;
+        }
+
+        try {
+            auditoriaService.registrarEvento(
+                    idUsuario,
+                    idSucursal,
+                    accion,
+                    detalles
+            );
+        } catch (Exception ex) {
+            System.err.println("[AUDITORIA] No se pudo registrar evento " + accion + ": " + ex.getMessage());
+        }
     }
 
     // =========================================================

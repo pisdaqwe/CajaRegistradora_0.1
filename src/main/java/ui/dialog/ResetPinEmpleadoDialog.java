@@ -8,6 +8,8 @@ import ui.theme.InformeUiTheme;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import app.AppContext;
+
 import java.awt.*;
 import java.util.Optional;
 
@@ -121,6 +123,11 @@ public class ResetPinEmpleadoDialog extends JDialog {
         request.setIdUsuarioObjetivo(idUsuarioObjetivo);
         request.setNuevoPin(new String(txtNuevoPin.getPassword()));
         request.setConfirmarPin(new String(txtConfirmarPin.getPassword()));
+
+        // NUEVO: datos del admin para auditoría
+        request.setIdUsuarioAdmin(AppContext.getUsuarioId());
+        request.setIdSucursalAdmin(AppContext.getIdSucursal());
+
         return request;
     }
 

@@ -6,14 +6,25 @@ import dtoS.StockProductoDisponibilidadDTO;
 import enums.ModoDisponibilidadProducto;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DisponibilidadProductoService {
 
     private final StockProductoDao stockProductoDao;
+    private final AuditoriaService auditoriaService;
 
-    public DisponibilidadProductoService(StockProductoDao stockProductoDao) {
+    public DisponibilidadProductoService(StockProductoDao stockProductoDao,
+                                         AuditoriaService auditoriaService) {
+        if (stockProductoDao == null) {
+            throw new IllegalArgumentException("stockProductoDao no puede ser null");
+        }
+        if (auditoriaService == null) {
+            throw new IllegalArgumentException("auditoriaService no puede ser null");
+        }
         this.stockProductoDao = stockProductoDao;
+        this.auditoriaService = auditoriaService;
     }
 
     // =====================================================
@@ -45,6 +56,7 @@ public class DisponibilidadProductoService {
             BigDecimal stock
     ) {
         int idSucursal = AppContext.getSesionCajaActual().getIdSucursal();
+        int idUsuario = AppContext.getUsuarioId();
 
         StockProductoDisponibilidadDTO actual =
                 stockProductoDao.findByProductoYSucursal(idProducto, idSucursal)
@@ -62,6 +74,13 @@ public class DisponibilidadProductoService {
                 idProducto,
                 modoDisponibilidad,
                 stockFinal
+        );
+
+        auditarSeguro(
+                idUsuario,
+                idSucursal,
+                "DISPONIBILIDAD_PRODUCTO_ACTUALIZADA",
+                detallesCambio(actual, modoDisponibilidad, stockFinal)
         );
     }
 
@@ -88,8 +107,6 @@ public class DisponibilidadProductoService {
             throw new IllegalArgumentException("El stock no puede ser negativo.");
         }
 
-        // Si el producto NO permite control por cantidad,
-        // no se le puede poner DISPONIBLE_CON_CANTIDAD.
         if (!actual.isPermiteStockCantidad()
                 && nuevoModo == ModoDisponibilidadProducto.DISPONIBLE_CON_CANTIDAD) {
             throw new IllegalArgumentException(
@@ -109,5 +126,39 @@ public class DisponibilidadProductoService {
             case DISPONIBLE_SIN_CONTROL -> stockSeguro;
             case DISPONIBLE_CON_CANTIDAD -> stockSeguro;
         };
+    }
+
+    // =====================================================
+    // DETALLES AUDITORÍA
+    // =====================================================
+
+    private Map<String, Object> detallesCambio(StockProductoDisponibilidadDTO actual,
+                                               ModoDisponibilidadProducto nuevoModo,
+                                               BigDecimal stockNuevo) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idProducto", actual.getIdProducto());
+        data.put("nombreProducto", actual.getNombreProducto());
+        data.put("idSubcategoria", actual.getIdSubcategoria());
+        data.put("nombreSubcategoria", actual.getNombreSubcategoria());
+        data.put("permiteStockCantidad", actual.isPermiteStockCantidad());
+
+        data.put("modoAnterior", actual.getModoDisponibilidad() != null ? actual.getModoDisponibilidad().name() : null);
+        data.put("modoNuevo", nuevoModo != null ? nuevoModo.name() : null);
+
+        data.put("stockAnterior", actual.getStockActual());
+        data.put("stockNuevo", stockNuevo);
+
+        return data;
+    }
+
+    private void auditarSeguro(int idUsuario,
+                               int idSucursal,
+                               String accion,
+                               Map<String, Object> detalles) {
+        try {
+            auditoriaService.registrarEvento(idUsuario, idSucursal, accion, detalles);
+        } catch (Exception ex) {
+            System.err.println("[AUDITORIA] No se pudo registrar evento " + accion + ": " + ex.getMessage());
+        }
     }
 }

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 import config.DbPool;
+import dtoS.CajaTerminalOptionDTO;
 import enums.EstadoCaja;
 import model.Caja;
 
@@ -143,6 +144,50 @@ public class CajaDao {
         }
 
         return cajas;
+    }
+    
+    public List<CajaTerminalOptionDTO> findOpcionesTerminal(int idCajaActual) {
+        String sql = """
+            SELECT 
+                c.id_caja,
+                c.nombre AS nombre_caja,
+                c.ubicacion,
+                c.estado,
+                c.activa,
+                c.id_sucursal,
+                s.nombre AS nombre_sucursal
+            FROM caja c
+            INNER JOIN sucursal s ON s.id_sucursal = c.id_sucursal
+            WHERE c.activa = 1
+            ORDER BY s.nombre, c.nombre
+        """;
+
+        List<CajaTerminalOptionDTO> result = new ArrayList<>();
+
+        try (Connection conn = DbPool.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                CajaTerminalOptionDTO dto = new CajaTerminalOptionDTO();
+
+                dto.setIdCaja(rs.getInt("id_caja"));
+                dto.setNombreCaja(rs.getString("nombre_caja"));
+                dto.setUbicacion(rs.getString("ubicacion"));
+                dto.setEstado(rs.getString("estado"));
+                dto.setActiva(rs.getBoolean("activa"));
+                dto.setIdSucursal(rs.getInt("id_sucursal"));
+                dto.setNombreSucursal(rs.getString("nombre_sucursal"));
+                dto.setSeleccionadaActual(dto.getIdCaja() == idCajaActual);
+
+                result.add(dto);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error cargando opciones de caja para terminal.", e);
+        }
+
+        return result;
     }
     
     // =====================================================

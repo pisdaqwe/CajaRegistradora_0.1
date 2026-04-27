@@ -3,6 +3,11 @@
 package config;
 
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -233,6 +238,46 @@ public final class ConfigLoader {
         return Boolean.parseBoolean(
                 properties.getProperty("printer.kitchen.enabled", "true")
         );
+    }
+    
+    //==================================================
+    //Herraminetas tecnico
+    //==================================================
+    
+    public static synchronized void updateTerminalIdCaja(int idCaja) {
+        checkLoaded();
+
+        if (idCaja <= 0) {
+            throw new IllegalArgumentException("El id de caja debe ser mayor que 0.");
+        }
+
+        properties.setProperty("terminal.id_caja", String.valueOf(idCaja));
+        saveProperties();
+    }
+
+    private static void saveProperties() {
+        try {
+            URL url = ConfigLoader.class.getClassLoader().getResource(CONFIG_FILE);
+
+            if (url == null) {
+                throw new IllegalStateException("No se encontró el archivo " + CONFIG_FILE);
+            }
+
+            if (!"file".equalsIgnoreCase(url.getProtocol())) {
+                throw new IllegalStateException(
+                        "El archivo config.properties no es editable en este modo de ejecución."
+                );
+            }
+
+            Path path = Paths.get(url.toURI());
+
+            try (OutputStream os = Files.newOutputStream(path)) {
+                properties.store(os, "Configuracion actualizada desde Herramientas de Tecnico");
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo guardar config.properties.", e);
+        }
     }
   
 }

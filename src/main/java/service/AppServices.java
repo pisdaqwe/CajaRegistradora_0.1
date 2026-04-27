@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import dao.InformesDao;
-
 /**
  * Contenedor central de servicios de la aplicación.
  *
@@ -27,24 +25,25 @@ import dao.InformesDao;
  * - soporte para devoluciones
  * - soporte para lectura de ticket de devolución
  * - soporte para merma
+ * - soporte base para auditoría
  */
 public class AppServices {
 
     // =====================================================
     // 1) SERVICIOS GENERALES DE LA APP
     // =====================================================
-
+    public final SistemaTecnicoService sistemaTecnicoService;
     public final AuthService authService;
     public final FichajeFacade fichajeFacade;
     public final FichajeService fichajeService;
     public final SesionCajaService sesionCajaService;
     public final CajaFacade cajaFacade;
     public final UsuarioService usuarioService;
+    public final AuditoriaService auditoriaService;
 
     // =====================================================
     // 2) SERVICIOS DEL MÓDULO DE VENTAS
     // =====================================================
-
     public final CatalogoService catalogoService;
     public final ProductoPersonalizacionService productoPersonalizacionService;
     public final VentaFacade ventaFacade;
@@ -54,86 +53,45 @@ public class AppServices {
     // =====================================================
     // 3) SERVICIOS DE DISPONIBILIDAD / STOCK
     // =====================================================
-
     public final DisponibilidadProductoService disponibilidadProductoService;
     public final DisponibilidadExtraService disponibilidadExtraService;
 
     // =====================================================
     // 4) SERVICIOS DE COMBOS
     // =====================================================
-
-    /**
-     * Servicio que carga desde BD las definiciones de combos activas.
-     */
     public final ComboService comboService;
-
-    /**
-     * Servicio que detecta automáticamente combos aplicables sobre el ticket.
-     */
     public final ComboMatcherService comboMatcherService;
 
-    /**
-     * Cache en memoria de combos activos.
-     *
-     * Se carga al iniciar AppServices y se reutiliza durante la sesión
-     * para no consultar la BD en cada cambio del ticket.
-     */
     private final List<ComboDefinition> combosActivosCache = new ArrayList<>();
 
     // =====================================================
     // 5) SERVICIOS DE DESCUENTOS
     // =====================================================
-
     public final DescuentoService descuentoService;
 
     // =====================================================
     // 6) SERVICIOS DE DEVOLUCIONES
     // =====================================================
-
     public final DevolucionService devolucionService;
     public final DevolucionFacade devolucionFacade;
-
-    /**
-     * Nuevo servicio lector del ticket de devolución.
-     *
-     * Uso previsto:
-     * - abrir vista previa del ticket de devolución
-     * - reutilizar desde diálogos/UI sin parsear JSON en pantalla
-     */
     public final DevolucionTicketService devolucionTicketService;
 
     // =====================================================
     // 7) SERVICIOS DE MERMA
     // =====================================================
-
-    /**
-     * Facade principal del caso de uso de merma.
-     *
-     * Uso previsto:
-     * - registrar mermas desde VentasFrame en ModoOperacion.MERMA
-     * - reutilizar la misma arquitectura UI -> Facade -> Service -> DAO
-     * 
-     */
     public final MermaFacade mermaFacade;
-    
-    // =====================================================
-    // 8) SERVICIOS DE INFORMES
-    // =====================================================
 
-   
+    // =====================================================
+    // 8) SERVICIOS DE INFORMES / AUXILIARES
+    // =====================================================
     public final InformesService informesService;
+    public final InformePdfService informePdfService;
     public final SucursalService sucursalService;
-    
-    
     public final RolService rolService;
-    
 
     // =====================================================
-    // 9) CONSTRUCTOR
+    // CONSTRUCTOR
     // =====================================================
-    
-    
-
     public AppServices(
             AuthService authService,
             FichajeFacade fichajeFacade,
@@ -163,7 +121,10 @@ public class AppServices {
             MermaFacade mermaFacade,
             InformesService informesService,
             SucursalService sucursalService,
-            RolService rolService
+            RolService rolService,
+            SistemaTecnicoService sistemaTecnicoService,
+            AuditoriaService auditoriaService,
+            InformePdfService informePdfService
     ) {
         // -----------------------------
         // 1) Servicios generales
@@ -174,6 +135,8 @@ public class AppServices {
         this.sesionCajaService = sesionCajaService;
         this.cajaFacade = cajaFacade;
         this.usuarioService = usuarioService;
+        this.sistemaTecnicoService = sistemaTecnicoService;
+        this.auditoriaService = auditoriaService;
 
         // -----------------------------
         // 2) Servicios de ventas
@@ -196,7 +159,6 @@ public class AppServices {
         this.comboService = comboService;
         this.comboMatcherService = comboMatcherService;
 
-        // Cargar combos activos al crear AppServices
         reloadCombosActivosCache();
 
         // -----------------------------
@@ -215,26 +177,19 @@ public class AppServices {
         // 7) Servicios de merma
         // -----------------------------
         this.mermaFacade = mermaFacade;
+
         // -----------------------------
-        // 8) Servicios de merma
+        // 8) Servicios de informes / auxiliares
         // -----------------------------
         this.informesService = informesService;
         this.sucursalService = sucursalService;
-        
         this.rolService = rolService;
+        this.informePdfService = informePdfService;
     }
 
     // =====================================================
-    // 9) MÉTODOS DE SOPORTE PARA COMBOS
+    // SOPORTE PARA COMBOS
     // =====================================================
-
-    /**
-     * Recarga desde BD la cache de combos activos.
-     *
-     * Útil:
-     * - al iniciar la app
-     * - si en el futuro un admin cambia combos y quieres refrescarlos
-     */
     public void reloadCombosActivosCache() {
         try {
             combosActivosCache.clear();
@@ -244,12 +199,7 @@ public class AppServices {
         }
     }
 
-    /**
-     * Devuelve la cache de combos activos en modo solo lectura.
-     */
     public List<ComboDefinition> getCombosActivosCache() {
         return Collections.unmodifiableList(combosActivosCache);
     }
-    
-    
 }

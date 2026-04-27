@@ -10,18 +10,22 @@ import dtoS.VentaItemParaDevolucionDTO;
 import dtoS.VentaParaDevolucionDTO;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DevolucionService {
 
     private final VentaDao ventaDao;
     private final VentaItemDao ventaItemDao;
     private final DevolucionRegistroDao devolucionRegistroDao;
+    private final AuditoriaService auditoriaService;
 
     public DevolucionService(
             VentaDao ventaDao,
             VentaItemDao ventaItemDao,
-            DevolucionRegistroDao devolucionRegistroDao
+            DevolucionRegistroDao devolucionRegistroDao,
+            AuditoriaService auditoriaService
     ) {
         if (ventaDao == null) {
             throw new IllegalArgumentException("ventaDao no puede ser null");
@@ -32,10 +36,14 @@ public class DevolucionService {
         if (devolucionRegistroDao == null) {
             throw new IllegalArgumentException("devolucionRegistroDao no puede ser null");
         }
+        if (auditoriaService == null) {
+            throw new IllegalArgumentException("auditoriaService no puede ser null");
+        }
 
         this.ventaDao = ventaDao;
         this.ventaItemDao = ventaItemDao;
         this.devolucionRegistroDao = devolucionRegistroDao;
+        this.auditoriaService = auditoriaService;
     }
 
     public VentaParaDevolucionDTO getVentaParaDevolucion(int idVenta) {
@@ -86,12 +94,21 @@ public class DevolucionService {
 
         BigDecimal totalDevuelto = calcularTotalDevolucion(request, itemsVenta);
 
-        return devolucionRegistroDao.registrarDevolucionCompleta(
+        RegistrarDevolucionResultDTO result = devolucionRegistroDao.registrarDevolucionCompleta(
                 request,
                 ventaOriginal,
                 itemsVenta,
                 totalDevuelto
         );
+
+        auditarSeguro(
+                request.getIdUsuarioAdmin(),
+                request.getIdSucursalActual(),
+                "DEVOLUCION_REGISTRADA_OK",
+                detallesDevolucion(request, result, ventaOriginal)
+        );
+
+        return result;
     }
 
     private void validarRequest(RegistrarDevolucionRequest request) {
@@ -243,5 +260,58 @@ public class DevolucionService {
         }
 
         throw new IllegalStateException("No existe la línea de venta id=" + idVentaItem);
+    }
+
+    private Map<String, Object> detallesDevolucion(RegistrarDevolucionRequest request,
+                                                   RegistrarDevolucionResultDTO result,
+                                                   VentaParaDevolucionDTO ventaOriginal) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("idDevolucion", result.getIdDevolucion());
+        data.put("idVentaOriginal", result.getIdVentaOriginal());
+        data.put("idSesionCajaActual", request.getIdSesionCajaActual());
+        data.put("idUsuarioAdmin", request.getIdUsuarioAdmin());
+        data.put("idSucursalActual", request.getIdSucursalActual());
+        data.put("metodoReembolso", result.getMetodoReembolso());
+        data.put("importeTotalDevuelto", result.getImporteTotalDevuelto());
+        data.put("ticketGenerado", result.isTicketGenerado());
+
+        data.put("motivo", request.getMotivo());
+        data.put("observaciones", request.getObservaciones());
+        data.put("numLineas", request.getItems() != null ? request.getItems().size() : 0);
+        data.put("lineasConReponeStock", contarLineasConReponeStock(request));
+
+        if (ventaOriginal != null) {
+            data.put("nombrePedido", ventaOriginal.getNombrePedido());
+            data.put("tipoServicio", ventaOriginal.getTipoServicio());
+            data.put("metodoPagoOriginal", ventaOriginal.getMetodoPagoOriginal());
+            data.put("totalVentaOriginal", ventaOriginal.getTotalVenta());
+        }
+
+        return data;
+    }
+
+    private int contarLineasConReponeStock(RegistrarDevolucionRequest request) {
+        int total = 0;
+        if (request.getItems() == null) {
+            return total;
+        }
+
+        for (RegistrarDevolucionItemRequest item : request.getItems()) {
+            if (item != null && item.isReponeStock()) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private void auditarSeguro(int idUsuario,
+                               int idSucursal,
+                               String accion,
+                               Map<String, Object> detalles) {
+        try {
+            auditoriaService.registrarEvento(idUsuario, idSucursal, accion, detalles);
+        } catch (Exception ex) {
+            System.err.println("[AUDITORIA] No se pudo registrar evento " + accion + ": " + ex.getMessage());
+        }
     }
 }
