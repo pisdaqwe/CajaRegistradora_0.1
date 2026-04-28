@@ -4,6 +4,7 @@ import app.AppContext;
 import dtoS.ColaMonitorItemDTO;
 import service.AppServices;
 import service.ColaImpresionService;
+import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -193,12 +194,11 @@ public class MonitorPreparacionDialog extends JDialog {
                     colaImpresionService.imprimirSiguiente(stationPanel.idEstacion);
 
             if (printed == null) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No hay items pendientes en " + stationPanel.stationName + ".",
-                        "Sin pendientes",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+            	TpvDialogUtils.showInfo(
+            	        this,
+            	        "Sin pendientes",
+            	        "No hay items pendientes en " + stationPanel.stationName + "."
+            	);
                 refreshStation(stationPanel);
                 return;
             }
@@ -207,12 +207,11 @@ public class MonitorPreparacionDialog extends JDialog {
             refreshStation(stationPanel);
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "No se pudo imprimir el siguiente item.\n" + safeMessage(ex),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+        	TpvDialogUtils.showError(
+        	        this,
+        	        "Error",
+        	        "No se pudo imprimir el siguiente item.\n" + safeMessage(ex)
+        	);
         }
     }
 
@@ -225,11 +224,8 @@ public class MonitorPreparacionDialog extends JDialog {
 
         sb.append("VISTA PREVIA DEL ITEM").append("\n");
         sb.append("----------------------------------------").append("\n");
-        sb.append("Estación: ").append(item.getNombreEstacion()).append("\n");
-        sb.append("Cola #: ").append(item.getIdCola()).append("\n");
-        sb.append("Venta #: ").append(item.getIdVenta()).append("\n");
         sb.append("Hora cola: ").append(formatHora(item.getFechaCreacion())).append("\n");
-        sb.append("\n");
+        sb.append("----------------------------------------").append("\n");
         sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)");
 
         return sb.toString();

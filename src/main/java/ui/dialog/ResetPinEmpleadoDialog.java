@@ -3,6 +3,8 @@ package ui.dialog;
 import dtoS.EmpleadoDetalleDTO;
 import dtoS.ResetPinEmpleadoRequest;
 import service.AppServices;
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -15,148 +17,180 @@ import java.util.Optional;
 
 public class ResetPinEmpleadoDialog extends JDialog {
 
-    private final AppServices services;
-    private final int idUsuarioObjetivo;
+	private final AppServices services;
+	private final int idUsuarioObjetivo;
 
-    private JLabel lblEmpleadoValor;
-    private JPasswordField txtNuevoPin;
-    private JPasswordField txtConfirmarPin;
+	private JLabel lblEmpleadoValor;
+	private JPasswordField txtNuevoPin;
+	private JPasswordField txtConfirmarPin;
 
-    private boolean confirmed;
+	private boolean confirmed;
 
-    public ResetPinEmpleadoDialog(Window owner, AppServices services, int idUsuarioObjetivo) {
-        super(owner, "Reset PIN empleado", ModalityType.APPLICATION_MODAL);
+	public ResetPinEmpleadoDialog(Window owner, AppServices services, int idUsuarioObjetivo) {
+		super(owner, "Reset PIN empleado", ModalityType.APPLICATION_MODAL);
 
-        this.services = services;
-        this.idUsuarioObjetivo = idUsuarioObjetivo;
+		this.services = services;
+		this.idUsuarioObjetivo = idUsuarioObjetivo;
 
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(480, 280);
-        setLocationRelativeTo(owner);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setSize(480, 280);
+		setLocationRelativeTo(owner);
 
-        buildUI();
-        cargarEmpleado();
-    }
+		buildUI();
+		cargarEmpleado();
+	}
 
-    public boolean showDialog() {
-        setVisible(true);
-        return confirmed;
-    }
+	public boolean showDialog() {
+		setVisible(true);
+		return confirmed;
+	}
 
-    private void buildUI() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(new EmptyBorder(14, 14, 14, 14));
-        root.setBackground(InformeUiTheme.APP_BG);
+	private void buildUI() {
+		JPanel root = new JPanel(new BorderLayout(10, 10));
+		root.setBorder(new EmptyBorder(14, 14, 14, 14));
+		root.setBackground(InformeUiTheme.APP_BG);
 
-        JPanel form = InformeUiTheme.createCardPanel(new GridBagLayout());
+		JPanel form = InformeUiTheme.createCardPanel(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.insets = new Insets(8, 8, 8, 8);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        lblEmpleadoValor = createValueLabel();
-        txtNuevoPin = new JPasswordField(18);
-        txtConfirmarPin = new JPasswordField(18);
+		lblEmpleadoValor = createValueLabel();
+		txtNuevoPin = new JPasswordField(18);
+		txtConfirmarPin = new JPasswordField(18);
 
-        InformeUiTheme.styleTextField(txtNuevoPin);
-        InformeUiTheme.styleTextField(txtConfirmarPin);
+		InformeUiTheme.styleTextField(txtNuevoPin);
+		InformeUiTheme.styleTextField(txtConfirmarPin);
 
-        addRow(form, gbc, 0, "Empleado:", lblEmpleadoValor);
-        addRow(form, gbc, 1, "Nuevo PIN:", txtNuevoPin);
-        addRow(form, gbc, 2, "Confirmar PIN:", txtConfirmarPin);
+		addRow(form, gbc, 0, "Empleado:", lblEmpleadoValor);
 
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footer.setOpaque(false);
+		addKeyboardRow(form, gbc, 1, "Nuevo PIN:", txtNuevoPin,
+		        "Teclado - Nuevo PIN", 8);
 
-        JButton btnCancelar = new JButton("Cancelar");
-        InformeUiTheme.styleSecondaryButton(btnCancelar);
-        btnCancelar.addActionListener(e -> dispose());
+		addKeyboardRow(form, gbc, 2, "Confirmar PIN:", txtConfirmarPin,
+		        "Teclado - Confirmar PIN", 8);
 
-        JButton btnGuardar = new JButton("Guardar");
-        InformeUiTheme.stylePrimaryButton(btnGuardar);
-        btnGuardar.addActionListener(e -> onGuardar());
+		JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		footer.setOpaque(false);
 
-        footer.add(btnCancelar);
-        footer.add(btnGuardar);
+		JButton btnCancelar = new JButton("Cancelar");
+		InformeUiTheme.styleSecondaryButton(btnCancelar);
+		btnCancelar.addActionListener(e -> dispose());
 
-        root.add(form, BorderLayout.CENTER);
-        root.add(footer, BorderLayout.SOUTH);
+		JButton btnGuardar = new JButton("Guardar");
+		InformeUiTheme.stylePrimaryButton(btnGuardar);
+		btnGuardar.addActionListener(e -> onGuardar());
 
-        setContentPane(root);
-    }
+		footer.add(btnCancelar);
+		footer.add(btnGuardar);
 
-    private void addRow(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent field) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        panel.add(InformeUiTheme.createFieldLabel(label), gbc);
+		root.add(form, BorderLayout.CENTER);
+		root.add(footer, BorderLayout.SOUTH);
 
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        panel.add(field, gbc);
-    }
+		setContentPane(root);
+	}
 
-    private JLabel createValueLabel() {
-        JLabel lbl = new JLabel("-");
-        lbl.setFont(InformeUiTheme.FONT_BODY);
-        lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
-        return lbl;
-    }
+	private void addRow(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent field) {
+		gbc.gridx = 0;
+		gbc.gridy = row;
+		gbc.weightx = 0;
+		panel.add(InformeUiTheme.createFieldLabel(label), gbc);
 
-    private void cargarEmpleado() {
-        Optional<EmpleadoDetalleDTO> opt = services.usuarioService.getDetalleEmpleado(idUsuarioObjetivo);
-        if (opt.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "No se pudo cargar el empleado.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            dispose();
-            return;
-        }
+		gbc.gridx = 1;
+		gbc.weightx = 1.0;
+		panel.add(field, gbc);
+	}
 
-        EmpleadoDetalleDTO detalle = opt.get();
-        lblEmpleadoValor.setText(detalle.getNombre() + " (" + detalle.getUsuario() + ")");
-    }
+	private JLabel createValueLabel() {
+		JLabel lbl = new JLabel("-");
+		lbl.setFont(InformeUiTheme.FONT_BODY);
+		lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
+		return lbl;
+	}
 
-    private ResetPinEmpleadoRequest leerRequest() {
-        ResetPinEmpleadoRequest request = new ResetPinEmpleadoRequest();
-        request.setIdUsuarioObjetivo(idUsuarioObjetivo);
-        request.setNuevoPin(new String(txtNuevoPin.getPassword()));
-        request.setConfirmarPin(new String(txtConfirmarPin.getPassword()));
+	private void cargarEmpleado() {
+		Optional<EmpleadoDetalleDTO> opt = services.usuarioService.getDetalleEmpleado(idUsuarioObjetivo);
+		if (opt.isEmpty()) {
+			TpvDialogUtils.showError(this, "Error", "No se pudo cargar el empleado.");
+			dispose();
+			return;
+		}
 
-        // NUEVO: datos del admin para auditoría
-        request.setIdUsuarioAdmin(AppContext.getUsuarioId());
-        request.setIdSucursalAdmin(AppContext.getIdSucursal());
+		EmpleadoDetalleDTO detalle = opt.get();
+		lblEmpleadoValor.setText(detalle.getNombre() + " (" + detalle.getUsuario() + ")");
+	}
 
-        return request;
-    }
+	private ResetPinEmpleadoRequest leerRequest() {
+		ResetPinEmpleadoRequest request = new ResetPinEmpleadoRequest();
+		request.setIdUsuarioObjetivo(idUsuarioObjetivo);
+		request.setNuevoPin(new String(txtNuevoPin.getPassword()));
+		request.setConfirmarPin(new String(txtConfirmarPin.getPassword()));
 
-    private void validar() {
-        String nuevo = new String(txtNuevoPin.getPassword());
-        String confirmar = new String(txtConfirmarPin.getPassword());
+		// NUEVO: datos del admin para auditoría
+		request.setIdUsuarioAdmin(AppContext.getUsuarioId());
+		request.setIdSucursalAdmin(AppContext.getIdSucursal());
 
-        if (nuevo.trim().isEmpty()) {
-            throw new IllegalArgumentException("El nuevo PIN es obligatorio.");
-        }
+		return request;
+	}
 
-        if (!nuevo.equals(confirmar)) {
-            throw new IllegalArgumentException("La confirmación del PIN no coincide.");
-        }
-    }
+	private void validar() {
+		String nuevo = new String(txtNuevoPin.getPassword());
+		String confirmar = new String(txtConfirmarPin.getPassword());
 
-    private void onGuardar() {
-        try {
-            validar();
-            ResetPinEmpleadoRequest request = leerRequest();
-            services.usuarioService.resetPin(request);
-            confirmed = true;
-            dispose();
+		if (nuevo.trim().isEmpty()) {
+			throw new IllegalArgumentException("El nuevo PIN es obligatorio.");
+		}
 
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    "No se pudo resetear el PIN",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
+		if (!nuevo.equals(confirmar)) {
+			throw new IllegalArgumentException("La confirmación del PIN no coincide.");
+		}
+	}
+
+	private void onGuardar() {
+		try {
+			validar();
+			ResetPinEmpleadoRequest request = leerRequest();
+			services.usuarioService.resetPin(request);
+			confirmed = true;
+			dispose();
+
+		} catch (Exception ex) {
+			TpvDialogUtils.showError(this, "No se pudo resetear el PIN", ex.getMessage());
+		}
+	}private JButton createKeyboardButton(JTextField field, String titulo, int maxLength) {
+	    JButton button = new JButton("⌨");
+	    InformeUiTheme.styleSecondaryButton(button);
+	    button.setMargin(new Insets(6, 10, 6, 10));
+
+	    button.addActionListener(e ->
+	            TecladoVirtualDialog.showNumerico(this, field, titulo, maxLength)
+	    );
+
+	    return button;
+	}
+
+	private void addKeyboardRow(
+	        JPanel panel,
+	        GridBagConstraints gbc,
+	        int row,
+	        String label,
+	        JTextField field,
+	        String tituloTeclado,
+	        int maxLength
+	) {
+	    gbc.gridx = 0;
+	    gbc.gridy = row;
+	    gbc.weightx = 0;
+	    panel.add(InformeUiTheme.createFieldLabel(label), gbc);
+
+	    JPanel wrapper = InformeUiTheme.createTransparentPanel(new BorderLayout(8, 0));
+	    wrapper.add(field, BorderLayout.CENTER);
+	    wrapper.add(createKeyboardButton(field, tituloTeclado, maxLength), BorderLayout.EAST);
+
+	    gbc.gridx = 1;
+	    gbc.weightx = 1.0;
+	    panel.add(wrapper, gbc);
+	}
+	
 }

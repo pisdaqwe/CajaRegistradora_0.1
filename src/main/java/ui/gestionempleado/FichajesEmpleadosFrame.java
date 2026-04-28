@@ -4,6 +4,7 @@ import app.AppContext;
 import dtoS.FichajeEmpleadoRowDTO;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
+import ui.common.TecladoVirtualDialog;
 import ui.table.FichajesEmpleadoTableModel;
 import ui.theme.InformeUiTheme;
 
@@ -119,7 +120,23 @@ public class FichajesEmpleadosFrame extends BaseTpvFrame {
 
         gbc.gridx = x++;
         gbc.weightx = 1.0;
-        filtros.add(txtBuscar, gbc);
+        JPanel buscarWrapper = InformeUiTheme.createTransparentPanel(new BorderLayout(6, 0));
+        buscarWrapper.add(txtBuscar, BorderLayout.CENTER);
+
+        JButton btnTecladoBuscar = new JButton("⌨");
+        InformeUiTheme.styleSecondaryButton(btnTecladoBuscar);
+        btnTecladoBuscar.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtBuscar,
+                        "Teclado - Buscar empleado",
+                        40
+                )
+        );
+
+        buscarWrapper.add(btnTecladoBuscar, BorderLayout.EAST);
+
+        filtros.add(buscarWrapper, gbc);
 
         gbc.gridx = x++;
         gbc.weightx = 0;

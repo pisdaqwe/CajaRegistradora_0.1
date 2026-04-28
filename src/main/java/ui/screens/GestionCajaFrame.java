@@ -4,6 +4,7 @@ import dtoS.CajaEstadoDTO;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
 import ui.common.InformeUiTheme;
+import ui.common.TpvDialogUtils;
 import ui.dialog.AbrirSesionCajaDialog;
 import ui.dialog.CerrarSesionCajaDialog;
 import ui.table.EmpleadosFichadosTableModel;
@@ -162,11 +163,10 @@ public class GestionCajaFrame extends BaseTpvFrame {
         try {
             empleadosTableModel.setDatos(services.fichajeService.findFichajesActivos());
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    ex.getMessage(),
                     "Error cargando empleados fichados",
-                    JOptionPane.ERROR_MESSAGE
+                    ex.getMessage()
             );
         }
     }

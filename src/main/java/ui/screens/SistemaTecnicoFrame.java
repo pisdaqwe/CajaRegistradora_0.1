@@ -4,6 +4,7 @@ import dtoS.CajaTerminalOptionDTO;
 import dtoS.SistemaTecnicoInfoDTO;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
+import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -336,38 +337,34 @@ public class SistemaTecnicoFrame extends BaseTpvFrame {
         CajaTerminalOptionDTO caja = (CajaTerminalOptionDTO) comboCajas.getSelectedItem();
 
         if (caja == null) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showWarning(
                     this,
-                    "Selecciona una caja válida.",
                     "Validación",
-                    JOptionPane.WARNING_MESSAGE
+                    "Selecciona una caja válida."
             );
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
+        boolean confirm = TpvDialogUtils.confirm(
                 this,
+                "Confirmar cambio de terminal",
                 "Vas a configurar este equipo como:\n\n"
                         + caja.getNombreCaja()
                         + "\nSucursal: " + caja.getNombreSucursal()
-                        + "\n\nEl cambio se aplicará al reiniciar la aplicación.\n\n¿Continuar?",
-                "Confirmar cambio de terminal",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
+                        + "\n\nEl cambio se aplicará al reiniciar la aplicación.\n\n¿Continuar?"
         );
 
-        if (confirm != JOptionPane.YES_OPTION) {
+        if (!confirm) {
             return;
         }
 
         try {
             services.sistemaTecnicoService.cambiarCajaTerminal(caja.getIdCaja());
 
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showInfo(
                     this,
-                    "Caja terminal actualizada correctamente.\nReinicia la aplicación para aplicar el cambio.",
                     "Configuración guardada",
-                    JOptionPane.INFORMATION_MESSAGE
+                    "Caja terminal actualizada correctamente.\nReinicia la aplicación para aplicar el cambio."
             );
 
             cargarDatos();
@@ -376,16 +373,22 @@ public class SistemaTecnicoFrame extends BaseTpvFrame {
             mostrarError("No se pudo guardar la caja terminal.", e);
         }
     }
-
     private void onProbarConexionBD() {
         boolean ok = services.sistemaTecnicoService.probarConexionBD();
 
-        JOptionPane.showMessageDialog(
-                this,
-                ok ? "Conexión a base de datos correcta." : "No se pudo conectar con la base de datos.",
-                "Prueba de conexión",
-                ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE
-        );
+        if (ok) {
+            TpvDialogUtils.showInfo(
+                    this,
+                    "Prueba de conexión",
+                    "Conexión a base de datos correcta."
+            );
+        } else {
+            TpvDialogUtils.showError(
+                    this,
+                    "Prueba de conexión",
+                    "No se pudo conectar con la base de datos."
+            );
+        }
 
         cargarInfoTecnica();
     }
@@ -401,11 +404,10 @@ public class SistemaTecnicoFrame extends BaseTpvFrame {
     private void mostrarError(String mensaje, Exception e) {
         e.printStackTrace();
 
-        JOptionPane.showMessageDialog(
+        TpvDialogUtils.showError(
                 this,
-                mensaje + "\n\nDetalle: " + e.getMessage(),
                 "Error",
-                JOptionPane.ERROR_MESSAGE
+                mensaje + "\n\nDetalle: " + e.getMessage()
         );
     }
 

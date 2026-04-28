@@ -4,6 +4,9 @@ import dtoS.TicketClienteDTO;
 import dtoS.TicketDevolucionDTO;
 import dtoS.TicketHoyRowDTO;
 import service.AppServices;
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -15,7 +18,6 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -91,45 +93,94 @@ public class TicketsHoyDialog extends JDialog {
     // =====================================================
 
     private void buildUi() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(new EmptyBorder(12, 12, 12, 12));
-        root.setBackground(new Color(30, 30, 30));
+        JPanel root = new JPanel(new BorderLayout(12, 12));
+        root.setBorder(new EmptyBorder(16, 16, 16, 16));
+        root.setBackground(InformeUiTheme.APP_BG);
 
         // -------------------------------------------------
         // NORTH: título + filtros
         // -------------------------------------------------
-        JPanel top = new JPanel(new BorderLayout(10, 10));
+        JPanel top = new JPanel(new BorderLayout(10, 12));
         top.setOpaque(false);
 
-        JLabel lblTitle = new JLabel("TICKETS DEL DÍA");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
-        lblTitle.setForeground(new Color(245, 245, 245));
-        top.add(lblTitle, BorderLayout.NORTH);
+        JPanel titlePanel = new JPanel(new BorderLayout(0, 4));
+        titlePanel.setOpaque(false);
 
-        JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JLabel lblTitle = new JLabel("TICKETS DEL DÍA");
+        lblTitle.setFont(InformeUiTheme.FONT_TITLE);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblSubtitle = new JLabel("Consulta ventas y devoluciones registradas hoy");
+        lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        titlePanel.add(lblTitle, BorderLayout.NORTH);
+        titlePanel.add(lblSubtitle, BorderLayout.CENTER);
+
+        top.add(titlePanel, BorderLayout.NORTH);
+
+        JPanel filtersCard = InformeUiTheme.createCardPanel(new BorderLayout());
+        JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         filters.setOpaque(false);
 
+        JLabel lblMostrar = InformeUiTheme.createFieldLabel("Mostrar:");
+
         cmbFiltroTipo = new JComboBox<>(new String[]{"AMBOS", "VENTAS", "DEVOLUCIONES"});
+        InformeUiTheme.styleCombo(cmbFiltroTipo);
+        cmbFiltroTipo.setPreferredSize(new Dimension(170, 38));
+
+        JLabel lblBuscar = InformeUiTheme.createFieldLabel("Buscar:");
+
         txtBuscar = new JTextField(22);
+        InformeUiTheme.styleTextField(txtBuscar);
+        txtBuscar.setPreferredSize(new Dimension(260, 38));
+
+        JPanel buscarWrapper = new JPanel(new BorderLayout(6, 0));
+        buscarWrapper.setOpaque(false);
+        buscarWrapper.add(txtBuscar, BorderLayout.CENTER);
+
+        JButton btnTecladoBuscar = new JButton("⌨");
+        InformeUiTheme.styleSecondaryButton(btnTecladoBuscar);
+        btnTecladoBuscar.setToolTipText("Abrir teclado táctil");
+        btnTecladoBuscar.setPreferredSize(new Dimension(54, 38));
+        btnTecladoBuscar.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtBuscar,
+                        "Teclado - Buscar ticket",
+                        60
+                )
+        );
+
+        buscarWrapper.add(btnTecladoBuscar, BorderLayout.EAST);
+
         btnBuscar = new JButton("BUSCAR");
+        InformeUiTheme.stylePrimaryButton(btnBuscar);
+
         btnRecargar = new JButton("RECARGAR");
+        InformeUiTheme.styleSecondaryButton(btnRecargar);
 
         cmbFiltroTipo.addActionListener(e -> loadRowsByCurrentFilter());
+
         btnBuscar.addActionListener(e -> searchRowsByCurrentFilter());
+
         btnRecargar.addActionListener(e -> {
             txtBuscar.setText("");
             loadRowsByCurrentFilter();
         });
 
-        filters.add(new JLabel("Mostrar:"));
+        txtBuscar.addActionListener(e -> searchRowsByCurrentFilter());
+
+        filters.add(lblMostrar);
         filters.add(cmbFiltroTipo);
         filters.add(Box.createHorizontalStrut(12));
-        filters.add(new JLabel("Buscar:"));
-        filters.add(txtBuscar);
+        filters.add(lblBuscar);
+        filters.add(buscarWrapper);
         filters.add(btnBuscar);
         filters.add(btnRecargar);
 
-        top.add(filters, BorderLayout.CENTER);
+        filtersCard.add(filters, BorderLayout.CENTER);
+        top.add(filtersCard, BorderLayout.CENTER);
 
         root.add(top, BorderLayout.NORTH);
 
@@ -149,7 +200,7 @@ public class TicketsHoyDialog extends JDialog {
         };
 
         table = new JTable(tableModel);
-        table.setRowHeight(28);
+        InformeUiTheme.styleTable(table);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
 
@@ -163,22 +214,37 @@ public class TicketsHoyDialog extends JDialog {
         });
 
         JScrollPane scroll = new JScrollPane(table);
+        InformeUiTheme.styleScrollPane(scroll);
+
         root.add(scroll, BorderLayout.CENTER);
 
         // -------------------------------------------------
         // SOUTH: acciones
         // -------------------------------------------------
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
 
+        JLabel lblHint = new JLabel("Doble clic sobre una fila para abrir el ticket.");
+        lblHint.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+
         btnAbrir = new JButton("ABRIR");
+        InformeUiTheme.stylePrimaryButton(btnAbrir);
+
         btnCerrar = new JButton("CERRAR");
+        InformeUiTheme.styleSecondaryButton(btnCerrar);
 
         btnAbrir.addActionListener(e -> abrirRegistroSeleccionado());
         btnCerrar.addActionListener(e -> dispose());
 
-        bottom.add(btnAbrir);
-        bottom.add(btnCerrar);
+        actions.add(btnAbrir);
+        actions.add(btnCerrar);
+
+        bottom.add(lblHint, BorderLayout.WEST);
+        bottom.add(actions, BorderLayout.EAST);
 
         root.add(bottom, BorderLayout.SOUTH);
 
@@ -190,39 +256,61 @@ public class TicketsHoyDialog extends JDialog {
     // =====================================================
 
     private void loadRowsByCurrentFilter() {
-        String filtro = getFiltroActual();
-        List<TicketHoyRowDTO> data = new ArrayList<>();
+        try {
+            String filtro = getFiltroActual();
+            List<TicketHoyRowDTO> data = new ArrayList<>();
 
-        if ("AMBOS".equals(filtro) || "VENTAS".equals(filtro)) {
-            data.addAll(services.ticketClienteService.getTicketsHoy());
+            if ("AMBOS".equals(filtro) || "VENTAS".equals(filtro)) {
+                data.addAll(services.ticketClienteService.getTicketsHoy());
+            }
+
+            if ("AMBOS".equals(filtro) || "DEVOLUCIONES".equals(filtro)) {
+                data.addAll(services.devolucionTicketService.getDevolucionesHoy());
+            }
+
+            sortRowsByFechaDesc(data);
+            rows = data;
+            reloadTable();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+
+            TpvDialogUtils.showError(
+                    this,
+                    "Error al cargar tickets",
+                    "No se pudieron cargar los tickets del día.\n\n" + ex.getMessage()
+            );
         }
-
-        if ("AMBOS".equals(filtro) || "DEVOLUCIONES".equals(filtro)) {
-            data.addAll(services.devolucionTicketService.getDevolucionesHoy());
-        }
-
-        sortRowsByFechaDesc(data);
-        rows = data;
-        reloadTable();
     }
 
     private void searchRowsByCurrentFilter() {
-        String filtro = getFiltroActual();
-        String query = txtBuscar.getText();
+        try {
+            String filtro = getFiltroActual();
+            String query = txtBuscar.getText();
 
-        List<TicketHoyRowDTO> data = new ArrayList<>();
+            List<TicketHoyRowDTO> data = new ArrayList<>();
 
-        if ("AMBOS".equals(filtro) || "VENTAS".equals(filtro)) {
-            data.addAll(services.ticketClienteService.searchTickets(query));
+            if ("AMBOS".equals(filtro) || "VENTAS".equals(filtro)) {
+                data.addAll(services.ticketClienteService.searchTickets(query));
+            }
+
+            if ("AMBOS".equals(filtro) || "DEVOLUCIONES".equals(filtro)) {
+                data.addAll(services.devolucionTicketService.searchDevoluciones(query));
+            }
+
+            sortRowsByFechaDesc(data);
+            rows = data;
+            reloadTable();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+
+            TpvDialogUtils.showError(
+                    this,
+                    "Error al buscar tickets",
+                    "No se pudo realizar la búsqueda.\n\n" + ex.getMessage()
+            );
         }
-
-        if ("AMBOS".equals(filtro) || "DEVOLUCIONES".equals(filtro)) {
-            data.addAll(services.devolucionTicketService.searchDevoluciones(query));
-        }
-
-        sortRowsByFechaDesc(data);
-        rows = data;
-        reloadTable();
     }
 
     private String getFiltroActual() {
@@ -271,11 +359,10 @@ public class TicketsHoyDialog extends JDialog {
     private void abrirRegistroSeleccionado() {
         int selectedViewRow = table.getSelectedRow();
         if (selectedViewRow < 0) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showWarning(
                     this,
-                    "Selecciona un registro de la tabla.",
                     "Abrir ticket",
-                    JOptionPane.WARNING_MESSAGE
+                    "Selecciona un registro de la tabla."
             );
             return;
         }
@@ -308,11 +395,10 @@ public class TicketsHoyDialog extends JDialog {
         } catch (Exception e) {
             e.printStackTrace();
 
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    "No se pudo abrir el registro.\n\n" + e.getMessage(),
                     "Error",
-                    JOptionPane.ERROR_MESSAGE
+                    "No se pudo abrir el registro.\n\n" + e.getMessage()
             );
         }
     }
@@ -325,9 +411,11 @@ public class TicketsHoyDialog extends JDialog {
         if (row == null) {
             return "";
         }
+
         if (row.isDevolucion()) {
             return "DEVOLUCIÓN";
         }
+
         return "VENTA";
     }
 
@@ -335,9 +423,11 @@ public class TicketsHoyDialog extends JDialog {
         if (row == null) {
             return "";
         }
+
         if (row.isDevolucion() && row.hasIdDevolucion()) {
             return String.valueOf(row.getIdDevolucion());
         }
+
         return String.valueOf(row.getIdVenta());
     }
 
@@ -345,9 +435,11 @@ public class TicketsHoyDialog extends JDialog {
         if (row == null) {
             return "";
         }
+
         if (row.isDevolucion() && row.hasIdVentaOriginal()) {
             return "Venta #" + row.getIdVentaOriginal();
         }
+
         return "-";
     }
 
@@ -355,6 +447,7 @@ public class TicketsHoyDialog extends JDialog {
         if (row == null || row.getFechaGeneracion() == null) {
             return "";
         }
+
         return row.getFechaGeneracion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
     }
 
@@ -362,6 +455,7 @@ public class TicketsHoyDialog extends JDialog {
         if (metodo == null) {
             return "";
         }
+
         return switch (metodo.trim().toUpperCase()) {
             case "EFECTIVO" -> "Efectivo";
             case "TARJETA" -> "Tarjeta";

@@ -7,6 +7,7 @@ import enums.PostLoginDestination;
 import model.Fichaje;
 import model.Usuario;
 import service.AppServices;
+import ui.common.TpvDialogUtils;
 import ui.dialog.PinDialog;
 import ui.dialog.PinDialog.PinDialogMode;
 import ui.dialog.PinDialogResult;
@@ -435,11 +436,10 @@ public class LoginScreen extends JFrame {
         } catch (Exception ex) {
             AppContext.clear();
             mostrarLoginLimpio();
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    ex.getMessage(),
-                    "Error de login",
-                    JOptionPane.ERROR_MESSAGE
+                    "Error post-login",
+                    ex.getMessage()
             );
         }
     }
@@ -460,11 +460,10 @@ public class LoginScreen extends JFrame {
         } catch (Exception ex) {
             AppContext.clear();
             mostrarLoginLimpio();
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    ex.getMessage(),
                     "Error de autenticación",
-                    JOptionPane.ERROR_MESSAGE
+                    ex.getMessage()
             );
         }
     }
@@ -543,11 +542,10 @@ public class LoginScreen extends JFrame {
         } catch (Exception ex) {
             AppContext.clear();
             mostrarLoginLimpio();
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    ex.getMessage(),
                     "Error post-login",
-                    JOptionPane.ERROR_MESSAGE
+                    ex.getMessage()
             );
         }
     }
@@ -581,11 +579,10 @@ public class LoginScreen extends JFrame {
         } catch (Exception ex) {
             AppContext.clear();
             mostrarLoginLimpio();
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    ex.getMessage(),
                     "Error al abrir Ventas",
-                    JOptionPane.ERROR_MESSAGE
+                    "No se pudo abrir la pantalla de ventas."
             );
         }
     }
@@ -703,7 +700,11 @@ public class LoginScreen extends JFrame {
         try {
             String usuario = txtUsuario.getText().trim();
             if (usuario.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Introduce tu código");
+            	TpvDialogUtils.showWarning(
+            	        this,
+            	        "Código requerido",
+            	        "Introduce tu código."
+            	);
                 return;
             }
 
@@ -723,12 +724,11 @@ public class LoginScreen extends JFrame {
             cargarBotonesRapidos();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+        	TpvDialogUtils.showError(
+        	        this,
+        	        "Error",
+        	        ex.getMessage()
+        	);
         }
     }
 

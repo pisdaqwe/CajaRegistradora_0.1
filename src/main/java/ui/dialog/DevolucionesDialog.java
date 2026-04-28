@@ -9,6 +9,8 @@ import dtoS.TicketHoyRowDTO;
 import dtoS.VentaItemParaDevolucionDTO;
 import dtoS.VentaParaDevolucionDTO;
 import service.AppServices;
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
 import ui.table.DevolucionRowVM;
 import ui.table.DevolucionTableModel;
 import ui.table.VentasHoyDevolucionTableModel;
@@ -37,6 +39,8 @@ import java.util.Locale;
  * - panel táctil rediseñado para que no se deforme
  * - combo de método reembolso con tamaño controlado
  * - mejor distribución de total / motivo / observaciones
+ * - JOptionPane sustituido por TpvDialogUtils
+ * - teclado táctil añadido en búsqueda y motivo
  */
 public class DevolucionesDialog extends JDialog {
 
@@ -170,14 +174,14 @@ public class DevolucionesDialog extends JDialog {
         int screenW = screen.width;
         int screenH = screen.height;
 
-        int targetW = (int) (screenW * 0.90);
-        int targetH = (int) (screenH * 0.88);
+        int targetW = (int) (screenW * 0.92);
+        int targetH = (int) (screenH * 0.90);
 
-        int minW = 1220;
-        int minH = 760;
+        int minW = 1080;
+        int minH = 680;
 
-        int finalW = Math.max(minW, Math.min(targetW, screenW - 40));
-        int finalH = Math.max(minH, Math.min(targetH, screenH - 80));
+        int finalW = Math.max(minW, Math.min(targetW, screenW - 30));
+        int finalH = Math.max(minH, Math.min(targetH, screenH - 70));
 
         setMinimumSize(new Dimension(minW, minH));
         setPreferredSize(new Dimension(finalW, finalH));
@@ -190,25 +194,25 @@ public class DevolucionesDialog extends JDialog {
     // =====================================================
 
     private JComponent buildHeader() {
-        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        JPanel panel = new JPanel(new BorderLayout(8, 0));
         panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(0, 2, 2, 2));
 
         JLabel title = new JLabel("DEVOLUCIONES");
-        title.setFont(new Font("SansSerif", Font.BOLD, 30));
+        title.setFont(new Font("SansSerif", Font.BOLD, 21));
         title.setForeground(TEXT_MAIN);
 
-        JLabel subtitle = new JLabel("Ventas de hoy a la izquierda · Ajuste táctil de líneas a la derecha");
-        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        JLabel subtitle = new JLabel("Selecciona una venta, ajusta líneas y confirma");
+        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
         subtitle.setForeground(TEXT_SOFT);
 
-        JPanel left = new JPanel();
-        left.setOpaque(false);
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-        left.add(title);
-        left.add(Box.createVerticalStrut(4));
-        left.add(subtitle);
+        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 0));
+        textPanel.setOpaque(false);
+        textPanel.add(title);
+        textPanel.add(subtitle);
 
-        panel.add(left, BorderLayout.WEST);
+        panel.add(textPanel, BorderLayout.WEST);
+
         return panel;
     }
 
@@ -240,8 +244,28 @@ public class DevolucionesDialog extends JDialog {
 
         JPanel searchPanel = new JPanel(new BorderLayout(8, 8));
         searchPanel.setOpaque(false);
+
         txtBuscar.setPreferredSize(new Dimension(220, 42));
-        searchPanel.add(txtBuscar, BorderLayout.CENTER);
+
+        JPanel buscarWrapper = new JPanel(new BorderLayout(6, 0));
+        buscarWrapper.setOpaque(false);
+        buscarWrapper.add(txtBuscar, BorderLayout.CENTER);
+
+        JButton btnTecladoBuscar = new JButton("⌨");
+        styleSecondaryButton(btnTecladoBuscar);
+        btnTecladoBuscar.setPreferredSize(new Dimension(52, 42));
+        btnTecladoBuscar.setToolTipText("Abrir teclado táctil");
+        btnTecladoBuscar.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtBuscar,
+                        "Teclado - Buscar venta",
+                        60
+                )
+        );
+
+        buscarWrapper.add(btnTecladoBuscar, BorderLayout.EAST);
+        searchPanel.add(buscarWrapper, BorderLayout.CENTER);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         buttons.setOpaque(false);
@@ -294,7 +318,11 @@ public class DevolucionesDialog extends JDialog {
 
         JComponent itemsPanel = buildItemsPanel();
         JComponent touchPanel = buildTouchSelectorPanel();
-        touchPanel.setPreferredSize(new Dimension(0, 320));
+
+        // Antes estaba en 320 y se comía media pantalla.
+        // 245-260 es mucho más equilibrado.
+        touchPanel.setPreferredSize(new Dimension(0, 255));
+        touchPanel.setMinimumSize(new Dimension(0, 235));
 
         panel.add(itemsPanel, BorderLayout.CENTER);
         panel.add(touchPanel, BorderLayout.SOUTH);
@@ -322,146 +350,195 @@ public class DevolucionesDialog extends JDialog {
         return panel;
     }
 
-    /**
-     * Panel rediseñado para evitar:
-     * - combo gigantesco
-     * - cajas deformadas
-     * - columnas superpuestas
-     */
     private JComponent buildTouchSelectorPanel() {
-        JPanel panel = createCardPanel(new BorderLayout(12, 12));
+        JPanel panel = createCardPanel(new BorderLayout(8, 8));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(14, 14, 14, 14)
+                new EmptyBorder(8, 10, 8, 10)
         ));
 
-        JLabel title = new JLabel("AJUSTE TÁCTIL DE LA LÍNEA SELECCIONADA");
-        title.setFont(new Font("SansSerif", Font.BOLD, 20));
+        JLabel title = new JLabel("AJUSTE DE DEVOLUCIÓN");
+        title.setFont(new Font("SansSerif", Font.BOLD, 17));
         title.setForeground(TEXT_MAIN);
 
-        // -------------------------------------------------
-        // 1) RESUMEN DE LA LÍNEA
-        // -------------------------------------------------
-        JPanel info = new JPanel(new GridLayout(1, 4, 12, 8));
+        // ==============================
+        // INFO DE LÍNEA
+        // ==============================
+        JPanel info = new JPanel(new GridLayout(1, 4, 10, 4));
         info.setOpaque(false);
-        info.add(buildInfoBox("Producto", lblLineaProducto));
-        info.add(buildInfoBox("Tamaño", lblLineaTamano));
-        info.add(buildInfoBox("Disponible", lblLineaDisponible));
-        info.add(buildInfoBox("Final línea", lblLineaFinal));
+        info.add(buildCompactInfoBox("Producto", lblLineaProducto));
+        info.add(buildCompactInfoBox("Tamaño", lblLineaTamano));
+        info.add(buildCompactInfoBox("Disponible", lblLineaDisponible));
+        info.add(buildCompactInfoBox("Final línea", lblLineaFinal));
 
-        // -------------------------------------------------
-        // 2) CONTROLES DE CANTIDAD
-        // -------------------------------------------------
+        // ==============================
+        // CONTROLES CANTIDAD
+        // ==============================
         styleTouchButton(btnMenos);
         styleTouchButton(btnMas);
         styleWideTouchButton(btnDevolverTodo);
+        styleToggle(toggleReponeStock);
 
-        lblCantidadGrande.setFont(new Font("SansSerif", Font.BOLD, 34));
+        lblCantidadGrande.setFont(new Font("SansSerif", Font.BOLD, 26));
         lblCantidadGrande.setOpaque(true);
         lblCantidadGrande.setBackground(BG_INPUT);
         lblCantidadGrande.setForeground(new Color(14, 48, 35));
+        lblCantidadGrande.setHorizontalAlignment(SwingConstants.CENTER);
         lblCantidadGrande.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(12, 18, 12, 18)
+                new EmptyBorder(6, 12, 6, 12)
         ));
-        lblCantidadGrande.setPreferredSize(new Dimension(110, 64));
+        lblCantidadGrande.setPreferredSize(new Dimension(78, 46));
+        lblCantidadGrande.setMinimumSize(new Dimension(78, 46));
 
-        styleToggle(toggleReponeStock);
-
-        JPanel quantityControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        JPanel quantityControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         quantityControls.setOpaque(false);
         quantityControls.add(btnMenos);
         quantityControls.add(lblCantidadGrande);
         quantityControls.add(btnMas);
         quantityControls.add(btnDevolverTodo);
 
-        JPanel quantityPanel = new JPanel(new BorderLayout(12, 0));
+        JPanel quantityPanel = new JPanel(new BorderLayout(8, 0));
         quantityPanel.setOpaque(false);
         quantityPanel.add(quantityControls, BorderLayout.WEST);
         quantityPanel.add(toggleReponeStock, BorderLayout.EAST);
 
-        // -------------------------------------------------
-        // 3) FORMULARIO INFERIOR BIEN REPARTIDO
-        // -------------------------------------------------
+        // ==============================
+        // FORMULARIO INFERIOR
+        // ==============================
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.insets = new Insets(3, 5, 3, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        // Método reembolso (arriba izquierda)
-        cmbMetodoReembolso.setPreferredSize(new Dimension(220, 42));
+        cmbMetodoReembolso.setPreferredSize(new Dimension(0, 34));
+        txtMotivo.setPreferredSize(new Dimension(0, 34));
 
+        JPanel motivoWrapper = new JPanel(new BorderLayout(6, 0));
+        motivoWrapper.setOpaque(false);
+        motivoWrapper.add(txtMotivo, BorderLayout.CENTER);
+
+        JButton btnTecladoMotivo = new JButton("⌨");
+        styleSecondaryButton(btnTecladoMotivo);
+        btnTecladoMotivo.setPreferredSize(new Dimension(44, 34));
+        btnTecladoMotivo.setToolTipText("Abrir teclado táctil");
+        btnTecladoMotivo.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtMotivo,
+                        "Teclado - Motivo devolución",
+                        80
+                )
+        );
+
+        motivoWrapper.add(btnTecladoMotivo, BorderLayout.EAST);
+
+        txtObservaciones.setLineWrap(true);
+        txtObservaciones.setWrapStyleWord(true);
+
+        JScrollPane obsScroll = new JScrollPane(txtObservaciones);
+        obsScroll.setPreferredSize(new Dimension(0, 52));
+        obsScroll.setMinimumSize(new Dimension(0, 42));
+
+        // Fila 1: método + total
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.55;
-        formPanel.add(buildLabeledField("Método reembolso", cmbMetodoReembolso), gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0;
+        formPanel.add(buildCompactLabeledField("Método reembolso", cmbMetodoReembolso), gbc);
 
-        // Total devolución (arriba derecha)
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 0.45;
-        formPanel.add(buildInfoBox("Total devolución", lblTotalDevolucion), gbc);
+        formPanel.add(buildCompactInfoBox("Total devolución", lblTotalDevolucion), gbc);
 
-        // Motivo (abajo izquierda)
-        txtMotivo.setPreferredSize(new Dimension(0, 42));
-
+        // Fila 2: motivo + observaciones
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0.55;
-        formPanel.add(buildLabeledField("Motivo", txtMotivo), gbc);
-
-        // Observaciones (abajo derecha)
-        txtObservaciones.setLineWrap(true);
-        txtObservaciones.setWrapStyleWord(true);
-        JScrollPane obsScroll = new JScrollPane(txtObservaciones);
-        obsScroll.setPreferredSize(new Dimension(0, 80));
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0;
+        formPanel.add(buildCompactLabeledField("Motivo", motivoWrapper), gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 0.45;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1.0;
-        formPanel.add(buildLabeledField("Observaciones", obsScroll), gbc);
+        formPanel.add(buildCompactLabeledField("Observaciones", obsScroll), gbc);
 
-        // -------------------------------------------------
-        // 4) CONTENIDO GENERAL
-        // -------------------------------------------------
-        JPanel content = new JPanel();
+        // ==============================
+        // CONTENIDO
+        // ==============================
+        JPanel content = new JPanel(new BorderLayout(6, 6));
         content.setOpaque(false);
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
-        content.add(info);
-        content.add(Box.createVerticalStrut(12));
-        content.add(quantityPanel);
-        content.add(Box.createVerticalStrut(12));
-        content.add(formPanel);
+        JPanel topContent = new JPanel(new BorderLayout(6, 6));
+        topContent.setOpaque(false);
+        topContent.add(info, BorderLayout.NORTH);
+        topContent.add(quantityPanel, BorderLayout.CENTER);
+
+        content.add(topContent, BorderLayout.NORTH);
+        content.add(formPanel, BorderLayout.CENTER);
 
         panel.add(title, BorderLayout.NORTH);
         panel.add(content, BorderLayout.CENTER);
 
         return panel;
     }
+    private JPanel buildCompactInfoBox(String title, JLabel valueLabel) {
+        JPanel box = new JPanel(new BorderLayout(2, 2));
+        box.setOpaque(false);
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(TEXT_SOFT);
+        titleLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+        valueLabel.setForeground(TEXT_MAIN);
+        valueLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+        box.add(titleLabel, BorderLayout.NORTH);
+        box.add(valueLabel, BorderLayout.CENTER);
+
+        return box;
+    }
+
+    private JPanel buildCompactLabeledField(String title, JComponent comp) {
+        JPanel box = new JPanel(new BorderLayout(2, 2));
+        box.setOpaque(false);
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(TEXT_SOFT);
+        titleLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+        box.add(titleLabel, BorderLayout.NORTH);
+        box.add(comp, BorderLayout.CENTER);
+
+        return box;
+    }
 
     private void styleWideTouchButton(JButton button) {
         button.setFocusPainted(false);
         button.setBackground(BG_BUTTON_ALT);
         button.setForeground(TEXT_MAIN);
-        button.setFont(new Font("SansSerif", Font.BOLD, 18));
-        button.setPreferredSize(new Dimension(210, 64));
-        button.setMinimumSize(new Dimension(210, 64));
-        button.setMaximumSize(new Dimension(210, 64));
-        button.setMargin(new Insets(0, 12, 0, 12));
-        button.setText("DEVOLVER TODO");
+        button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setPreferredSize(new Dimension(165, 46));
+        button.setMinimumSize(new Dimension(150, 42));
+        button.setMargin(new Insets(0, 8, 0, 8));
     }
 
     private JComponent buildBottomBar() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(4, 0, 0, 0));
+
         panel.add(btnCerrar);
         panel.add(btnConfirmar);
+
         return panel;
     }
 
@@ -625,43 +702,45 @@ public class DevolucionesDialog extends JDialog {
         button.setFocusPainted(false);
         button.setBackground(BG_BUTTON);
         button.setForeground(TEXT_MAIN);
-        button.setFont(new Font("SansSerif", Font.BOLD, 15));
-        button.setPreferredSize(new Dimension(120, 42));
+        button.setFont(new Font("SansSerif", Font.BOLD, 14));
+        button.setPreferredSize(new Dimension(108, 38));
     }
 
     private void styleSecondaryButton(JButton button) {
         button.setFocusPainted(false);
         button.setBackground(BG_BUTTON_ALT);
         button.setForeground(TEXT_MAIN);
-        button.setFont(new Font("SansSerif", Font.BOLD, 15));
-        button.setPreferredSize(new Dimension(120, 42));
+        button.setFont(new Font("SansSerif", Font.BOLD, 14));
+        button.setPreferredSize(new Dimension(108, 38));
     }
 
     private void styleDangerButton(JButton button) {
         button.setFocusPainted(false);
         button.setBackground(BG_BUTTON_DANGER);
         button.setForeground(TEXT_MAIN);
-        button.setFont(new Font("SansSerif", Font.BOLD, 16));
-        button.setPreferredSize(new Dimension(280, 52));
+        button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setPreferredSize(new Dimension(245, 46));
     }
 
     private void styleTouchButton(JButton button) {
         button.setFocusPainted(false);
         button.setBackground(BG_BUTTON);
         button.setForeground(TEXT_MAIN);
-        button.setFont(new Font("SansSerif", Font.BOLD, 26));
-        button.setPreferredSize(new Dimension(78, 64));
+        button.setFont(new Font("SansSerif", Font.BOLD, 22));
+        button.setPreferredSize(new Dimension(64, 46));
+        button.setMinimumSize(new Dimension(58, 42));
     }
 
     private void styleToggle(JToggleButton toggle) {
         toggle.setFocusPainted(false);
         toggle.setBackground(BG_BUTTON_ALT);
         toggle.setForeground(TEXT_MAIN);
-        toggle.setFont(new Font("SansSerif", Font.BOLD, 16));
-        toggle.setPreferredSize(new Dimension(240, 64));
+        toggle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        toggle.setPreferredSize(new Dimension(210, 46));
+        toggle.setMinimumSize(new Dimension(180, 42));
         toggle.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(HIGHLIGHT, 1, true),
-                new EmptyBorder(8, 12, 8, 12)
+                new EmptyBorder(6, 10, 6, 10)
         ));
     }
 
@@ -671,6 +750,8 @@ public class DevolucionesDialog extends JDialog {
 
     private void wireActions() {
         btnBuscar.addActionListener(e -> onBuscarVentas());
+        txtBuscar.addActionListener(e -> onBuscarVentas());
+
         btnResetHoy.addActionListener(e -> onResetHoy());
         btnCerrar.addActionListener(e -> dispose());
         btnConfirmar.addActionListener(e -> onConfirmar());
@@ -713,7 +794,11 @@ public class DevolucionesDialog extends JDialog {
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error buscando ventas", JOptionPane.ERROR_MESSAGE);
+            TpvDialogUtils.showError(
+                    this,
+                    "Error buscando ventas",
+                    e.getMessage()
+            );
         }
     }
 
@@ -742,7 +827,11 @@ public class DevolucionesDialog extends JDialog {
         try {
             loadVentaSeleccionada(ventaRow.getIdVenta());
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error cargando venta", JOptionPane.ERROR_MESSAGE);
+            TpvDialogUtils.showError(
+                    this,
+                    "Error cargando venta",
+                    ex.getMessage()
+            );
             clearVentaSeleccionada();
         }
     }
@@ -888,15 +977,13 @@ public class DevolucionesDialog extends JDialog {
         try {
             RegistrarDevolucionRequest request = buildRequest();
 
-            int confirm = JOptionPane.showConfirmDialog(
+            boolean confirm = TpvDialogUtils.confirm(
                     this,
-                    "¿Confirmar devolución por " + formatMoney(calcularTotalRequest()) + "?",
                     "Confirmar devolución",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
+                    "¿Confirmar devolución por " + formatMoney(calcularTotalRequest()) + "?"
             );
 
-            if (confirm != JOptionPane.YES_OPTION) {
+            if (!confirm) {
                 return;
             }
 
@@ -912,13 +999,12 @@ public class DevolucionesDialog extends JDialog {
                 TicketDevolucionDialog dialog = new TicketDevolucionDialog(this, ticket);
                 dialog.showDialog();
             } else {
-                JOptionPane.showMessageDialog(
+                TpvDialogUtils.showInfo(
                         this,
+                        "Devolución registrada",
                         "Devolución registrada correctamente.\n\n"
                                 + "ID devolución: " + result.getIdDevolucion() + "\n"
-                                + "Total devuelto: " + formatMoney(result.getImporteTotalDevuelto()),
-                        "Devolución registrada",
-                        JOptionPane.INFORMATION_MESSAGE
+                                + "Total devuelto: " + formatMoney(result.getImporteTotalDevuelto())
                 );
             }
 
@@ -929,11 +1015,10 @@ public class DevolucionesDialog extends JDialog {
             loadVentasHoy();
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    e.getMessage(),
                     "Error registrando devolución",
-                    JOptionPane.ERROR_MESSAGE
+                    e.getMessage()
             );
         }
     }

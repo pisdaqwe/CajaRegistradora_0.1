@@ -2,6 +2,8 @@ package ui.dialog;
 
 import dtoS.StockProductoDisponibilidadDTO;
 import enums.ModoDisponibilidadProducto;
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -56,7 +58,8 @@ public class EditarDisponibilidadProductoDialog extends JDialog {
 	private void initDialog() {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setSize(WIDTH, HEIGHT);
-		setResizable(false);
+		setMinimumSize(new Dimension(640, 520));
+		setResizable(true);
 		setLocationRelativeTo(getOwner());
 	}
 
@@ -92,23 +95,20 @@ public class EditarDisponibilidadProductoDialog extends JDialog {
 	}
 
 	private JComponent buildHeader() {
-		JPanel panel = new JPanel();
+		JPanel panel = new JPanel(new BorderLayout(0, 2));
 		panel.setOpaque(false);
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(new EmptyBorder(0, 0, 4, 0));
 
-		JLabel lblTitle = new JLabel("EDITAR DISPONIBILIDAD");
-		lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-		lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+		JLabel lblTitle = new JLabel("EDITAR DISPONIBILIDAD", SwingConstants.CENTER);
+		lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
 		lblTitle.setForeground(TEXT_MAIN);
 
-		JLabel lblSubtitle = new JLabel("Configura el estado operativo del producto en esta sucursal");
-		lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-		lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+		JLabel lblSubtitle = new JLabel("Estado operativo del producto en esta sucursal", SwingConstants.CENTER);
+		lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
 		lblSubtitle.setForeground(TEXT_SOFT);
 
-		panel.add(lblTitle);
-		panel.add(Box.createVerticalStrut(4));
-		panel.add(lblSubtitle);
+		panel.add(lblTitle, BorderLayout.NORTH);
+		panel.add(lblSubtitle, BorderLayout.CENTER);
 
 		return panel;
 	}
@@ -178,9 +178,20 @@ public class EditarDisponibilidadProductoDialog extends JDialog {
 		gbc.weightx = 0;
 		form.add(createLabel("Stock actual:"), gbc);
 
+		JPanel stockWrapper = new JPanel(new BorderLayout(6, 0));
+		stockWrapper.setOpaque(false);
+		stockWrapper.add(txtStock, BorderLayout.CENTER);
+
+		JButton btnTecladoStock = createSmallActionButton("⌨");
+		btnTecladoStock.setToolTipText("Abrir teclado táctil");
+		btnTecladoStock
+				.addActionListener(e -> TecladoVirtualDialog.showNumerico(this, txtStock, "Teclado - Stock actual", 8));
+
+		stockWrapper.add(btnTecladoStock, BorderLayout.EAST);
+
 		gbc.gridx = 1;
 		gbc.weightx = 1;
-		form.add(txtStock, gbc);
+		form.add(stockWrapper, gbc);
 
 		row++;
 
@@ -197,6 +208,20 @@ public class EditarDisponibilidadProductoDialog extends JDialog {
 
 		panel.add(form, BorderLayout.CENTER);
 		return panel;
+	}
+
+	private JButton createSmallActionButton(String text) {
+		JButton button = new JButton(text);
+		button.setFocusPainted(false);
+		button.setFont(new Font("SansSerif", Font.BOLD, 16));
+		button.setForeground(TEXT_MAIN);
+		button.setBackground(BG_HEADER);
+		button.setOpaque(true);
+		button.setPreferredSize(new Dimension(50, 48));
+		button.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER, 1, true),
+				new EmptyBorder(8, 8, 8, 8)));
+		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		return button;
 	}
 
 	private JComponent buildBottomBar() {
@@ -261,8 +286,7 @@ public class EditarDisponibilidadProductoDialog extends JDialog {
 		ModoDisponibilidadProducto modo = (ModoDisponibilidadProducto) cmbModo.getSelectedItem();
 
 		if (modo == null) {
-			JOptionPane.showMessageDialog(this, "Debes seleccionar un modo de disponibilidad.", "Disponibilidad",
-					JOptionPane.WARNING_MESSAGE);
+			TpvDialogUtils.showWarning(this, "Disponibilidad", "Debes seleccionar un modo de disponibilidad.");
 			return;
 		}
 
@@ -270,14 +294,12 @@ public class EditarDisponibilidadProductoDialog extends JDialog {
 
 		if (modo == ModoDisponibilidadProducto.DISPONIBLE_CON_CANTIDAD) {
 			if (stock == null) {
-				JOptionPane.showMessageDialog(this, "Introduce un stock válido.", "Disponibilidad",
-						JOptionPane.WARNING_MESSAGE);
+				TpvDialogUtils.showWarning(this, "Disponibilidad", "Introduce un stock válido.");
 				return;
 			}
 
 			if (stock.compareTo(BigDecimal.ZERO) < 0) {
-				JOptionPane.showMessageDialog(this, "El stock no puede ser negativo.", "Disponibilidad",
-						JOptionPane.WARNING_MESSAGE);
+				TpvDialogUtils.showWarning(this, "Disponibilidad", "El stock no puede ser negativo.");
 				return;
 			}
 		} else {

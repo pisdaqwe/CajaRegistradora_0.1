@@ -4,6 +4,7 @@ import dtoS.CajaEstadoDTO;
 import dtoS.FichajeActivoDTO;
 import service.AppServices;
 import ui.common.InformeUiTheme;
+import ui.common.TpvDialogUtils;
 import ui.table.EmpleadosFichadosTableModel;
 
 import javax.swing.*;
@@ -542,26 +543,29 @@ public class AbrirSesionCajaDialog extends JDialog {
 
     private void confirmarAperturaCaja() {
         if (empleadoSeleccionado == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Debes seleccionar un empleado fichado.",
-                    "Abrir sesión",
-                    JOptionPane.WARNING_MESSAGE);
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Abrir sesión",
+        	        "Debes seleccionar un empleado fichado."
+        	);
             return;
         }
 
         if (cajaSeleccionada == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Debes seleccionar una caja disponible.",
-                    "Abrir sesión",
-                    JOptionPane.WARNING_MESSAGE);
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Abrir sesión",
+        	        "Debes seleccionar una caja disponible."
+        	);
             return;
         }
 
         if (importeSeleccionado == null || importeSeleccionado.compareTo(BigDecimal.ZERO) < 0) {
-            JOptionPane.showMessageDialog(this,
-                    "Debes indicar un importe inicial válido.",
-                    "Abrir sesión",
-                    JOptionPane.WARNING_MESSAGE);
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Abrir sesión",
+        	        "Debes indicar un importe inicial válido."
+        	);
             return;
         }
 
@@ -572,18 +576,20 @@ public class AbrirSesionCajaDialog extends JDialog {
                     importeSeleccionado
             );
 
-            JOptionPane.showMessageDialog(this,
-                    "Sesión de caja abierta correctamente.",
-                    "OK",
-                    JOptionPane.INFORMATION_MESSAGE);
+            TpvDialogUtils.showInfo(
+                    this,
+                    "Sesión abierta",
+                    "Sesión de caja abierta correctamente."
+            );
 
             dispose();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    "Error al abrir la sesión de caja",
-                    JOptionPane.ERROR_MESSAGE);
+        	TpvDialogUtils.showError(
+        	        this,
+        	        "Error al abrir la sesión de caja",
+        	        ex.getMessage()
+        	);
         }
     }
 

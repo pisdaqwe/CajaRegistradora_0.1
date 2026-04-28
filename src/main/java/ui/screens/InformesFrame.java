@@ -12,6 +12,7 @@ import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
+import ui.common.TpvDialogUtils;
 import ui.dialog.InformeGraficoDialog;
 import ui.informes.InformeFiltrosPanel;
 import ui.informes.InformeKpiPanel;
@@ -746,11 +747,10 @@ public class InformesFrame extends BaseTpvFrame {
             generated = false;
             toolbarPanel.setGraficoEnabled(false);
 
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    "Error al generar el informe:\n" + e.getMessage(),
                     "Error",
-                    JOptionPane.ERROR_MESSAGE
+                    "Error al generar el informe:\n" + e.getMessage()
             );
             e.printStackTrace();
         }
@@ -794,12 +794,11 @@ public class InformesFrame extends BaseTpvFrame {
     
     private void openGraphDialog() {
         if (!generated) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Primero genera el informe para poder visualizar el gráfico.",
-                    "Gráfico no disponible",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Gráfico no disponible",
+        	        "Primero genera el informe para poder visualizar el gráfico."
+        	);
             return;
         }
 
@@ -848,23 +847,21 @@ public class InformesFrame extends BaseTpvFrame {
     
     private void exportarPdfActual() {
         if (!generated) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Primero genera el informe antes de exportarlo a PDF.",
-                    "PDF no disponible",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "PDF no disponible",
+        	        "Primero genera el informe antes de exportarlo a PDF."
+        	);
             return;
         }
 
         Object currentResult = resolveCurrentResultOrNull();
         if (currentResult == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "No hay datos del informe actual para exportar.",
-                    "PDF no disponible",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "PDF no disponible",
+        	        "No hay datos del informe actual para exportar."
+        	);
             return;
         }
 
@@ -898,20 +895,18 @@ public class InformesFrame extends BaseTpvFrame {
 
             File pdfGenerado = services.informePdfService.exportarInforme(request, selectedFile);
 
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showInfo(
                     this,
-                    "PDF generado correctamente:\n" + pdfGenerado.getAbsolutePath(),
                     "Exportación completada",
-                    JOptionPane.INFORMATION_MESSAGE
+                    "PDF generado correctamente:\n" + pdfGenerado.getAbsolutePath()
             );
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al exportar el PDF:\n" + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+        	TpvDialogUtils.showError(
+        	        this,
+        	        "Error",
+        	        "Error al exportar el PDF:\n" + ex.getMessage()
+        	);
             ex.printStackTrace();
         }
     }

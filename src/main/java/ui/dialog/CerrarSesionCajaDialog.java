@@ -7,6 +7,7 @@ import model.SesionCaja;
 import model.Usuario;
 import service.AppServices;
 import ui.common.InformeUiTheme;
+import ui.common.TpvDialogUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -303,11 +304,10 @@ public class CerrarSesionCajaDialog extends JDialog {
             lblEmpleadoValidado.setText("✖ " + ex.getMessage());
             lblEmpleadoValidado.setForeground(InformeUiTheme.DANGER);
 
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    ex.getMessage(),
                     "Validación de empleado",
-                    JOptionPane.ERROR_MESSAGE
+                    ex.getMessage()
             );
         }
     }
@@ -395,22 +395,21 @@ public class CerrarSesionCajaDialog extends JDialog {
 
     private void confirmarCierreCaja() {
         if (importeContado == null || resumenCierre == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Debe comprobar el conteo antes de cerrar la caja.",
+            TpvDialogUtils.showWarning(
+                    this,
                     "Cierre de caja",
-                    JOptionPane.WARNING_MESSAGE);
+                    "Debe comprobar el conteo antes de cerrar la caja."
+            );
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
+        boolean confirm = TpvDialogUtils.confirm(
                 this,
-                "¿Confirmar el cierre de la caja?\nEsta acción no se puede deshacer.",
                 "Confirmar cierre",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
+                "¿Confirmar el cierre de la caja?\nEsta acción no se puede deshacer."
         );
 
-        if (confirm != JOptionPane.YES_OPTION) {
+        if (!confirm) {
             return;
         }
 
@@ -422,18 +421,20 @@ public class CerrarSesionCajaDialog extends JDialog {
                     AppContext.getUsuarioId()
             );
 
-            JOptionPane.showMessageDialog(this,
-                    "Caja cerrada correctamente",
+            TpvDialogUtils.showInfo(
+                    this,
                     "Cierre de caja",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    "Caja cerrada correctamente."
+            );
 
             dispose();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
+            TpvDialogUtils.showError(
+                    this,
                     "Error al cerrar caja",
-                    JOptionPane.ERROR_MESSAGE);
+                    ex.getMessage()
+            );
         }
     }
 

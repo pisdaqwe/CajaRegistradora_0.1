@@ -116,7 +116,28 @@ public class AuditoriaMenuFrame extends BaseTpvFrame {
 
         gbc.gridx = x++;
         gbc.weightx = 1.0;
-        filtros.add(txtBuscar, gbc);
+
+        JPanel buscarWrapper = new JPanel(new BorderLayout(6, 0));
+        buscarWrapper.setOpaque(false);
+
+        buscarWrapper.add(txtBuscar, BorderLayout.CENTER);
+
+        JButton btnTecladoBuscar = new JButton("⌨");
+        InformeUiTheme.styleSecondaryButton(btnTecladoBuscar);
+        btnTecladoBuscar.setToolTipText("Abrir teclado táctil");
+
+        btnTecladoBuscar.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtBuscar,
+                        "Teclado - Buscar auditoría",
+                        60
+                )
+        );
+
+        buscarWrapper.add(btnTecladoBuscar, BorderLayout.EAST);
+
+        filtros.add(buscarWrapper, gbc);
 
         gbc.gridx = x++;
         gbc.weightx = 0;

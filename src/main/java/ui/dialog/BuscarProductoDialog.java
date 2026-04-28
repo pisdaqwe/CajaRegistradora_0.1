@@ -1,6 +1,9 @@
 package ui.dialog;
 
 import dtoS.ProductoBusquedaRowDTO;
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -22,15 +25,15 @@ public class BuscarProductoDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Color BG_MAIN = new Color(14, 48, 35);
-    private static final Color BG_PANEL = new Color(20, 67, 47);
+    private static final Color BG_MAIN = InformeUiTheme.APP_BG;
+    private static final Color BG_PANEL = InformeUiTheme.CARD_BG;
     private static final Color BG_TABLE = new Color(244, 248, 245);
-    private static final Color BG_HEADER = new Color(0, 92, 62);
+    private static final Color BG_HEADER = InformeUiTheme.STARBUCKS_GREEN;
     private static final Color BG_SELECTION = new Color(159, 196, 173);
-    private static final Color BORDER = new Color(95, 145, 118);
-    private static final Color TEXT_MAIN = new Color(245, 245, 240);
+    private static final Color BORDER = InformeUiTheme.BORDER;
+    private static final Color TEXT_MAIN = InformeUiTheme.TEXT_PRIMARY;
     private static final Color TEXT_DARK = new Color(30, 40, 35);
-    private static final Color TEXT_SOFT = new Color(212, 223, 216);
+    private static final Color TEXT_SOFT = InformeUiTheme.TEXT_SECONDARY;
     private static final Color ROW_DISABLED_BG = new Color(228, 228, 228);
     private static final Color ROW_DISABLED_FG = new Color(130, 130, 130);
 
@@ -58,17 +61,27 @@ public class BuscarProductoDialog extends JDialog {
 
     private void initDialog() {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(WIDTH, HEIGHT);
-        setResizable(false);
+        setResizable(true);
+
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+
+        int targetW = (int) (screen.width * 0.78);
+        int targetH = (int) (screen.height * 0.78);
+
+        int finalW = Math.max(820, Math.min(WIDTH, targetW));
+        int finalH = Math.max(560, Math.min(HEIGHT, targetH));
+
+        setMinimumSize(new Dimension(780, 540));
+        setSize(finalW, finalH);
         setLocationRelativeTo(getOwner());
     }
 
     private void initComponents() {
         txtBuscar = new JTextField();
-        txtBuscar.setFont(new Font("SansSerif", Font.BOLD, 20));
+        txtBuscar.setFont(new Font("SansSerif", Font.BOLD, 18));
         txtBuscar.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(10, 12, 10, 12)
+                new EmptyBorder(8, 12, 8, 12)
         ));
         txtBuscar.setBackground(Color.WHITE);
         txtBuscar.setForeground(TEXT_DARK);
@@ -77,6 +90,8 @@ public class BuscarProductoDialog extends JDialog {
         tableModel = new ProductoBusquedaTableModel(this.rows);
 
         table = new JTable(tableModel) {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
@@ -105,8 +120,8 @@ public class BuscarProductoDialog extends JDialog {
         sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
 
-        table.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        table.setRowHeight(34);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        table.setRowHeight(32);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setBackground(BG_TABLE);
         table.setForeground(TEXT_DARK);
@@ -117,19 +132,20 @@ public class BuscarProductoDialog extends JDialog {
         table.setShowVerticalLines(false);
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("SansSerif", Font.BOLD, 16));
+        header.setFont(new Font("SansSerif", Font.BOLD, 15));
         header.setBackground(BG_HEADER);
         header.setForeground(TEXT_MAIN);
         header.setReorderingAllowed(false);
+        header.setPreferredSize(new Dimension(header.getWidth(), 36));
 
         configureColumnRenderers();
         configureColumnWidths();
     }
 
     private void buildLayout() {
-        JPanel root = new JPanel(new BorderLayout(12, 12));
+        JPanel root = new JPanel(new BorderLayout(10, 10));
         root.setBackground(BG_MAIN);
-        root.setBorder(new EmptyBorder(14, 14, 14, 14));
+        root.setBorder(new EmptyBorder(12, 12, 12, 12));
         setContentPane(root);
 
         root.add(buildHeader(), BorderLayout.NORTH);
@@ -138,7 +154,7 @@ public class BuscarProductoDialog extends JDialog {
     }
 
     private JComponent buildHeader() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(10, 8));
         panel.setOpaque(false);
 
         JPanel titleBox = new JPanel();
@@ -147,31 +163,48 @@ public class BuscarProductoDialog extends JDialog {
 
         JLabel lblTitle = new JLabel("BUSCAR PRODUCTO");
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 23));
         lblTitle.setForeground(TEXT_MAIN);
 
         JLabel lblSubtitle = new JLabel("Busca por nombre y añade solo productos vendibles");
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SOFT);
 
         titleBox.add(lblTitle);
-        titleBox.add(Box.createVerticalStrut(4));
+        titleBox.add(Box.createVerticalStrut(2));
         titleBox.add(lblSubtitle);
 
         JPanel searchWrap = new JPanel(new BorderLayout(8, 8));
         searchWrap.setBackground(BG_PANEL);
         searchWrap.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(10, 10, 10, 10)
+                new EmptyBorder(8, 10, 8, 10)
         ));
 
         JLabel lblBuscar = new JLabel("Buscar:");
-        lblBuscar.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblBuscar.setFont(new Font("SansSerif", Font.BOLD, 15));
         lblBuscar.setForeground(TEXT_MAIN);
 
+        JPanel inputWrap = new JPanel(new BorderLayout(6, 0));
+        inputWrap.setOpaque(false);
+        inputWrap.add(txtBuscar, BorderLayout.CENTER);
+
+        JButton btnTeclado = createSmallActionButton("⌨");
+        btnTeclado.setToolTipText("Abrir teclado táctil");
+        btnTeclado.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtBuscar,
+                        "Teclado - Buscar producto",
+                        60
+                )
+        );
+
+        inputWrap.add(btnTeclado, BorderLayout.EAST);
+
         searchWrap.add(lblBuscar, BorderLayout.WEST);
-        searchWrap.add(txtBuscar, BorderLayout.CENTER);
+        searchWrap.add(inputWrap, BorderLayout.CENTER);
 
         panel.add(titleBox, BorderLayout.NORTH);
         panel.add(searchWrap, BorderLayout.SOUTH);
@@ -184,7 +217,7 @@ public class BuscarProductoDialog extends JDialog {
         panel.setBackground(BG_PANEL);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(10, 10, 10, 10)
+                new EmptyBorder(8, 8, 8, 8)
         ));
 
         JScrollPane scrollPane = new JScrollPane(table);
@@ -196,31 +229,74 @@ public class BuscarProductoDialog extends JDialog {
     }
 
     private JComponent buildBottomBar() {
-        JPanel panel = new JPanel(new GridLayout(1, 2, 12, 12));
+        JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setOpaque(false);
 
-        JButton btnCancelar = createActionButton("CANCELAR");
-        JButton btnAceptar = createActionButton("AÑADIR");
+        JLabel lblHint = new JLabel("Doble clic sobre un producto para añadirlo.");
+        lblHint.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        lblHint.setForeground(TEXT_SOFT);
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        buttons.setOpaque(false);
+
+        JButton btnCancelar = createSecondaryActionButton("CANCELAR");
+        JButton btnAceptar = createPrimaryActionButton("AÑADIR");
 
         btnCancelar.addActionListener(e -> cancel());
         btnAceptar.addActionListener(e -> acceptSelected());
 
-        panel.add(btnCancelar);
-        panel.add(btnAceptar);
+        buttons.add(btnCancelar);
+        buttons.add(btnAceptar);
+
+        panel.add(lblHint, BorderLayout.WEST);
+        panel.add(buttons, BorderLayout.EAST);
 
         return panel;
     }
 
-    private JButton createActionButton(String text) {
+    private JButton createPrimaryActionButton(String text) {
         JButton button = new JButton(text);
         button.setFocusPainted(false);
-        button.setFont(new Font("SansSerif", Font.BOLD, 18));
+        button.setFont(new Font("SansSerif", Font.BOLD, 15));
         button.setForeground(TEXT_MAIN);
         button.setBackground(BG_HEADER);
         button.setOpaque(true);
+        button.setPreferredSize(new Dimension(140, 42));
         button.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(14, 12, 14, 12)
+                new EmptyBorder(9, 12, 9, 12)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    private JButton createSecondaryActionButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setForeground(TEXT_MAIN);
+        button.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+        button.setOpaque(true);
+        button.setPreferredSize(new Dimension(140, 42));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER, 1, true),
+                new EmptyBorder(9, 12, 9, 12)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    private JButton createSmallActionButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(new Font("SansSerif", Font.BOLD, 16));
+        button.setForeground(TEXT_MAIN);
+        button.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+        button.setOpaque(true);
+        button.setPreferredSize(new Dimension(48, 40));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER, 1, true),
+                new EmptyBorder(6, 8, 6, 8)
         ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
@@ -258,6 +334,7 @@ public class BuscarProductoDialog extends JDialog {
 
     private void aplicarFiltro() {
         String texto = txtBuscar.getText();
+
         if (texto == null || texto.isBlank()) {
             sorter.setRowFilter(null);
             return;
@@ -305,12 +382,12 @@ public class BuscarProductoDialog extends JDialog {
 
     private void acceptSelected() {
         int viewRow = table.getSelectedRow();
+
         if (viewRow < 0) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showWarning(
                     this,
-                    "Selecciona un producto de la tabla.",
                     "Búsqueda de productos",
-                    JOptionPane.WARNING_MESSAGE
+                    "Selecciona un producto de la tabla."
             );
             return;
         }
@@ -319,11 +396,10 @@ public class BuscarProductoDialog extends JDialog {
         ProductoBusquedaRowDTO selected = tableModel.getRow(modelRow);
 
         if (!selected.isBotonHabilitado()) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showWarning(
                     this,
-                    "Ese producto no se puede vender ahora.\n\nEstado: " + selected.getTextoEstado(),
                     "Producto no disponible",
-                    JOptionPane.WARNING_MESSAGE
+                    "Ese producto no se puede vender ahora.\n\nEstado: " + selected.getTextoEstado()
             );
             return;
         }
@@ -343,6 +419,8 @@ public class BuscarProductoDialog extends JDialog {
     }
 
     private static final class ProductoBusquedaTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private final String[] columns = {"Producto", "Tamaño", "Precio", "Estado"};
         private final List<ProductoBusquedaRowDTO> rows;

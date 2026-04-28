@@ -7,6 +7,7 @@ import dtoS.EmpleadoRowDTO;
 import model.Rol;
 import service.AppServices;
 import ui.common.BaseTpvFrame;
+import ui.common.TecladoVirtualDialog;
 import ui.dialog.EmpleadoFormDialog;
 import ui.dialog.ResetPinEmpleadoDialog;
 import ui.table.EmpleadosTableModel;
@@ -133,7 +134,23 @@ public class GestionEmpleadosFrame extends BaseTpvFrame {
 
 		gbc.gridx = x++;
 		gbc.weightx = 1.0;
-		filtros.add(txtBuscar, gbc);
+		JPanel buscarWrapper = InformeUiTheme.createTransparentPanel(new BorderLayout(6, 0));
+		buscarWrapper.add(txtBuscar, BorderLayout.CENTER);
+
+		JButton btnTecladoBuscar = new JButton("⌨");
+		InformeUiTheme.styleSecondaryButton(btnTecladoBuscar);
+		btnTecladoBuscar.addActionListener(e ->
+		        TecladoVirtualDialog.showAlfanumerico(
+		                this,
+		                txtBuscar,
+		                "Teclado - Buscar empleado",
+		                40
+		        )
+		);
+
+		buscarWrapper.add(btnTecladoBuscar, BorderLayout.EAST);
+
+		filtros.add(buscarWrapper, gbc);
 
 		gbc.gridx = x++;
 		gbc.weightx = 0;

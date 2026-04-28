@@ -3,6 +3,8 @@ package ui.dialog;
 import dtoS.TicketClienteComboDTO;
 import dtoS.TicketClienteDTO;
 import dtoS.TicketClienteItemDTO;
+import ui.common.TpvDialogUtils;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -57,33 +59,48 @@ public class TicketClienteDialog extends JDialog {
     // =====================================================
 
     private void buildUi() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(new EmptyBorder(12, 12, 12, 12));
-        root.setBackground(new Color(30, 30, 30));
+        JPanel root = new JPanel(new BorderLayout(12, 12));
+        root.setBorder(new EmptyBorder(16, 16, 16, 16));
+        root.setBackground(InformeUiTheme.APP_BG);
+
+        JPanel header = new JPanel(new BorderLayout(0, 4));
+        header.setOpaque(false);
 
         JLabel lblTitle = new JLabel("VISTA PREVIA DEL TICKET", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
-        lblTitle.setForeground(new Color(245, 245, 245));
-        root.add(lblTitle, BorderLayout.NORTH);
+        lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel lblSubtitle = new JLabel("Ticket de cliente generado desde la venta", SwingConstants.CENTER);
+        lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        header.add(lblTitle, BorderLayout.NORTH);
+        header.add(lblSubtitle, BorderLayout.CENTER);
+
+        root.add(header, BorderLayout.NORTH);
 
         txtTicket = new JTextArea();
         txtTicket.setEditable(false);
-        txtTicket.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+        txtTicket.setFont(InformeUiTheme.FONT_TICKET);
         txtTicket.setLineWrap(false);
         txtTicket.setWrapStyleWord(false);
-        txtTicket.setBackground(new Color(250, 248, 240));
-        txtTicket.setForeground(Color.BLACK);
         txtTicket.setMargin(new Insets(14, 14, 14, 14));
 
+        InformeUiTheme.styleTextArea(txtTicket);
+
         JScrollPane scroll = new JScrollPane(txtTicket);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(120, 120, 120)));
+        InformeUiTheme.styleScrollPane(scroll);
+
         root.add(scroll, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         bottom.setOpaque(false);
 
         btnReimprimir = new JButton("REIMPRIMIR");
+        InformeUiTheme.stylePrimaryButton(btnReimprimir);
+
         btnCerrar = new JButton("CERRAR");
+        InformeUiTheme.styleSecondaryButton(btnCerrar);
 
         btnReimprimir.addActionListener(e -> onReimprimir());
         btnCerrar.addActionListener(e -> dispose());
@@ -110,11 +127,10 @@ public class TicketClienteDialog extends JDialog {
     // =====================================================
 
     private void onReimprimir() {
-        JOptionPane.showMessageDialog(
+        TpvDialogUtils.showInfo(
                 this,
-                "Reimpresión lógica preparada.\n\nDe momento esta pantalla muestra la vista previa del ticket.",
                 "Reimprimir ticket",
-                JOptionPane.INFORMATION_MESSAGE
+                "Reimpresión lógica preparada.\n\nDe momento esta pantalla muestra la vista previa del ticket."
         );
     }
 

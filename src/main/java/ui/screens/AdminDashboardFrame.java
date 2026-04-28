@@ -131,30 +131,20 @@ public class AdminDashboardFrame extends BaseTpvFrame {
 	private void onNuevoPedido() {
 	    try {
 	        int idUsuario = AppContext.getUsuarioId();
-
-	        // 1) Gate: exige sesión abierta y trae el ref (idSesion, idCaja, idSucursal, nombreCaja)
+	        
 	        SesionCajaRefDTO ref = services.sesionCajaService
 	                .requireSesionAbiertaPorUsuario(idUsuario);
-
-	        // 2) Guardar en AppContext (lo usará VentasFrame)
 	        AppContext.setSesionCajaActual(ref);
-
-	        // 3) Abrir VentasFrame
-	        // (de momento placeholder si aún no existe)
-	        JOptionPane.showMessageDialog(this,
-	                "OK: Sesión asignada -> " + ref.getNombreCaja()
-	                        + " (sesión " + ref.getIdSesion() + ").\n"
-	                        + "Siguiente: abrir VentasFrame.",
-	                "Gate OK", JOptionPane.INFORMATION_MESSAGE);
-
-	       
 	         VentasFrame frame = new VentasFrame(onLogoutNavigate, () -> this.setVisible(true), services);
 	         frame.setVisible(true);
 	         this.setVisible(false);
 
 	    } catch (Exception ex) {
-	        JOptionPane.showMessageDialog(this, ex.getMessage(),
-	                "No se puede abrir Ventas", JOptionPane.WARNING_MESSAGE);
+	    	TpvDialogUtils.showWarning(
+	    	        this,
+	    	        "No se puede abrir Ventas",
+	    	        ex.getMessage()
+	    	);
 	    }
 	    refreshNuevoPedidoVisibility();
 	}

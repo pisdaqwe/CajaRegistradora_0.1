@@ -1,6 +1,7 @@
 package ui.dialog;
 
 import ui.common.InformeUiTheme;
+import ui.common.TpvDialogUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -127,10 +128,11 @@ public class ConteoCajaDialog extends JDialog {
         String texto = txtCantidadContada.getText().trim();
 
         if (texto.isEmpty() || ".".equals(texto)) {
-            JOptionPane.showMessageDialog(this,
-                    "Debe introducir un importe válido",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+        	TpvDialogUtils.showError(
+        	        this,
+        	        "Importe inválido",
+        	        "Debe introducir un importe válido."
+        	);
             return;
         }
 
@@ -145,10 +147,11 @@ public class ConteoCajaDialog extends JDialog {
             dispose();
 
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Importe no válido (máx. 2 decimales)",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+        	TpvDialogUtils.showError(
+        	        this,
+        	        "Importe inválido",
+        	        "Importe no válido. Máximo 2 decimales."
+        	);
         }
     }
 

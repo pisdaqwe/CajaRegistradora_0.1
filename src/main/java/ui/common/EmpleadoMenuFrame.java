@@ -141,10 +141,11 @@ public class EmpleadoMenuFrame extends BaseTpvFrame {
     private void openAltaEmpleado() {
         EmpleadoFormDialog dialog = new EmpleadoFormDialog(this, services, null);
         if (dialog.showDialog()) {
-            JOptionPane.showMessageDialog(this,
-                    "Empleado creado correctamente.",
-                    "OK",
-                    JOptionPane.INFORMATION_MESSAGE);
+            TpvDialogUtils.showInfo(
+                    this,
+                    "Empleado creado",
+                    "Empleado creado correctamente."
+            );
         }
     }
 
@@ -156,10 +157,11 @@ public class EmpleadoMenuFrame extends BaseTpvFrame {
 
         ResetPinEmpleadoDialog dialog = new ResetPinEmpleadoDialog(this, services, empleado.getIdUsuario());
         if (dialog.showDialog()) {
-            JOptionPane.showMessageDialog(this,
-                    "PIN actualizado correctamente.",
-                    "OK",
-                    JOptionPane.INFORMATION_MESSAGE);
+            TpvDialogUtils.showInfo(
+                    this,
+                    "PIN actualizado",
+                    "PIN actualizado correctamente."
+            );
         }
     }
 
@@ -178,21 +180,19 @@ public class EmpleadoMenuFrame extends BaseTpvFrame {
 
         List<EmpleadoRowDTO> empleados = services.usuarioService.buscarEmpleados(filtro);
         if (empleados.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "No hay empleados disponibles.",
+            TpvDialogUtils.showWarning(
+                    this,
                     "Sin empleados",
-                    JOptionPane.WARNING_MESSAGE);
+                    "No hay empleados disponibles."
+            );
             return null;
         }
 
-        return (EmpleadoRowDTO) JOptionPane.showInputDialog(
+        return TpvDialogUtils.showSelection(
                 this,
-                "Selecciona un empleado:",
                 "Elegir empleado",
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                empleados.toArray(),
-                empleados.get(0)
+                "Selecciona el empleado sobre el que quieres realizar la acción.",
+                empleados
         );
     }
 

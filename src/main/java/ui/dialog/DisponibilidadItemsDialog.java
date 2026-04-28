@@ -4,7 +4,8 @@ import dtoS.DisponibilidadItemRowDTO;
 import dtoS.StockExtraDisponibilidadDTO;
 import dtoS.StockProductoDisponibilidadDTO;
 import service.AppServices;
-
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
@@ -59,8 +60,18 @@ public class DisponibilidadItemsDialog extends JDialog {
 
     private void initDialog() {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(WIDTH, HEIGHT);
-        setResizable(false);
+        setResizable(true);
+
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+
+        int targetW = (int) (screen.width * 0.88);
+        int targetH = (int) (screen.height * 0.84);
+
+        int finalW = Math.max(1050, Math.min(WIDTH, targetW));
+        int finalH = Math.max(650, Math.min(HEIGHT, targetH));
+
+        setMinimumSize(new Dimension(980, 620));
+        setSize(finalW, finalH);
         setLocationRelativeTo(getOwner());
     }
 
@@ -149,31 +160,48 @@ public class DisponibilidadItemsDialog extends JDialog {
 
         JLabel lblTitle = new JLabel("DISPONIBILIDAD DEL CATÁLOGO");
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
         lblTitle.setForeground(TEXT_MAIN);
 
         JLabel lblSubtitle = new JLabel("Gestiona productos y extras de la sucursal actual");
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SOFT);
 
         titleBox.add(lblTitle);
-        titleBox.add(Box.createVerticalStrut(4));
+        titleBox.add(Box.createVerticalStrut(3));
         titleBox.add(lblSubtitle);
 
         JPanel searchWrap = new JPanel(new BorderLayout(8, 8));
         searchWrap.setBackground(BG_PANEL);
         searchWrap.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(10, 10, 10, 10)
+                new EmptyBorder(8, 10, 8, 10)
         ));
 
         JLabel lblBuscar = new JLabel("Buscar:");
-        lblBuscar.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblBuscar.setFont(new Font("SansSerif", Font.BOLD, 15));
         lblBuscar.setForeground(TEXT_MAIN);
 
+        JPanel inputWrap = new JPanel(new BorderLayout(6, 0));
+        inputWrap.setOpaque(false);
+        inputWrap.add(txtBuscar, BorderLayout.CENTER);
+
+        JButton btnTeclado = createSmallActionButton("⌨");
+        btnTeclado.setToolTipText("Abrir teclado táctil");
+        btnTeclado.addActionListener(e ->
+                TecladoVirtualDialog.showAlfanumerico(
+                        this,
+                        txtBuscar,
+                        "Teclado - Buscar disponibilidad",
+                        60
+                )
+        );
+
+        inputWrap.add(btnTeclado, BorderLayout.EAST);
+
         searchWrap.add(lblBuscar, BorderLayout.WEST);
-        searchWrap.add(txtBuscar, BorderLayout.CENTER);
+        searchWrap.add(inputWrap, BorderLayout.CENTER);
 
         panel.add(titleBox, BorderLayout.NORTH);
         panel.add(searchWrap, BorderLayout.SOUTH);
@@ -181,6 +209,21 @@ public class DisponibilidadItemsDialog extends JDialog {
         return panel;
     }
 
+    private JButton createSmallActionButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(new Font("SansSerif", Font.BOLD, 16));
+        button.setForeground(TEXT_MAIN);
+        button.setBackground(BG_HEADER);
+        button.setOpaque(true);
+        button.setPreferredSize(new Dimension(50, 42));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER, 1, true),
+                new EmptyBorder(6, 8, 6, 8)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
     private JComponent buildCenter() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(BG_PANEL);
@@ -335,11 +378,10 @@ public class DisponibilidadItemsDialog extends JDialog {
     private void editSelected() {
         int viewRow = table.getSelectedRow();
         if (viewRow < 0) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showWarning(
                     this,
-                    "Selecciona un elemento de la tabla.",
                     "Disponibilidad",
-                    JOptionPane.WARNING_MESSAGE
+                    "Selecciona un elemento de la tabla."
             );
             return;
         }
@@ -358,11 +400,10 @@ public class DisponibilidadItemsDialog extends JDialog {
             reselectItem(selected.getTipoItem(), selected.getIdItem());
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(
+            TpvDialogUtils.showError(
                     this,
-                    "No se pudo guardar el cambio.\n\n" + e.getMessage(),
                     "Error",
-                    JOptionPane.ERROR_MESSAGE
+                    "No se pudo guardar el cambio.\n\n" + e.getMessage()
             );
         }
     }

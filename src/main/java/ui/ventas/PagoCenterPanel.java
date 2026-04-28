@@ -1,69 +1,77 @@
 package ui.ventas;
 
+import ui.theme.InformeUiTheme;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.GridLayout;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
+/**
+ * Panel placeholder/centro de pago.
+ *
+ * Puede mantenerse como panel informativo si el flujo real usa PagoPanel.
+ */
 public class PagoCenterPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
     public PagoCenterPanel() {
         setLayout(new BorderLayout(12, 12));
-        setBackground(new Color(20, 20, 20));
-        setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        setBackground(InformeUiTheme.APP_BG);
+        setBorder(new EmptyBorder(16, 16, 16, 16));
 
         add(buildCenterInfo(), BorderLayout.CENTER);
         add(buildMetodosPagoBar(), BorderLayout.SOUTH);
     }
 
     private JPanel buildCenterInfo() {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setOpaque(false);
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        wrapper.setOpaque(false);
 
-        JLabel title = new JLabel("PAGO (placeholder)", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Monospaced", Font.BOLD, 28));
+        JPanel card = InformeUiTheme.createCardPanel(new BorderLayout(0, 10));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(InformeUiTheme.BORDER, 1, true),
+                new EmptyBorder(24, 28, 24, 28)
+        ));
 
-        JLabel sub = new JLabel("Aquí irá el flujo de cobro (Nombre / Método / Confirmación)", SwingConstants.CENTER);
-        sub.setForeground(new Color(200, 200, 200));
-        sub.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        JLabel title = new JLabel("PAGO", SwingConstants.CENTER);
+        title.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        title.setFont(new Font("SansSerif", Font.BOLD, 26));
 
-        p.add(title, BorderLayout.CENTER);
-        p.add(sub, BorderLayout.SOUTH);
+        JLabel sub = new JLabel("Selecciona método de pago y confirma el cobro", SwingConstants.CENTER);
+        sub.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        sub.setFont(InformeUiTheme.FONT_SUBTITLE);
 
-        return p;
+        card.add(title, BorderLayout.NORTH);
+        card.add(sub, BorderLayout.CENTER);
+
+        wrapper.add(card);
+
+        return wrapper;
     }
 
     private JPanel buildMetodosPagoBar() {
         JPanel bar = new JPanel(new GridLayout(1, 3, 12, 12));
         bar.setOpaque(false);
 
-        bar.add(createTpvButton("EFECTIVO"));
-        bar.add(createTpvButton("TARJETA"));
-        bar.add(createTpvButton("EXACTO"));
+        bar.add(createTpvButton("EFECTIVO", false));
+        bar.add(createTpvButton("TARJETA", true));
+        bar.add(createTpvButton("EXACTO", false));
 
         return bar;
     }
 
-    private JButton createTpvButton(String text) {
-        JButton b = new JButton(text);
-        b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 18));
-        b.setBackground(new Color(255, 210, 0)); // amarillo TPV
-        b.setForeground(Color.BLACK);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 60, 60)),
-                BorderFactory.createEmptyBorder(18, 18, 18, 18)
+    private JButton createTpvButton(String text, boolean cardPayment) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(new Font("SansSerif", Font.BOLD, 17));
+        button.setForeground(cardPayment ? new Color(25, 25, 25) : InformeUiTheme.TEXT_PRIMARY);
+        button.setBackground(cardPayment ? InformeUiTheme.ACCENT_GOLD : InformeUiTheme.STARBUCKS_GREEN);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(InformeUiTheme.BORDER, 1, true),
+                new EmptyBorder(16, 18, 16, 18)
         ));
-        return b;
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return button;
     }
 }

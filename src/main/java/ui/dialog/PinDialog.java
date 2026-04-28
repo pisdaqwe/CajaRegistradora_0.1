@@ -1,5 +1,6 @@
 package ui.dialog;
 
+import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -335,24 +336,22 @@ public class PinDialog extends JDialog {
         String pin = new String(txtPin.getPassword()).trim();
 
         if (mode == PinDialogMode.LOGIN_COMPLETO && usuario.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Ingrese usuario",
-                    "Dato obligatorio",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Dato obligatorio",
+        	        "Ingrese usuario."
+        	);
             txtUsuario.requestFocusInWindow();
             campoActivo = CampoActivo.USUARIO;
             return;
         }
 
         if (pin.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Ingrese PIN",
-                    "Dato obligatorio",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Dato obligatorio",
+        	        "Ingrese PIN."
+        	);
             txtPin.requestFocusInWindow();
             campoActivo = CampoActivo.PIN;
             return;

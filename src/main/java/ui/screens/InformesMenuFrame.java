@@ -80,10 +80,7 @@ public class InformesMenuFrame extends BaseTpvFrame {
         main.add(root, BorderLayout.CENTER);
     }
 
-    private void placeholder(String nombre) {
-        JOptionPane.showMessageDialog(this, nombre + " (pendiente)");
-    }
-
+   
     private void volver() {
         // Cerrar este frame y volver al dashboard (sin limpiar sesión)
         safeDispose();

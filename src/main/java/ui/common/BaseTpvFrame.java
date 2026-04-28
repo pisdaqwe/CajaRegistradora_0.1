@@ -53,12 +53,11 @@ public abstract class BaseTpvFrame extends JFrame {
      */
     protected final void requireAuthenticatedOrExit() {
         if (!AppContext.isAuthenticated()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "No hay sesión activa. Volviendo al login.",
-                    "Sesión requerida",
-                    JOptionPane.WARNING_MESSAGE
-            );
+        	TpvDialogUtils.showWarning(
+        	        this,
+        	        "Sesión requerida",
+        	        "No hay sesión activa. Volviendo al login."
+        	);
             safeDispose();
             if (onLogoutNavigate != null) onLogoutNavigate.run();
         }

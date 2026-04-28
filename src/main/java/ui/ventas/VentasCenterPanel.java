@@ -127,6 +127,12 @@ public class VentasCenterPanel extends JPanel {
                     public void onCobroEfectivoExacto() {
                         // no-op
                     }
+
+					@Override
+					public void onCobroTarjeta() {
+						// TODO Auto-generated method stub
+						
+					}
                 }
         );
     }

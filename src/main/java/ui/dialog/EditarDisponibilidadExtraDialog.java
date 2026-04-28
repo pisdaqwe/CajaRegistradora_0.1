@@ -51,7 +51,8 @@ public class EditarDisponibilidadExtraDialog extends JDialog {
     private void initDialog() {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setSize(WIDTH, HEIGHT);
-        setResizable(false);
+        setMinimumSize(new Dimension(560, 330));
+        setResizable(true);
         setLocationRelativeTo(getOwner());
     }
 
@@ -78,23 +79,20 @@ public class EditarDisponibilidadExtraDialog extends JDialog {
     }
 
     private JComponent buildHeader() {
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel(new BorderLayout(0, 2));
         panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(new EmptyBorder(0, 0, 4, 0));
 
-        JLabel lblTitle = new JLabel("EDITAR EXTRA");
-        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+        JLabel lblTitle = new JLabel("EDITAR EXTRA", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitle.setForeground(TEXT_MAIN);
 
-        JLabel lblSubtitle = new JLabel("Activa o desactiva el extra en la sucursal actual");
-        lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        JLabel lblSubtitle = new JLabel("Activa o desactiva el extra en la sucursal actual", SwingConstants.CENTER);
+        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
         lblSubtitle.setForeground(TEXT_SOFT);
 
-        panel.add(lblTitle);
-        panel.add(Box.createVerticalStrut(4));
-        panel.add(lblSubtitle);
+        panel.add(lblTitle, BorderLayout.NORTH);
+        panel.add(lblSubtitle, BorderLayout.CENTER);
 
         return panel;
     }

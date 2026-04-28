@@ -5,6 +5,8 @@ import dtoS.EmpleadoDetalleDTO;
 import dtoS.EmpleadoSaveRequest;
 import model.Rol;
 import service.AppServices;
+import ui.common.TecladoVirtualDialog;
+import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
@@ -85,12 +87,20 @@ public class EmpleadoFormDialog extends JDialog {
         InformeUiTheme.styleCheckBox(chkActivo);
 
         int y = 0;
-        addRow(form, gbc, y++, "Nombre:", txtNombre);
-        addRow(form, gbc, y++, "Usuario / código:", txtUsuario);
+        addKeyboardRow(form, gbc, y++, "Nombre:", txtNombre,
+                "Teclado - Nombre empleado", 60, false);
+
+        addKeyboardRow(form, gbc, y++, "Usuario / código:", txtUsuario,
+                "Teclado - Usuario / código", 30, false);
+
         addRow(form, gbc, y++, "Rol:", cmbRol);
         addRow(form, gbc, y++, "Sucursal:", lblSucursalValor);
-        addRow(form, gbc, y++, "PIN:", txtPin);
-        addRow(form, gbc, y++, "Confirmar PIN:", txtConfirmarPin);
+
+        addKeyboardRow(form, gbc, y++, "PIN:", txtPin,
+                "Teclado - PIN", 8, true);
+
+        addKeyboardRow(form, gbc, y++, "Confirmar PIN:", txtConfirmarPin,
+                "Teclado - Confirmar PIN", 8, true);
 
         gbc.gridx = 1;
         gbc.gridy = y;
@@ -127,6 +137,29 @@ public class EmpleadoFormDialog extends JDialog {
         gbc.weightx = 1.0;
         panel.add(field, gbc);
     }
+    private void addKeyboardRow(
+            JPanel panel,
+            GridBagConstraints gbc,
+            int row,
+            String label,
+            JTextField field,
+            String tituloTeclado,
+            int maxLength,
+            boolean numerico
+    ) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        panel.add(InformeUiTheme.createFieldLabel(label), gbc);
+
+        JPanel wrapper = InformeUiTheme.createTransparentPanel(new BorderLayout(8, 0));
+        wrapper.add(field, BorderLayout.CENTER);
+        wrapper.add(createKeyboardButton(field, tituloTeclado, maxLength, numerico), BorderLayout.EAST);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        panel.add(wrapper, gbc);
+    }
 
     private JLabel createValueLabel() {
         JLabel lbl = new JLabel("-");
@@ -156,10 +189,11 @@ public class EmpleadoFormDialog extends JDialog {
 
         Optional<EmpleadoDetalleDTO> opt = services.usuarioService.getDetalleEmpleado(idUsuarioEditar);
         if (opt.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "No se pudo cargar el empleado a editar.",
+            TpvDialogUtils.showError(
+                    this,
                     "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                    "No se pudo cargar el empleado a editar."
+            );
             dispose();
             return;
         }
@@ -269,10 +303,26 @@ public class EmpleadoFormDialog extends JDialog {
             dispose();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
+            TpvDialogUtils.showError(
+                    this,
                     "No se pudo guardar el empleado",
-                    JOptionPane.ERROR_MESSAGE);
+                    ex.getMessage()
+            );
         }
+    }
+    private JButton createKeyboardButton(JTextField field, String titulo, int maxLength, boolean numerico) {
+        JButton button = new JButton("⌨");
+        InformeUiTheme.styleSecondaryButton(button);
+        button.setMargin(new Insets(6, 10, 6, 10));
+
+        button.addActionListener(e -> {
+            if (numerico) {
+                TecladoVirtualDialog.showNumerico(this, field, titulo, maxLength);
+            } else {
+                TecladoVirtualDialog.showAlfanumerico(this, field, titulo, maxLength);
+            }
+        });
+
+        return button;
     }
 }
