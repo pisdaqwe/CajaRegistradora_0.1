@@ -28,7 +28,6 @@ public class OpcionesPanel extends JPanel {
 		void onSkuClicked();
 		void onBuscarProductoClicked();
 		void onDisponibilidadClicked();
-		void onStockClicked();
 		void onDescuentosClicked();
 		void onUltimosTicketsClicked();
 		void onDevolucionesClicked();
@@ -48,7 +47,6 @@ public class OpcionesPanel extends JPanel {
 	private JButton btnSku;
 	private JButton btnBuscarProducto;
 	private JButton btnDisponibilidad;
-	private JButton btnStock;
 	private JButton btnDescuentos;
 	private JButton btnUltimosTickets;
 	private JButton btnVolver;
@@ -115,8 +113,7 @@ public class OpcionesPanel extends JPanel {
 				"CONSULTA",
 				"Consulta rápida de disponibilidad y stock",
 				createButtonGrid(
-						btnDisponibilidad = createPrimaryButton("DISPONIBILIDAD", this::fireDisponibilidadClicked),
-						btnStock = createPrimaryButton("STOCK", this::fireStockClicked)
+						btnDisponibilidad = createPrimaryButton("DISPONIBILIDAD", this::fireDisponibilidadClicked)
 				)
 		));
 
@@ -236,14 +233,16 @@ public class OpcionesPanel extends JPanel {
 	}
 
 	private JPanel createButtonGrid(JButton... buttons) {
-		JPanel panel = new JPanel(new GridLayout(0, 2, 12, 12));
-		panel.setOpaque(false);
+	    int columnas = buttons.length == 1 ? 1 : 2;
 
-		for (JButton button : buttons) {
-			panel.add(button);
-		}
+	    JPanel panel = new JPanel(new GridLayout(0, columnas, 12, 12));
+	    panel.setOpaque(false);
 
-		return panel;
+	    for (JButton button : buttons) {
+	        panel.add(button);
+	    }
+
+	    return panel;
 	}
 
 	private JComponent createBottomBar() {
@@ -338,11 +337,7 @@ public class OpcionesPanel extends JPanel {
 		}
 	}
 
-	private void fireStockClicked() {
-		if (actionListener != null) {
-			actionListener.onStockClicked();
-		}
-	}
+	
 
 	private void fireDescuentosClicked() {
 		if (actionListener != null) {

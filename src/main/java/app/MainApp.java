@@ -76,6 +76,7 @@ import service.UsuarioService;
 import service.VentaService;
 import service.VentaStockIngredienteService;
 import ui.screens.LoginScreen;
+import util.I18n;
 
 public class MainApp {
 
@@ -86,6 +87,9 @@ public class MainApp {
         // 1) CONFIGURACIÓN GENERAL
         // =====================================================
         ConfigLoader.load();
+        I18n.setLanguage(ConfigLoader.getAppLanguage());
+
+        System.out.println("[I18N] Idioma cargado: " + I18n.getCurrentLanguageCode());
         DbPool.init();
 
         // =====================================================

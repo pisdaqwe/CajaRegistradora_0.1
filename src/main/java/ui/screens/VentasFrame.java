@@ -247,11 +247,6 @@ public class VentasFrame extends BaseTpvFrame {
             }
 
             @Override
-            public void onStockClicked() {
-                onStock();
-            }
-
-            @Override
             public void onDescuentosClicked() {
                 onDescuentos();
             }

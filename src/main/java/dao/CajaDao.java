@@ -48,10 +48,10 @@ public class CajaDao {
      */
 	public List<Caja> findCajasOperativas(){
 		String sql ="""
-				SELECT id_caja,nombre,ubucacion,estado,activa,
+				SELECT id_caja,nombre,ubicacion,estado,activa,
 						id_sucursal,fecha_creacion,ultima_apertura
 				FROM caja
-				WHERE activa = 1 AND estadi = 'OPERATIVA'
+				WHERE activa = 1 AND estado = 'OPERATIVA'
 				
 				""";
 		List<Caja> cajas = new ArrayList<>();

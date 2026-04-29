@@ -13,6 +13,8 @@ import ui.dialog.PinDialog.PinDialogMode;
 import ui.dialog.PinDialogResult;
 import ui.router.PostLoginRouter;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -55,7 +57,7 @@ public class LoginScreen extends JFrame {
     }
 
     private void initUI() {
-        setTitle("TPV - Identificación");
+        setTitle(I18n.t("login.title"));
         setSize(1280, 820);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -76,11 +78,11 @@ public class LoginScreen extends JFrame {
         JPanel brandPanel = createTransparentPanel();
         brandPanel.setLayout(new BoxLayout(brandPanel, BoxLayout.Y_AXIS));
 
-        JLabel lblMarca = new JLabel("TPV Cafetería");
+        JLabel lblMarca = new JLabel(I18n.t("login.brand"));
         lblMarca.setFont(FONT_BRAND);
         lblMarca.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblSub = new JLabel("Acceso de empleados · Terminal " + AppContext.getNombreCajaTerminal());
+        JLabel lblSub = new JLabel(I18n.t("login.subtitle", AppContext.getNombreCajaTerminal()));
         lblSub.setFont(InformeUiTheme.FONT_SUBTITLE);
         lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -130,17 +132,11 @@ public class LoginScreen extends JFrame {
         JPanel header = createTransparentPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
 
-        JLabel lblTitle = new JLabel("Bienvenido");
+        JLabel lblTitle = new JLabel(I18n.t("login.welcome.title"));
         lblTitle.setFont(FONT_INFO_TITLE);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblBody = new JLabel(
-                "<html>"
-                        + "Identifícate para <b>fichar</b> o acceder al <b>TPV</b>.<br><br>"
-                        + "Cada terminal trabaja sobre una caja concreta.<br>"
-                        + "Usa tu código de empleado o selecciona un acceso rápido."
-                        + "</html>"
-        );
+        JLabel lblBody = new JLabel(I18n.t("login.welcome.body"));
         lblBody.setFont(FONT_INFO_BODY);
         lblBody.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -155,18 +151,17 @@ public class LoginScreen extends JFrame {
         terminalCard.setAlignmentX(Component.LEFT_ALIGNMENT);
         terminalCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 170));
 
-        JLabel lblTerminal = new JLabel("Terminal actual");
+        JLabel lblTerminal = new JLabel(I18n.t("login.currentTerminal"));
         lblTerminal.setFont(InformeUiTheme.FONT_LABEL);
         lblTerminal.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lblTerminal.setIcon(TpvIconFactory.cashRegister(18, InformeUiTheme.TEXT_SECONDARY));
+        lblTerminal.setIconTextGap(8);
 
         JLabel lblCaja = new JLabel(AppContext.getNombreCajaTerminal());
         lblCaja.setFont(new Font("SansSerif", Font.BOLD, 28));
         lblCaja.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblHint = new JLabel(
-                "<html>Partner Sign-In muestra los empleados disponibles<br>"
-                        + "para esta caja.</html>"
-        );
+        JLabel lblHint = new JLabel(I18n.t("login.currentTerminal.hint"));
         lblHint.setFont(InformeUiTheme.FONT_BODY);
         lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -183,13 +178,13 @@ public class LoginScreen extends JFrame {
         tipsCard.setAlignmentX(Component.LEFT_ALIGNMENT);
         tipsCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
 
-        tipsCard.add(createTipLabel("• Clock In / Out para registrar entrada o salida"));
+        tipsCard.add(createTipLabel(I18n.t("login.tip.clock")));
         tipsCard.add(Box.createVerticalStrut(8));
-        tipsCard.add(createTipLabel("• Sign In para acceder al sistema"));
+        tipsCard.add(createTipLabel(I18n.t("login.tip.signIn")));
         tipsCard.add(Box.createVerticalStrut(8));
-        tipsCard.add(createTipLabel("• El teclado numérico permite introducir tu código"));
+        tipsCard.add(createTipLabel(I18n.t("login.tip.keypad")));
         tipsCard.add(Box.createVerticalStrut(8));
-        tipsCard.add(createTipLabel("• El ticket inferior muestra el último fichaje realizado"));
+        tipsCard.add(createTipLabel(I18n.t("login.tip.ticket")));
 
         JPanel quickLoginPanel = buildQuickLoginPanel();
         quickLoginPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -226,9 +221,11 @@ public class LoginScreen extends JFrame {
     private JPanel buildDisplayPanel() {
         JPanel panel = createTransparentPanel(new BorderLayout(0, 10));
 
-        JLabel lbl = new JLabel("Código de empleado");
+        JLabel lbl = new JLabel(I18n.t("login.employeeCode"));
         lbl.setFont(InformeUiTheme.FONT_LABEL);
         lbl.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lbl.setIcon(TpvIconFactory.user(18, InformeUiTheme.TEXT_SECONDARY));
+        lbl.setIconTextGap(8);
 
         txtUsuario = new JTextField();
         txtUsuario.setEditable(false);
@@ -253,16 +250,17 @@ public class LoginScreen extends JFrame {
         return center;
     }
 
- 
     private JPanel buildQuickLoginPanel() {
         JPanel wrapper = createTransparentPanel(new BorderLayout(0, 10));
         wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Partner Sign-In");
+        JLabel lblTitle = new JLabel(I18n.t("login.quickAccess.title"));
         lblTitle.setFont(InformeUiTheme.FONT_SECTION);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        lblTitle.setIcon(TpvIconFactory.user(18, InformeUiTheme.TEXT_PRIMARY));
+        lblTitle.setIconTextGap(8);
 
-        JLabel lblSub = new JLabel("Accesos rápidos disponibles para esta caja");
+        JLabel lblSub = new JLabel(I18n.t("login.quickAccess.subtitle"));
         lblSub.setFont(InformeUiTheme.FONT_SUBTITLE);
         lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -290,13 +288,13 @@ public class LoginScreen extends JFrame {
 
         return wrapper;
     }
-    
+
     private JPanel buildKeypadPanel() {
         JPanel wrapper = createTransparentPanel(new BorderLayout(0, 10));
         wrapper.setPreferredSize(new Dimension(0, 380));
         wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 380));
 
-        JLabel lblTitle = new JLabel("Teclado numérico");
+        JLabel lblTitle = new JLabel(I18n.t("login.keypad.title"));
         lblTitle.setFont(InformeUiTheme.FONT_SECTION);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
@@ -325,30 +323,31 @@ public class LoginScreen extends JFrame {
         right.setBorder(InformeUiTheme.createInnerCardBorder());
         right.setPreferredSize(new Dimension(185, 100));
 
-        JLabel lbl = new JLabel("<html><center>Acciones<br>principales</center></html>", SwingConstants.CENTER);
+        JLabel lbl = new JLabel(I18n.t("login.actions.title"), SwingConstants.CENTER);
         lbl.setFont(InformeUiTheme.FONT_SECTION);
         lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JButton btnClock = new JButton("Clock In / Out");
+        JButton btnClock = new JButton(I18n.t("login.clockInOut"));
         InformeUiTheme.styleSecondaryButton(btnClock);
         btnClock.setFont(FONT_ACTION);
         btnClock.setPreferredSize(new Dimension(100, 64));
+        btnClock.setIcon(TpvIconFactory.user(20, InformeUiTheme.TEXT_PRIMARY));
+        btnClock.setIconTextGap(8);
         btnClock.addActionListener(e -> fichar());
 
-        JButton btnSignIn = new JButton("Sign In");
+        JButton btnSignIn = new JButton(I18n.t("login.signIn"));
         InformeUiTheme.stylePrimaryButton(btnSignIn);
         btnSignIn.setFont(FONT_ACTION);
         btnSignIn.setPreferredSize(new Dimension(100, 64));
+        btnSignIn.setIcon(TpvIconFactory.check(20, Color.WHITE));
+        btnSignIn.setIconTextGap(8);
         btnSignIn.addActionListener(e -> hacerLoginCompleto());
 
         JPanel actions = createTransparentPanel(new GridLayout(2, 1, 0, 12));
         actions.add(btnClock);
         actions.add(btnSignIn);
 
-        JLabel lblHint = new JLabel(
-                "<html><center>Introduce tu código<br>o usa un acceso rápido</center></html>",
-                SwingConstants.CENTER
-        );
+        JLabel lblHint = new JLabel(I18n.t("login.actions.hint"), SwingConstants.CENTER);
         lblHint.setFont(InformeUiTheme.FONT_BODY);
         lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -363,9 +362,11 @@ public class LoginScreen extends JFrame {
         JPanel wrapper = createTransparentPanel(new BorderLayout(0, 8));
         wrapper.setPreferredSize(new Dimension(0, 150));
 
-        JLabel lblTitle = new JLabel("Último fichaje");
+        JLabel lblTitle = new JLabel(I18n.t("login.lastClock"));
         lblTitle.setFont(InformeUiTheme.FONT_SECTION);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        lblTitle.setIcon(TpvIconFactory.info(18, InformeUiTheme.TEXT_PRIMARY));
+        lblTitle.setIconTextGap(8);
 
         txtTicket = new JTextArea(4, 20);
         txtTicket.setEditable(false);
@@ -395,6 +396,8 @@ public class LoginScreen extends JFrame {
         JLabel lbl = new JLabel(text);
         lbl.setFont(InformeUiTheme.FONT_BODY);
         lbl.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lbl.setIcon(TpvIconFactory.check(14, InformeUiTheme.ACCENT_GOLD));
+        lbl.setIconTextGap(8);
         return lbl;
     }
 
@@ -438,7 +441,7 @@ public class LoginScreen extends JFrame {
             mostrarLoginLimpio();
             TpvDialogUtils.showError(
                     this,
-                    "Error post-login",
+                    I18n.t("login.postLoginError"),
                     ex.getMessage()
             );
         }
@@ -462,7 +465,7 @@ public class LoginScreen extends JFrame {
             mostrarLoginLimpio();
             TpvDialogUtils.showError(
                     this,
-                    "Error de autenticación",
+                    I18n.t("login.authError"),
                     ex.getMessage()
             );
         }
@@ -470,7 +473,7 @@ public class LoginScreen extends JFrame {
 
     private void completarContextoPostAutenticacion(Usuario usuarioLogueado) {
         if (usuarioLogueado == null) {
-            throw new IllegalArgumentException("Usuario autenticado no puede ser null");
+            throw new IllegalArgumentException(I18n.t("login.error.nullUser"));
         }
 
         AppContext.clear();
@@ -481,16 +484,16 @@ public class LoginScreen extends JFrame {
 
             if (ref.getIdCaja() != AppContext.getIdCajaTerminal()) {
                 throw new IllegalStateException(
-                        "Tienes una sesión abierta en " + ref.getNombreCaja()
-                                + ". Este terminal pertenece a " + AppContext.getNombreCajaTerminal()
-                                + ". Debes iniciar sesión en tu caja asignada o pedir reasignación."
+                        I18n.t(
+                                "login.error.cashMismatch",
+                                ref.getNombreCaja(),
+                                AppContext.getNombreCajaTerminal()
+                        )
                 );
             }
 
             if (ref.getIdSucursal() != AppContext.getIdSucursal()) {
-                throw new IllegalStateException(
-                        "La sesión de caja no pertenece a la sucursal del terminal actual."
-                );
+                throw new IllegalStateException(I18n.t("login.error.branchMismatch"));
             }
 
             AppContext.setUsuario(usuarioLogueado);
@@ -499,9 +502,7 @@ public class LoginScreen extends JFrame {
         }
 
         if (usuarioLogueado.getIdSucursal() != AppContext.getIdSucursal()) {
-            throw new IllegalStateException(
-                    "El usuario no pertenece a la sucursal del terminal actual."
-            );
+            throw new IllegalStateException(I18n.t("login.error.userBranchMismatch"));
         }
 
         AppContext.setUsuario(usuarioLogueado);
@@ -510,7 +511,7 @@ public class LoginScreen extends JFrame {
     private boolean esCajero(Usuario usuario) {
         if (usuario.getRol() == null || usuario.getRol().getNombre() == null) {
             throw new IllegalStateException(
-                    "Usuario sin rol válido: " + usuario.getIdUsuario()
+                    I18n.t("login.error.invalidRole", usuario.getIdUsuario())
             );
         }
 
@@ -533,9 +534,13 @@ public class LoginScreen extends JFrame {
                     abrirOperativeHome();
                     break;
 
+                case TECHNIC_PANEL:
+                    abrirTecnicoPanel();
+                    break;
+
                 default:
                     throw new IllegalStateException(
-                            "Destino post-login no soportado: " + destino
+                            I18n.t("login.error.unsupportedDestination", destino)
                     );
             }
 
@@ -544,7 +549,7 @@ public class LoginScreen extends JFrame {
             mostrarLoginLimpio();
             TpvDialogUtils.showError(
                     this,
-                    "Error post-login",
+                    I18n.t("login.postLoginError"),
                     ex.getMessage()
             );
         }
@@ -559,13 +564,20 @@ public class LoginScreen extends JFrame {
         dash.setVisible(true);
     }
 
+    private void abrirTecnicoPanel() {
+        SistemaTecnicoFrame frame = new SistemaTecnicoFrame(
+                services,
+                this::mostrarLoginLimpio
+        );
+
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        frame.setVisible(true);
+    }
+
     private void abrirOperativeHome() {
         try {
             if (!AppContext.hasSesionCajaActual()) {
-                throw new IllegalStateException(
-                        "El usuario operativo no tiene sesión de caja asignada. " +
-                                "Asigna primero una caja desde la gestión de cajas."
-                );
+                throw new IllegalStateException(I18n.t("login.error.noCashSession"));
             }
 
             VentasFrame ventas = new VentasFrame(
@@ -581,8 +593,8 @@ public class LoginScreen extends JFrame {
             mostrarLoginLimpio();
             TpvDialogUtils.showError(
                     this,
-                    "Error al abrir Ventas",
-                    "No se pudo abrir la pantalla de ventas."
+                    I18n.t("login.openSalesErrorTitle"),
+                    I18n.t("login.openSalesErrorMessage")
             );
         }
     }
@@ -608,7 +620,7 @@ public class LoginScreen extends JFrame {
             panelBotonesRapidos.setLayout(new BorderLayout());
 
             JLabel empty = new JLabel(
-                    "<html><center>Sin accesos rápidos<br>disponibles</center></html>",
+                    I18n.t("login.quickAccess.empty"),
                     SwingConstants.CENTER
             );
             empty.setForeground(InformeUiTheme.TEXT_SECONDARY);
@@ -647,6 +659,8 @@ public class LoginScreen extends JFrame {
         ));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(100, 58));
+        btn.setIcon(TpvIconFactory.user(18, InformeUiTheme.TEXT_PRIMARY));
+        btn.setIconTextGap(8);
 
         btn.addActionListener(e -> hacerLoginRapido(dto));
         return btn;
@@ -668,25 +682,29 @@ public class LoginScreen extends JFrame {
     }
 
     private JButton createClearButton() {
-        JButton btn = new JButton("Clear");
+        JButton btn = new JButton(I18n.t("common.clean"));
         btn.setFont(FONT_KEYPAD_SPECIAL);
         btn.setFocusPainted(false);
         btn.setBackground(InformeUiTheme.DANGER);
         btn.setForeground(Color.WHITE);
         btn.setBorder(new EmptyBorder(12, 10, 12, 10));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setIcon(TpvIconFactory.cancel(18, Color.WHITE));
+        btn.setIconTextGap(8);
         btn.addActionListener(e -> txtUsuario.setText(""));
         return btn;
     }
 
     private JButton createBackButton() {
-        JButton btn = new JButton("Back");
+        JButton btn = new JButton(I18n.t("common.back"));
         btn.setFont(FONT_KEYPAD_SPECIAL);
         btn.setFocusPainted(false);
         btn.setBackground(InformeUiTheme.STARBUCKS_GREEN);
         btn.setForeground(Color.WHITE);
         btn.setBorder(new EmptyBorder(12, 10, 12, 10));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setIcon(TpvIconFactory.back(18, Color.WHITE));
+        btn.setIconTextGap(8);
         btn.addActionListener(e -> {
             String text = txtUsuario.getText();
             if (!text.isEmpty()) {
@@ -700,11 +718,11 @@ public class LoginScreen extends JFrame {
         try {
             String usuario = txtUsuario.getText().trim();
             if (usuario.isEmpty()) {
-            	TpvDialogUtils.showWarning(
-            	        this,
-            	        "Código requerido",
-            	        "Introduce tu código."
-            	);
+                TpvDialogUtils.showWarning(
+                        this,
+                        I18n.t("login.codeRequiredTitle"),
+                        I18n.t("login.codeRequiredMessage")
+                );
                 return;
             }
 
@@ -724,36 +742,65 @@ public class LoginScreen extends JFrame {
             cargarBotonesRapidos();
 
         } catch (Exception ex) {
-        	TpvDialogUtils.showError(
-        	        this,
-        	        "Error",
-        	        ex.getMessage()
-        	);
+            TpvDialogUtils.showError(
+                    this,
+                    I18n.t("common.error"),
+                    ex.getMessage()
+            );
         }
     }
 
     private String generarTicket(Fichaje f, String tipo) {
         StringBuilder sb = new StringBuilder();
+
         sb.append("================================\n");
-        sb.append("         FICHAJE EMPLEADO\n");
+        sb.append(centerTicketText(I18n.t("login.ticket.title"))).append("\n");
         sb.append("================================\n");
-        sb.append("Caja:       ").append(AppContext.getNombreCajaTerminal()).append("\n");
-        sb.append("Sucursal:   ").append(AppContext.getIdSucursal()).append("\n");
-        sb.append("Tipo:       ").append(tipo).append("\n");
-        sb.append("ID Usuario: ").append(f.getIdUsuario()).append("\n");
-        sb.append("Entrada:    ").append(f.getFechaEntrada()).append("\n");
+        sb.append(I18n.t("login.ticket.cashRegister")).append(": ").append(AppContext.getNombreCajaTerminal()).append("\n");
+        sb.append(I18n.t("login.ticket.branch")).append(": ").append(AppContext.getIdSucursal()).append("\n");
+        sb.append(I18n.t("login.ticket.type")).append(": ").append(traducirTipoFichaje(tipo)).append("\n");
+        sb.append(I18n.t("login.ticket.userId")).append(": ").append(f.getIdUsuario()).append("\n");
+        sb.append(I18n.t("login.ticket.entry")).append(": ").append(f.getFechaEntrada()).append("\n");
 
         if ("SALIDA".equals(tipo)) {
-            sb.append("Salida:     ").append(f.getFechaSalida()).append("\n");
-            sb.append("Duración:   ").append(f.getDuracion()).append(" min\n");
+            sb.append(I18n.t("login.ticket.exit")).append(": ").append(f.getFechaSalida()).append("\n");
+            sb.append(I18n.t("login.ticket.duration")).append(": ").append(f.getDuracion()).append(" min\n");
         }
 
         sb.append("================================\n");
+
         return sb.toString();
     }
 
+    private String traducirTipoFichaje(String tipo) {
+        if ("SALIDA".equalsIgnoreCase(tipo)) {
+            return I18n.t("login.ticket.type.exit");
+        }
+
+        return I18n.t("login.ticket.type.entry");
+    }
+
+    private String centerTicketText(String text) {
+        if (text == null) {
+            text = "";
+        }
+
+        int width = 32;
+        String value = text.trim();
+
+        if (value.length() >= width) {
+            return value;
+        }
+
+        int leftPadding = (width - value.length()) / 2;
+        return " ".repeat(leftPadding) + value;
+    }
+
     private void iniciarReloj(JLabel label) {
-        DateTimeFormatter fechaFormato = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM");
+        DateTimeFormatter fechaFormato = DateTimeFormatter.ofPattern(
+                I18n.t("login.clock.datePattern"),
+                I18n.getCurrentLocale()
+        );
         DateTimeFormatter horaFormato = DateTimeFormatter.ofPattern("HH:mm:ss");
 
         Timer timer = new Timer(1000, e -> {

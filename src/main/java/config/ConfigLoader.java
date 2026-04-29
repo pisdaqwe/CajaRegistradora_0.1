@@ -113,6 +113,45 @@ public final class ConfigLoader {
         checkLoaded();
         return properties.getProperty("app.timezone", "Europe/Madrid");
     }
+    public static String getAppLanguage() {
+        checkLoaded();
+
+        String language = properties.getProperty("app.language", "es");
+
+        if (language == null || language.isBlank()) {
+            return "es";
+        }
+
+        language = language.trim().toLowerCase();
+
+        if (!language.equals("es") && !language.equals("en")) {
+            return "es";
+        }
+
+        return language;
+    }
+    public static synchronized void updateAppLanguage(String language) {
+        checkLoaded();
+
+        String normalized = normalizeAppLanguage(language);
+
+        properties.setProperty("app.language", normalized);
+        saveProperties();
+    }
+
+    private static String normalizeAppLanguage(String language) {
+        if (language == null || language.isBlank()) {
+            return "es";
+        }
+
+        String value = language.trim().toLowerCase();
+
+        if (value.startsWith("en")) {
+            return "en";
+        }
+
+        return "es";
+    }
 
     // =========================================
     // TERMINAL
@@ -279,5 +318,6 @@ public final class ConfigLoader {
             throw new RuntimeException("No se pudo guardar config.properties.", e);
         }
     }
+    
   
 }
