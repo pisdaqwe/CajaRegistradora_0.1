@@ -7,6 +7,7 @@ import enums.CustomizationMode;
 import enums.TipoServicio;
 import model.TicketSession;
 import service.AppServices;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,7 +72,8 @@ public class VentasCenterPanel extends JPanel {
         this.services = services;
 
         setLayout(cardLayout);
-        setOpaque(false);
+        setOpaque(true);
+        setBackground(InformeUiTheme.APP_BG);
 
         this.catalogoPanel = new CatalogoCenterPanel(services, onProductoClicked);
         this.customizationCenterPanel = new CustomizationCenterPanel();
@@ -139,7 +141,8 @@ public class VentasCenterPanel extends JPanel {
 
     private JPanel buildPagoFlowPanel() {
         JPanel panel = new JPanel(pagoCardLayout);
-        panel.setOpaque(false);
+        panel.setOpaque(true);
+        panel.setBackground(InformeUiTheme.APP_BG);
 
         panel.add(nombrePedidoPanel, SUBCARD_NOMBRE_PEDIDO);
         panel.add(pagoPanel, SUBCARD_PAGO_IMPORTE);

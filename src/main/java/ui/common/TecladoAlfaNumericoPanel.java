@@ -1,5 +1,9 @@
 package ui.common;
 
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -92,7 +96,12 @@ public class TecladoAlfaNumericoPanel extends JPanel {
         JPanel row = new JPanel(new GridLayout(1, 9, 8, 8));
         row.setOpaque(false);
 
-        btnShift = createActionButton("MAYÚS", this::toggleCaseMode);
+        btnShift = createActionButton(
+                I18n.t("keyboard.uppercase.short"),
+                TpvIconFactory.key(16, Color.WHITE),
+                I18n.t("keyboard.uppercase"),
+                this::toggleCaseMode
+        );
         row.add(btnShift);
 
         row.add(createLetterButton("Z"));
@@ -103,7 +112,7 @@ public class TecladoAlfaNumericoPanel extends JPanel {
         row.add(createLetterButton("N"));
         row.add(createLetterButton("M"));
 
-        row.add(createActionButton("-", () -> appendText("-")));
+        row.add(createActionButton("-", null, "-", () -> appendText("-")));
 
         return row;
     }
@@ -112,9 +121,24 @@ public class TecladoAlfaNumericoPanel extends JPanel {
         JPanel panel = new JPanel(new GridLayout(1, 3, 8, 8));
         panel.setOpaque(false);
 
-        panel.add(createActionButton("BORRAR", this::deleteLastChar));
-        panel.add(createActionButton("ESPACIO", () -> appendText(" ")));
-        panel.add(createActionButton("LIMPIAR", this::clearText));
+        panel.add(createActionButton(
+                I18n.t("keyboard.delete"),
+                TpvIconFactory.back(16, Color.WHITE),
+                I18n.t("keyboard.delete.tooltip"),
+                this::deleteLastChar
+        ));
+        panel.add(createActionButton(
+                I18n.t("keyboard.space"),
+                null,
+                I18n.t("keyboard.space"),
+                () -> appendText(" ")
+        ));
+        panel.add(createActionButton(
+                I18n.t("keyboard.clear"),
+                TpvIconFactory.cancel(16, Color.WHITE),
+                I18n.t("keyboard.clear.tooltip"),
+                this::clearText
+        ));
 
         return panel;
     }
@@ -150,8 +174,15 @@ public class TecladoAlfaNumericoPanel extends JPanel {
         return button;
     }
 
-    private JButton createActionButton(String text, Runnable action) {
+    private JButton createActionButton(String text, Icon icon, String tooltip, Runnable action) {
         JButton button = new JButton(text);
+        if (icon != null) {
+            button.setIcon(icon);
+            button.setIconTextGap(7);
+        }
+        if (tooltip != null && !tooltip.isBlank()) {
+            button.setToolTipText(tooltip);
+        }
         styleActionButton(button);
         button.addActionListener(e -> action.run());
         return button;
@@ -213,28 +244,33 @@ public class TecladoAlfaNumericoPanel extends JPanel {
             return;
         }
 
-        btnShift.setText(uppercaseMode ? "MAYÚS" : "minús");
+        btnShift.setText(uppercaseMode
+                ? I18n.t("keyboard.uppercase.short")
+                : I18n.t("keyboard.lowercase.short"));
+        btnShift.setToolTipText(uppercaseMode
+                ? I18n.t("keyboard.uppercase")
+                : I18n.t("keyboard.lowercase"));
     }
 
     private void styleKeyButton(JButton button) {
         button.setFocusPainted(false);
         button.setFont(new Font("SansSerif", Font.BOLD, 18));
         button.setPreferredSize(new Dimension(60, 55));
-        button.setBackground(new Color(0, 92, 62));
+        button.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
         button.setForeground(Color.WHITE);
         button.setOpaque(true);
-        button.setBorder(BorderFactory.createLineBorder(new Color(120, 170, 145), 1, true));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createLineBorder(InformeUiTheme.BORDER, 1, true));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private void styleActionButton(JButton button) {
         button.setFocusPainted(false);
-        button.setFont(new Font("SansSerif", Font.BOLD, 16));
-        button.setPreferredSize(new Dimension(100, 55));
-        button.setBackground(new Color(57, 102, 74));
+        button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setPreferredSize(new Dimension(110, 55));
+        button.setBackground(InformeUiTheme.STARBUCKS_GREEN);
         button.setForeground(Color.WHITE);
         button.setOpaque(true);
-        button.setBorder(BorderFactory.createLineBorder(new Color(146, 183, 161), 1, true));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createLineBorder(InformeUiTheme.ACCENT_GOLD, 1, true));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 }

@@ -177,6 +177,11 @@ public final class InformeUiTheme {
         p.setOpaque(false);
         return p;
     }
+    public static JPanel createTransparentPanel() {
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        return p;
+    }
 
     public static void styleDisplayField(JTextField field) {
         field.setFont(FONT_LOGIN_DISPLAY);

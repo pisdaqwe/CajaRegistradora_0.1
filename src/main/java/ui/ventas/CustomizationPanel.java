@@ -7,6 +7,9 @@ import enums.CustomizationMode;
 import model.TicketItem;
 import model.TicketSession;
 import service.AppServices;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -15,6 +18,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -53,35 +57,25 @@ public class CustomizationPanel extends JPanel {
     // =========================================================
     // CARD BEBIDA
     // =========================================================
-    private final JLabel lblDrinkTitle = new JLabel("CUSTOM DRINK", SwingConstants.LEFT);
+    private final JLabel lblDrinkTitle = new JLabel(I18n.t("sales.custom.drinkTitle"), SwingConstants.LEFT);
 
     private final DefaultListModel<TamanoDTO> sizeListModel = new DefaultListModel<>();
     private final JList<TamanoDTO> lstSizes = new JList<>(sizeListModel);
 
-    /**
-     * NUEVO:
-     * Botón lateral para abrir la card de selección de tipo de café.
-     *
-     * IMPORTANTE:
-     * - solo aparece en el modo bebida
-     * - no sustituye ningún extra
-     * - solo navega hacia la nueva card CAFE del panel central
-     */
-    private final JButton btnCafe = createNavButton("CAFE", CustomizationCard.CAFE);
+    private final JButton btnCafe = createNavButton(I18n.t("sales.custom.card.cafe"), CustomizationCard.CAFE);
+    private final JButton btnShots = createNavButton(I18n.t("sales.custom.card.shots"), CustomizationCard.SHOTS);
+    private final JButton btnSyrups = createNavButton(I18n.t("sales.custom.card.syrups"), CustomizationCard.SYRUPS);
+    private final JButton btnToppings = createNavButton(I18n.t("sales.custom.card.toppings"), CustomizationCard.TOPPINGS);
+    private final JButton btnMilk = createNavButton(I18n.t("sales.custom.card.milk"), CustomizationCard.MILK);
+    private final JButton btnPrep = createNavButton(I18n.t("sales.custom.card.prep"), CustomizationCard.PREP);
 
-    private final JButton btnShots = createNavButton("SHOTS", CustomizationCard.SHOTS);
-    private final JButton btnSyrups = createNavButton("SYRUPS", CustomizationCard.SYRUPS);
-    private final JButton btnToppings = createNavButton("TOPPINGS", CustomizationCard.TOPPINGS);
-    private final JButton btnMilk = createNavButton("MILK", CustomizationCard.MILK);
-    private final JButton btnPrep = createNavButton("PREP", CustomizationCard.PREP);
-
-    private final JButton btnPrepFood = createNavButton("PREP", CustomizationCard.PREP_FOOD);
-    private final JButton btnOpcionesFood = createNavButton("EXTRAS", CustomizationCard.OPCIONES_FOOD);
+    private final JButton btnPrepFood = createNavButton(I18n.t("sales.custom.card.prep"), CustomizationCard.PREP_FOOD);
+    private final JButton btnOpcionesFood = createNavButton(I18n.t("sales.custom.card.foodExtras"), CustomizationCard.OPCIONES_FOOD);
 
     // =========================================================
     // CARD COMIDA
     // =========================================================
-    private final JLabel lblFoodTitle = new JLabel("CUSTOM FOOD", SwingConstants.LEFT);
+    private final JLabel lblFoodTitle = new JLabel(I18n.t("sales.custom.foodTitle"), SwingConstants.LEFT);
     private final DefaultListModel<TamanoDTO> foodSizeListModel = new DefaultListModel<>();
     private final JList<TamanoDTO> lstFoodSizes = new JList<>(foodSizeListModel);
 
@@ -97,9 +91,9 @@ public class CustomizationPanel extends JPanel {
         this.onTamanoSelected = onTamanoSelected;
 
         setLayout(cardLayout);
-        setBackground(new Color(20, 20, 20));
+        setBackground(InformeUiTheme.APP_BG);
         setBorder(new EmptyBorder(10, 10, 10, 10));
-        setPreferredSize(new Dimension(170, 0));
+        setPreferredSize(new Dimension(178, 0));
 
         add(buildEmptyCard(), CustomizationMode.VACIO.name());
         add(buildDrinkCard(), CustomizationMode.BEBIDA.name());
@@ -116,7 +110,7 @@ public class CustomizationPanel extends JPanel {
         TicketItem item = ticketSession.getSelectedItemOrNull();
 
         if (item == null) {
-            emptyInfo.setText("Selecciona un producto del ticket\npara ver sus opciones.");
+            emptyInfo.setText(I18n.t("sales.custom.empty.selectProduct"));
             showMode(CustomizationMode.VACIO);
             return;
         }
@@ -150,32 +144,36 @@ public class CustomizationPanel extends JPanel {
     // =========================================================
 
     private JPanel buildEmptyCard() {
-        JPanel root = new JPanel(new BorderLayout(8, 8));
-        root.setBackground(new Color(20, 20, 20));
+        JPanel root = InformeUiTheme.createTransparentPanel(new BorderLayout(8, 8));
         root.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        JLabel lblTitle = new JLabel("CUSTOM", SwingConstants.LEFT);
-        lblTitle.setFont(new Font("Monospaced", Font.BOLD, 18));
-        lblTitle.setForeground(Color.WHITE);
+        JLabel lblTitle = new JLabel(I18n.t("sales.custom.genericTitle"), SwingConstants.LEFT);
+        lblTitle.setFont(InformeUiTheme.FONT_SECTION);
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        lblTitle.setIcon(TpvIconFactory.settings(18, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(8);
 
         emptyInfo.setEditable(false);
-        emptyInfo.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        emptyInfo.setBackground(new Color(30, 30, 30));
-        emptyInfo.setForeground(new Color(220, 220, 220));
+        emptyInfo.setFont(InformeUiTheme.FONT_BODY);
+        emptyInfo.setBackground(InformeUiTheme.CARD_BG_2);
+        emptyInfo.setForeground(InformeUiTheme.TEXT_SECONDARY);
         emptyInfo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         emptyInfo.setLineWrap(true);
         emptyInfo.setWrapStyleWord(true);
 
+        JScrollPane scroll = new JScrollPane(emptyInfo);
+        InformeUiTheme.styleScrollPane(scroll);
+
         root.add(lblTitle, BorderLayout.NORTH);
-        root.add(new JScrollPane(emptyInfo), BorderLayout.CENTER);
+        root.add(scroll, BorderLayout.CENTER);
 
         return root;
     }
 
     private void refreshEmptyCard(TicketItem item) {
         emptyInfo.setText(
-                "Producto:\n" + safeProductName(item) + "\n\n" +
-                "Este producto no tiene customización lateral."
+                I18n.t("sales.custom.empty.product") + "\n" + safeProductName(item) + "\n\n" +
+                I18n.t("sales.custom.empty.noCustomization")
         );
     }
 
@@ -184,27 +182,18 @@ public class CustomizationPanel extends JPanel {
     // =========================================================
 
     private JPanel buildDrinkCard() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBackground(new Color(20, 20, 20));
+        JPanel root = InformeUiTheme.createTransparentPanel(new BorderLayout(10, 10));
         root.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        JPanel top = new JPanel(new BorderLayout(6, 6));
-        top.setOpaque(false);
+        JPanel top = InformeUiTheme.createTransparentPanel(new BorderLayout(6, 6));
 
-        lblDrinkTitle.setFont(new Font("Monospaced", Font.BOLD, 16));
-        lblDrinkTitle.setForeground(Color.WHITE);
+        styleTitleLabel(lblDrinkTitle, TpvIconFactory.product(18, InformeUiTheme.ACCENT_GOLD));
 
         top.add(lblDrinkTitle, BorderLayout.NORTH);
         top.add(buildSizesBlock(), BorderLayout.CENTER);
 
-        JPanel nav = new JPanel(new GridLayout(0, 1, 8, 8));
-        nav.setOpaque(false);
+        JPanel nav = InformeUiTheme.createTransparentPanel(new GridLayout(0, 1, 8, 8));
 
-        // =====================================================
-        // NUEVO BLOQUE AÑADIDO:
-        // El café aparece como una navegación propia dentro
-        // del flujo de bebida.
-        // =====================================================
         nav.add(btnCafe);
         nav.add(btnShots);
         nav.add(btnSyrups);
@@ -219,43 +208,15 @@ public class CustomizationPanel extends JPanel {
     }
 
     private JComponent buildSizesBlock() {
-        JPanel panel = new JPanel(new BorderLayout(6, 6));
-        panel.setOpaque(false);
+        JPanel panel = InformeUiTheme.createTransparentPanel(new BorderLayout(6, 6));
         panel.setBorder(new EmptyBorder(8, 0, 8, 0));
 
-        JLabel lblSizes = new JLabel("TAMAÑOS");
-        lblSizes.setFont(new Font("Monospaced", Font.BOLD, 12));
-        lblSizes.setForeground(new Color(230, 230, 230));
+        JLabel lblSizes = new JLabel(I18n.t("sales.custom.sizes"));
+        lblSizes.setFont(InformeUiTheme.FONT_LABEL);
+        lblSizes.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        lstSizes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        lstSizes.setVisibleRowCount(3);
-        lstSizes.setFixedCellHeight(28);
-        lstSizes.setBackground(new Color(30, 30, 30));
-        lstSizes.setForeground(Color.WHITE);
-        lstSizes.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60)));
-        lstSizes.setCellRenderer(new DefaultListCellRenderer() {
-            private static final long serialVersionUID = 1L;
+        configureSizeList(lstSizes);
 
-            @Override
-            public Component getListCellRendererComponent(
-                    JList<?> list,
-                    Object value,
-                    int index,
-                    boolean isSelected,
-                    boolean cellHasFocus
-            ) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-                if (value instanceof TamanoDTO t) {
-                    setText(t.getNombre());
-                }
-
-                setFont(new Font("Monospaced", Font.BOLD, 12));
-                return this;
-            }
-        });
-
-        lstSizes.setEnabled(true);
         lstSizes.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             if (syncingSizesSelection) return;
@@ -269,6 +230,7 @@ public class CustomizationPanel extends JPanel {
         });
 
         JScrollPane sp = new JScrollPane(lstSizes);
+        InformeUiTheme.styleScrollPane(sp);
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setPreferredSize(new Dimension(130, 95));
         sp.getVerticalScrollBar().setUnitIncrement(16);
@@ -280,21 +242,45 @@ public class CustomizationPanel extends JPanel {
     }
 
     private JComponent buildFoodSizesBlock() {
-        JPanel panel = new JPanel(new BorderLayout(6, 6));
-        panel.setOpaque(false);
+        JPanel panel = InformeUiTheme.createTransparentPanel(new BorderLayout(6, 6));
         panel.setBorder(new EmptyBorder(8, 0, 8, 0));
 
-        JLabel lblSizes = new JLabel("TAMAÑOS");
-        lblSizes.setFont(new Font("Monospaced", Font.BOLD, 12));
-        lblSizes.setForeground(new Color(230, 230, 230));
+        JLabel lblSizes = new JLabel(I18n.t("sales.custom.sizes"));
+        lblSizes.setFont(InformeUiTheme.FONT_LABEL);
+        lblSizes.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        lstFoodSizes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        lstFoodSizes.setVisibleRowCount(3);
-        lstFoodSizes.setFixedCellHeight(28);
-        lstFoodSizes.setBackground(new Color(30, 30, 30));
-        lstFoodSizes.setForeground(Color.WHITE);
-        lstFoodSizes.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60)));
-        lstFoodSizes.setCellRenderer(new DefaultListCellRenderer() {
+        configureSizeList(lstFoodSizes);
+
+        lstFoodSizes.addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            if (syncingSizesSelection) return;
+
+            TamanoDTO seleccionado = lstFoodSizes.getSelectedValue();
+            if (seleccionado == null) return;
+
+            if (onTamanoSelected != null) {
+                onTamanoSelected.accept(seleccionado);
+            }
+        });
+
+        JScrollPane sp = new JScrollPane(lstFoodSizes);
+        InformeUiTheme.styleScrollPane(sp);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setPreferredSize(new Dimension(130, 95));
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+
+        panel.add(lblSizes, BorderLayout.NORTH);
+        panel.add(sp, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private void configureSizeList(JList<TamanoDTO> list) {
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setVisibleRowCount(3);
+        list.setFixedCellHeight(28);
+        InformeUiTheme.styleList(list);
+        list.setCellRenderer(new DefaultListCellRenderer() {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -311,33 +297,12 @@ public class CustomizationPanel extends JPanel {
                     setText(t.getNombre());
                 }
 
-                setFont(new Font("Monospaced", Font.BOLD, 12));
+                setFont(InformeUiTheme.FONT_LABEL);
                 return this;
             }
         });
 
-        lstFoodSizes.setEnabled(true);
-        lstFoodSizes.addListSelectionListener(e -> {
-            if (e.getValueIsAdjusting()) return;
-            if (syncingSizesSelection) return;
-
-            TamanoDTO seleccionado = lstFoodSizes.getSelectedValue();
-            if (seleccionado == null) return;
-
-            if (onTamanoSelected != null) {
-                onTamanoSelected.accept(seleccionado);
-            }
-        });
-
-        JScrollPane sp = new JScrollPane(lstFoodSizes);
-        sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.setPreferredSize(new Dimension(130, 95));
-        sp.getVerticalScrollBar().setUnitIncrement(16);
-
-        panel.add(lblSizes, BorderLayout.NORTH);
-        panel.add(sp, BorderLayout.CENTER);
-
-        return panel;
+        list.setEnabled(true);
     }
 
     private void refreshDrinkCard(TicketItem item, List<TamanoDTO> tamanos) {
@@ -361,21 +326,17 @@ public class CustomizationPanel extends JPanel {
     // =========================================================
 
     private JPanel buildFoodCard() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBackground(new Color(20, 20, 20));
+        JPanel root = InformeUiTheme.createTransparentPanel(new BorderLayout(10, 10));
         root.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        JPanel top = new JPanel(new BorderLayout(6, 6));
-        top.setOpaque(false);
+        JPanel top = InformeUiTheme.createTransparentPanel(new BorderLayout(6, 6));
 
-        lblFoodTitle.setFont(new Font("Monospaced", Font.BOLD, 16));
-        lblFoodTitle.setForeground(Color.WHITE);
+        styleTitleLabel(lblFoodTitle, TpvIconFactory.product(18, InformeUiTheme.ACCENT_GOLD));
 
         top.add(lblFoodTitle, BorderLayout.NORTH);
         top.add(buildFoodSizesBlock(), BorderLayout.CENTER);
 
-        JPanel nav = new JPanel(new GridLayout(0, 1, 8, 8));
-        nav.setOpaque(false);
+        JPanel nav = InformeUiTheme.createTransparentPanel(new GridLayout(0, 1, 8, 8));
         nav.add(btnOpcionesFood);
         nav.add(btnPrepFood);
 
@@ -408,10 +369,13 @@ public class CustomizationPanel extends JPanel {
     private JButton createNavButton(String text, CustomizationCard card) {
         JButton b = new JButton(text);
         b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 12));
-        b.setBackground(new Color(255, 210, 0));
-        b.setForeground(Color.BLACK);
-        b.setBorder(BorderFactory.createEmptyBorder(14, 10, 14, 10));
+        b.setFont(InformeUiTheme.FONT_BUTTON.deriveFont(Font.BOLD, 12f));
+        b.setBackground(InformeUiTheme.ACCENT_GOLD);
+        b.setForeground(new Color(28, 28, 22));
+        b.setBorder(BorderFactory.createEmptyBorder(13, 10, 13, 10));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setIcon(resolveNavIcon(card));
+        b.setIconTextGap(7);
 
         b.addActionListener(e -> {
             if (onCardSelected != null) {
@@ -420,6 +384,21 @@ public class CustomizationPanel extends JPanel {
         });
 
         return b;
+    }
+
+    private Icon resolveNavIcon(CustomizationCard card) {
+        return switch (card) {
+            case PREP, PREP_FOOD -> TpvIconFactory.settings(16, new Color(28, 28, 22));
+            case OPCIONES_FOOD -> TpvIconFactory.product(16, new Color(28, 28, 22));
+            default -> TpvIconFactory.product(16, new Color(28, 28, 22));
+        };
+    }
+
+    private void styleTitleLabel(JLabel label, Icon icon) {
+        label.setFont(InformeUiTheme.FONT_SECTION);
+        label.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        label.setIcon(icon);
+        label.setIconTextGap(8);
     }
 
     // =========================================================
@@ -454,7 +433,7 @@ public class CustomizationPanel extends JPanel {
 
     private String safeProductName(TicketItem item) {
         if (item == null || item.getProducto() == null || item.getProducto().getNombre() == null) {
-            return "(sin producto)";
+            return I18n.t("sales.custom.noProduct");
         }
         return item.getProducto().getNombre();
     }

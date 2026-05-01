@@ -76,6 +76,7 @@ import service.UsuarioService;
 import service.VentaService;
 import service.VentaStockIngredienteService;
 import ui.screens.LoginScreen;
+import ui.theme.TpvLookAndFeelManager;
 import util.I18n;
 
 public class MainApp {
@@ -88,6 +89,7 @@ public class MainApp {
         // =====================================================
         ConfigLoader.load();
         I18n.setLanguage(ConfigLoader.getAppLanguage());
+        TpvLookAndFeelManager.apply(ConfigLoader.getAppLookAndFeel());
 
         System.out.println("[I18N] Idioma cargado: " + I18n.getCurrentLanguageCode());
         DbPool.init();

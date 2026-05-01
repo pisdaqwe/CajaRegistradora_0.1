@@ -6,6 +6,8 @@ import service.AppServices;
 import service.ColaImpresionService;
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -40,11 +42,11 @@ public class MonitorPreparacionDialog extends JDialog {
     private final StationPanel friasPanel;
     private final StationPanel comidaPanel;
 
-    private final JButton btnRefresh = new JButton("Refrescar");
-    private final JButton btnClose = new JButton("Cerrar");
+    private final JButton btnRefresh = new JButton(I18n.t("common.refresh"));
+    private final JButton btnClose = new JButton(I18n.t("common.close"));
 
     public MonitorPreparacionDialog(Window owner, AppServices appServices) {
-        super(owner, "Monitor de preparación", ModalityType.MODELESS);
+        super(owner, I18n.t("prepMonitor.title"), ModalityType.MODELESS);
 
         this.appServices = Objects.requireNonNull(appServices, "appServices no puede ser null");
         this.colaImpresionService = Objects.requireNonNull(
@@ -62,9 +64,9 @@ public class MonitorPreparacionDialog extends JDialog {
         int idEstacionComida = colaImpresionService
                 .requireIdEstacionByCodigoYSucursal(CODIGO_COMIDA, idSucursalActual);
 
-        calientesPanel = new StationPanel(idEstacionCalientes, "BEBIDAS CALIENTES");
-        friasPanel = new StationPanel(idEstacionFrias, "BEBIDAS FRÍAS");
-        comidaPanel = new StationPanel(idEstacionComida, "COMIDA");
+        calientesPanel = new StationPanel(idEstacionCalientes, I18n.t("prepMonitor.station.hotDrinks"));
+        friasPanel = new StationPanel(idEstacionFrias, I18n.t("prepMonitor.station.coldDrinks"));
+        comidaPanel = new StationPanel(idEstacionComida, I18n.t("prepMonitor.station.food"));
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setSize(1520, 820);
@@ -94,17 +96,11 @@ public class MonitorPreparacionDialog extends JDialog {
 
         JPanel leftCard = InformeUiTheme.createCardPanel(new BorderLayout(0, 8));
 
-        JLabel lblTitle = new JLabel("Monitor de preparación");
+        JLabel lblTitle = new JLabel(I18n.t("prepMonitor.header"));
         lblTitle.setFont(InformeUiTheme.FONT_TITLE);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblSub = new JLabel(
-                "<html>"
-                        + "Sucursal actual: <b>" + idSucursalActual + "</b><br>"
-                        + "Muestra únicamente items pendientes del día actual. "
-                        + "Cada estación trabaja sobre su propia cola de impresión."
-                        + "</html>"
-        );
+        JLabel lblSub = new JLabel(I18n.t("prepMonitor.subtitleHtml", idSucursalActual));
         lblSub.setFont(InformeUiTheme.FONT_BODY);
         lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -114,7 +110,7 @@ public class MonitorPreparacionDialog extends JDialog {
         JPanel rightCard = InformeUiTheme.createCardPanel(new BorderLayout(0, 10));
         rightCard.setPreferredSize(new Dimension(250, 100));
 
-        JLabel lblInfo = new JLabel("Acciones");
+        JLabel lblInfo = new JLabel(I18n.t("prepMonitor.actions"));
         lblInfo.setFont(InformeUiTheme.FONT_SECTION);
         lblInfo.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
@@ -123,6 +119,8 @@ public class MonitorPreparacionDialog extends JDialog {
 
         InformeUiTheme.styleSecondaryButton(btnRefresh);
         InformeUiTheme.stylePrimaryButton(btnClose);
+        btnRefresh.setIcon(TpvIconFactory.refresh(18, InformeUiTheme.TEXT_PRIMARY));
+        btnClose.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
 
         buttons.add(btnRefresh);
         buttons.add(btnClose);
@@ -184,7 +182,7 @@ public class MonitorPreparacionDialog extends JDialog {
             stationPanel.setItems(rows);
 
         } catch (Exception ex) {
-            stationPanel.showError("Error al cargar cola: " + safeMessage(ex));
+            stationPanel.showError(I18n.t("prepMonitor.errorQueue", safeMessage(ex)));
         }
     }
 
@@ -196,8 +194,8 @@ public class MonitorPreparacionDialog extends JDialog {
             if (printed == null) {
             	TpvDialogUtils.showInfo(
             	        this,
-            	        "Sin pendientes",
-            	        "No hay items pendientes en " + stationPanel.stationName + "."
+            	        I18n.t("prepMonitor.noPendingTitle"),
+            	        I18n.t("prepMonitor.noPendingMessage", stationPanel.stationName)
             	);
                 refreshStation(stationPanel);
                 return;
@@ -209,8 +207,8 @@ public class MonitorPreparacionDialog extends JDialog {
         } catch (Exception ex) {
         	TpvDialogUtils.showError(
         	        this,
-        	        "Error",
-        	        "No se pudo imprimir el siguiente item.\n" + safeMessage(ex)
+        	        I18n.t("common.error"),
+        	        I18n.t("prepMonitor.errorPrint", safeMessage(ex))
         	);
         }
     }
@@ -222,11 +220,11 @@ public class MonitorPreparacionDialog extends JDialog {
     private String buildPreviewText(ColaMonitorItemDTO item) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("VISTA PREVIA DEL ITEM").append("\n");
+        sb.append(I18n.t("prepMonitor.preview.title")).append("\n");
         sb.append("----------------------------------------").append("\n");
-        sb.append("Hora cola: ").append(formatHora(item.getFechaCreacion())).append("\n");
+        sb.append(I18n.t("prepMonitor.preview.queueTime")).append(": ").append(formatHora(item.getFechaCreacion())).append("\n");
         sb.append("----------------------------------------").append("\n");
-        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)");
+        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : I18n.t("prepMonitor.preview.noDetail"));
 
         return sb.toString();
     }
@@ -234,16 +232,16 @@ public class MonitorPreparacionDialog extends JDialog {
     private String buildPrintedText(ColaMonitorItemDTO item) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("MINI-TICKET / ETIQUETA").append("\n");
+        sb.append(I18n.t("prepMonitor.printed.title")).append("\n");
         sb.append("========================================").append("\n");
-        sb.append("ESTACIÓN: ").append(item.getNombreEstacion()).append("\n");
-        sb.append("COLA #: ").append(item.getIdCola()).append("\n");
-        sb.append("VENTA #: ").append(item.getIdVenta()).append("\n");
-        sb.append("HORA: ").append(LocalDateTime.now().format(HORA_FMT)).append("\n");
+        sb.append(I18n.t("prepMonitor.printed.station")).append(": ").append(item.getNombreEstacion()).append("\n");
+        sb.append(I18n.t("prepMonitor.printed.queue")).append(": ").append(item.getIdCola()).append("\n");
+        sb.append(I18n.t("prepMonitor.printed.sale")).append(": ").append(item.getIdVenta()).append("\n");
+        sb.append(I18n.t("prepMonitor.printed.time")).append(": ").append(LocalDateTime.now().format(HORA_FMT)).append("\n");
         sb.append("========================================").append("\n");
-        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : "(Sin detalle)").append("\n");
+        sb.append(item.getDetalleTexto() != null ? item.getDetalleTexto() : I18n.t("prepMonitor.preview.noDetail")).append("\n");
         sb.append("========================================").append("\n");
-        sb.append("IMPRESO Y MARCADO COMO PREPARADO");
+        sb.append(I18n.t("prepMonitor.printed.done"));
 
         return sb.toString();
     }
@@ -257,9 +255,9 @@ public class MonitorPreparacionDialog extends JDialog {
         private final int idEstacion;
         private final String stationName;
 
-        private final JLabel lblCount = new JLabel("Pendientes: 0");
-        private final JButton btnPrintNext = new JButton("Imprimir siguiente");
-        private final JButton btnClearPreview = new JButton("Limpiar detalle");
+        private final JLabel lblCount = new JLabel(I18n.t("prepMonitor.pending", 0));
+        private final JButton btnPrintNext = new JButton(I18n.t("prepMonitor.printNext"));
+        private final JButton btnClearPreview = new JButton(I18n.t("prepMonitor.clearDetail"));
 
         private final DefaultListModel<ColaMonitorItemDTO> listModel = new DefaultListModel<>();
         private final JList<ColaMonitorItemDTO> lstItems = new JList<>(listModel);
@@ -304,6 +302,7 @@ public class MonitorPreparacionDialog extends JDialog {
             titleBox.add(lblCount);
 
             InformeUiTheme.stylePrimaryButton(btnPrintNext);
+            btnPrintNext.setIcon(TpvIconFactory.check(18, InformeUiTheme.TEXT_PRIMARY));
 
             panel.add(titleBox, BorderLayout.CENTER);
             panel.add(btnPrintNext, BorderLayout.EAST);
@@ -316,11 +315,11 @@ public class MonitorPreparacionDialog extends JDialog {
             body.setOpaque(false);
 
             JScrollPane spList = new JScrollPane(lstItems);
-            spList.setBorder(createSectionBorder("Cola pendiente (hoy)"));
+            spList.setBorder(createSectionBorder(I18n.t("prepMonitor.queueSection")));
             spList.getViewport().setBackground(InformeUiTheme.CARD_BG_2);
 
             JScrollPane spText = new JScrollPane(txtPrinted);
-            spText.setBorder(createSectionBorder("Último mini-ticket simulado"));
+            spText.setBorder(createSectionBorder(I18n.t("prepMonitor.lastMiniTicket")));
             spText.getViewport().setBackground(InformeUiTheme.CARD_BG_2);
 
             body.add(spList);
@@ -334,6 +333,7 @@ public class MonitorPreparacionDialog extends JDialog {
             panel.setOpaque(false);
 
             InformeUiTheme.styleSecondaryButton(btnClearPreview);
+            btnClearPreview.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
             panel.add(btnClearPreview);
 
             return panel;
@@ -395,12 +395,12 @@ public class MonitorPreparacionDialog extends JDialog {
                 listModel.addElement(row);
             }
 
-            lblCount.setText("Pendientes: " + safeRows.size());
+            lblCount.setText(I18n.t("prepMonitor.pending", safeRows.size()));
             btnPrintNext.setEnabled(!safeRows.isEmpty());
 
             if (safeRows.isEmpty()) {
                 if (txtPrinted.getText() == null || txtPrinted.getText().isBlank()) {
-                    txtPrinted.setText("Sin items pendientes en esta estación.");
+                    txtPrinted.setText(I18n.t("prepMonitor.emptyStation"));
                 }
             }
         }
@@ -412,7 +412,7 @@ public class MonitorPreparacionDialog extends JDialog {
 
         void showError(String message) {
             listModel.clear();
-            lblCount.setText("Pendientes: error");
+            lblCount.setText(I18n.t("prepMonitor.pendingError"));
             btnPrintNext.setEnabled(false);
             txtPrinted.setText(message);
         }
@@ -453,7 +453,7 @@ public class MonitorPreparacionDialog extends JDialog {
                     ? value.getFechaCreacion().format(HORA_FMT)
                     : "--:--:--";
 
-            lblTop.setText("#" + value.getIdCola() + " | Venta " + value.getIdVenta() + " | " + hora);
+            lblTop.setText("#" + value.getIdCola() + " | " + I18n.t("prepMonitor.renderer.sale") + " " + value.getIdVenta() + " | " + hora);
             lblBottom.setText(value.getResumenLista());
 
             if (isSelected) {

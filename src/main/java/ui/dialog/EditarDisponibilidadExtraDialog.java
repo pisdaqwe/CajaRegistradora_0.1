@@ -1,45 +1,29 @@
 package ui.dialog;
 
 import dtoS.StockExtraDisponibilidadDTO;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class EditarDisponibilidadExtraDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
-    // =========================================================
-    // COLORES
-    // =========================================================
-    private static final Color BG_MAIN = new Color(14, 48, 35);
-    private static final Color BG_PANEL = new Color(20, 67, 47);
-    private static final Color BG_HEADER = new Color(0, 92, 62);
-    private static final Color BORDER = new Color(95, 145, 118);
-    private static final Color TEXT_MAIN = new Color(245, 245, 240);
-    private static final Color TEXT_SOFT = new Color(212, 223, 216);
-    private static final Color TEXT_DARK = new Color(30, 40, 35);
-
     private static final int WIDTH = 640;
     private static final int HEIGHT = 380;
 
-    // =========================================================
-    // ESTADO
-    // =========================================================
     private final StockExtraDisponibilidadDTO extra;
-    private EditarDisponibilidadExtraDialogResult result =
-            EditarDisponibilidadExtraDialogResult.cancelled();
+    private EditarDisponibilidadExtraDialogResult result = EditarDisponibilidadExtraDialogResult.cancelled();
 
-    // =========================================================
-    // UI
-    // =========================================================
     private JLabel lblNombreExtra;
     private JLabel lblTipoExtra;
     private JCheckBox chkDisponible;
 
     public EditarDisponibilidadExtraDialog(JFrame owner, StockExtraDisponibilidadDTO extra) {
-        super(owner, "Editar disponibilidad de extra", true);
+        super(owner, I18n.t("availability.extraEdit.title"), true);
         this.extra = extra;
 
         initDialog();
@@ -60,17 +44,15 @@ public class EditarDisponibilidadExtraDialog extends JDialog {
         lblNombreExtra = createValueLabel();
         lblTipoExtra = createValueLabel();
 
-        chkDisponible = new JCheckBox("Disponible en esta sucursal");
-        chkDisponible.setOpaque(false);
-        chkDisponible.setFont(new Font("SansSerif", Font.BOLD, 18));
-        chkDisponible.setForeground(TEXT_MAIN);
-        chkDisponible.setFocusPainted(false);
+        chkDisponible = new JCheckBox(I18n.t("availability.extraEdit.availableHere"));
+        InformeUiTheme.styleCheckBox(chkDisponible);
+        chkDisponible.setFont(InformeUiTheme.FONT_BODY.deriveFont(Font.BOLD, 18f));
     }
 
     private void buildLayout() {
         JPanel root = new JPanel(new BorderLayout(12, 12));
-        root.setBackground(BG_MAIN);
-        root.setBorder(new EmptyBorder(14, 14, 14, 14));
+        root.setBackground(InformeUiTheme.APP_BG);
+        root.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
         setContentPane(root);
 
         root.add(buildHeader(), BorderLayout.NORTH);
@@ -79,31 +61,25 @@ public class EditarDisponibilidadExtraDialog extends JDialog {
     }
 
     private JComponent buildHeader() {
-        JPanel panel = new JPanel(new BorderLayout(0, 2));
-        panel.setOpaque(false);
-        panel.setBorder(new EmptyBorder(0, 0, 4, 0));
+        JPanel panel = InformeUiTheme.createTransparentPanel(new BorderLayout(0, 4));
 
-        JLabel lblTitle = new JLabel("EDITAR EXTRA", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
-        lblTitle.setForeground(TEXT_MAIN);
+        JLabel lblTitle = new JLabel(I18n.t("availability.extraEdit.header"), SwingConstants.CENTER);
+        lblTitle.setIcon(TpvIconFactory.product(22, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(10);
+        lblTitle.setFont(InformeUiTheme.FONT_SECTION.deriveFont(22f));
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblSubtitle = new JLabel("Activa o desactiva el extra en la sucursal actual", SwingConstants.CENTER);
-        lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lblSubtitle.setForeground(TEXT_SOFT);
+        JLabel lblSubtitle = new JLabel(I18n.t("availability.extraEdit.subtitle"), SwingConstants.CENTER);
+        lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
         panel.add(lblTitle, BorderLayout.NORTH);
         panel.add(lblSubtitle, BorderLayout.CENTER);
-
         return panel;
     }
 
     private JComponent buildCenter() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(BG_PANEL);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(16, 16, 16, 16)
-        ));
+        JPanel panel = InformeUiTheme.createCardPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -111,50 +87,47 @@ public class EditarDisponibilidadExtraDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int row = 0;
-
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        panel.add(createLabel("Extra:"), gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        panel.add(lblNombreExtra, gbc);
-
-        row++;
-
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        panel.add(createLabel("Tipo:"), gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        panel.add(lblTipoExtra, gbc);
-
-        row++;
+        addFormRow(panel, gbc, row++, I18n.t("availability.extraEdit.extra") + ":", lblNombreExtra);
+        addFormRow(panel, gbc, row++, I18n.t("availability.extraEdit.type") + ":", lblTipoExtra);
 
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.gridwidth = 2;
+        gbc.weightx = 1;
         panel.add(chkDisponible, gbc);
-
         return panel;
     }
 
-    private JComponent buildBottomBar() {
-        JPanel panel = new JPanel(new GridLayout(1, 2, 12, 12));
-        panel.setOpaque(false);
+    private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent value) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        panel.add(createLabel(label), gbc);
 
-        JButton btnCancelar = createActionButton("CANCELAR");
-        JButton btnGuardar = createActionButton("GUARDAR");
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        panel.add(value, gbc);
+    }
+
+    private JComponent buildBottomBar() {
+        JPanel panel = InformeUiTheme.createTransparentPanel(new GridLayout(1, 2, 12, 12));
+
+        JButton btnCancelar = new JButton(I18n.t("common.cancel"));
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIconTextGap(8);
+        InformeUiTheme.styleSecondaryButton(btnCancelar);
+
+        JButton btnGuardar = new JButton(I18n.t("common.save"));
+        btnGuardar.setIcon(TpvIconFactory.save(18, Color.WHITE));
+        btnGuardar.setIconTextGap(8);
+        InformeUiTheme.stylePrimaryButton(btnGuardar);
 
         btnCancelar.addActionListener(e -> cancel());
         btnGuardar.addActionListener(e -> accept());
 
         panel.add(btnCancelar);
         panel.add(btnGuardar);
-
         return panel;
     }
 
@@ -180,31 +153,13 @@ public class EditarDisponibilidadExtraDialog extends JDialog {
     }
 
     private JLabel createLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(new Font("SansSerif", Font.BOLD, 16));
-        label.setForeground(TEXT_MAIN);
-        return label;
+        return InformeUiTheme.createFieldLabel(text);
     }
 
     private JLabel createValueLabel() {
         JLabel label = new JLabel();
-        label.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        label.setForeground(TEXT_SOFT);
+        label.setFont(InformeUiTheme.FONT_BODY);
+        label.setForeground(InformeUiTheme.TEXT_PRIMARY);
         return label;
-    }
-
-    private JButton createActionButton(String text) {
-        JButton button = new JButton(text);
-        button.setFocusPainted(false);
-        button.setFont(new Font("SansSerif", Font.BOLD, 18));
-        button.setForeground(TEXT_MAIN);
-        button.setBackground(BG_HEADER);
-        button.setOpaque(true);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER, 1, true),
-                new EmptyBorder(14, 12, 14, 12)
-        ));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
     }
 }

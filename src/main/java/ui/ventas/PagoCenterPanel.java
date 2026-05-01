@@ -1,6 +1,8 @@
 package ui.ventas;
 
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -34,11 +36,14 @@ public class PagoCenterPanel extends JPanel {
                 new EmptyBorder(24, 28, 24, 28)
         ));
 
-        JLabel title = new JLabel("PAGO", SwingConstants.CENTER);
+        JLabel title = new JLabel(I18n.t("sales.payment.title"), SwingConstants.CENTER);
+        title.setIcon(TpvIconFactory.creditCard(24, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(10);
+        title.setHorizontalTextPosition(SwingConstants.RIGHT);
         title.setForeground(InformeUiTheme.TEXT_PRIMARY);
         title.setFont(new Font("SansSerif", Font.BOLD, 26));
 
-        JLabel sub = new JLabel("Selecciona método de pago y confirma el cobro", SwingConstants.CENTER);
+        JLabel sub = new JLabel(I18n.t("sales.payment.subtitle"), SwingConstants.CENTER);
         sub.setForeground(InformeUiTheme.TEXT_SECONDARY);
         sub.setFont(InformeUiTheme.FONT_SUBTITLE);
 
@@ -54,15 +59,17 @@ public class PagoCenterPanel extends JPanel {
         JPanel bar = new JPanel(new GridLayout(1, 3, 12, 12));
         bar.setOpaque(false);
 
-        bar.add(createTpvButton("EFECTIVO", false));
-        bar.add(createTpvButton("TARJETA", true));
-        bar.add(createTpvButton("EXACTO", false));
+        bar.add(createTpvButton(I18n.t("sales.payment.cash"), false, TpvIconFactory.cashRegister(18, InformeUiTheme.TEXT_PRIMARY)));
+        bar.add(createTpvButton(I18n.t("sales.payment.card"), true, TpvIconFactory.creditCard(18, new Color(25, 25, 25))));
+        bar.add(createTpvButton(I18n.t("sales.payment.exact"), false, TpvIconFactory.check(18, InformeUiTheme.TEXT_PRIMARY)));
 
         return bar;
     }
 
-    private JButton createTpvButton(String text, boolean cardPayment) {
+    private JButton createTpvButton(String text, boolean cardPayment, Icon icon) {
         JButton button = new JButton(text);
+        button.setIcon(icon);
+        button.setIconTextGap(8);
         button.setFocusPainted(false);
         button.setFont(new Font("SansSerif", Font.BOLD, 17));
         button.setForeground(cardPayment ? new Color(25, 25, 25) : InformeUiTheme.TEXT_PRIMARY);

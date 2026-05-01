@@ -5,6 +5,8 @@ import dtoS.TicketClienteDTO;
 import dtoS.TicketClienteItemDTO;
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -14,14 +16,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 
-/**
- * Vista previa lógica del ticket cliente.
- *
- * AJUSTE ACTUAL:
- * - ahora también muestra el café seleccionado de cada bebida.
- */
 public class TicketClienteDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -33,7 +28,7 @@ public class TicketClienteDialog extends JDialog {
     private JButton btnReimprimir;
 
     public TicketClienteDialog(Window owner, TicketClienteDTO ticket) {
-        super(owner, "Ticket cliente", ModalityType.APPLICATION_MODAL);
+        super(owner, I18n.t("ticketClient.title"), ModalityType.APPLICATION_MODAL);
 
         if (ticket == null) {
             throw new IllegalArgumentException("TicketClienteDTO no puede ser null");
@@ -54,29 +49,25 @@ public class TicketClienteDialog extends JDialog {
         setVisible(true);
     }
 
-    // =====================================================
-    // 1. UI
-    // =====================================================
-
     private void buildUi() {
         JPanel root = new JPanel(new BorderLayout(12, 12));
         root.setBorder(new EmptyBorder(16, 16, 16, 16));
         root.setBackground(InformeUiTheme.APP_BG);
 
-        JPanel header = new JPanel(new BorderLayout(0, 4));
-        header.setOpaque(false);
+        JPanel header = InformeUiTheme.createTransparentPanel(new BorderLayout(0, 4));
 
-        JLabel lblTitle = new JLabel("VISTA PREVIA DEL TICKET", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel(I18n.t("ticketClient.header"), SwingConstants.CENTER);
+        lblTitle.setIcon(TpvIconFactory.report(22, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(8);
         lblTitle.setFont(InformeUiTheme.FONT_SECTION);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblSubtitle = new JLabel("Ticket de cliente generado desde la venta", SwingConstants.CENTER);
+        JLabel lblSubtitle = new JLabel(I18n.t("ticketClient.subtitle"), SwingConstants.CENTER);
         lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
         lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
         header.add(lblTitle, BorderLayout.NORTH);
         header.add(lblSubtitle, BorderLayout.CENTER);
-
         root.add(header, BorderLayout.NORTH);
 
         txtTicket = new JTextArea();
@@ -85,21 +76,22 @@ public class TicketClienteDialog extends JDialog {
         txtTicket.setLineWrap(false);
         txtTicket.setWrapStyleWord(false);
         txtTicket.setMargin(new Insets(14, 14, 14, 14));
-
         InformeUiTheme.styleTextArea(txtTicket);
 
         JScrollPane scroll = new JScrollPane(txtTicket);
         InformeUiTheme.styleScrollPane(scroll);
-
         root.add(scroll, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        bottom.setOpaque(false);
+        JPanel bottom = InformeUiTheme.createTransparentPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 
-        btnReimprimir = new JButton("REIMPRIMIR");
+        btnReimprimir = new JButton(I18n.t("ticketClient.reprint"));
+        btnReimprimir.setIcon(TpvIconFactory.report(18, Color.WHITE));
+        btnReimprimir.setIconTextGap(8);
         InformeUiTheme.stylePrimaryButton(btnReimprimir);
 
-        btnCerrar = new JButton("CERRAR");
+        btnCerrar = new JButton(I18n.t("common.close"));
+        btnCerrar.setIcon(TpvIconFactory.back(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCerrar.setIconTextGap(8);
         InformeUiTheme.styleSecondaryButton(btnCerrar);
 
         btnReimprimir.addActionListener(e -> onReimprimir());
@@ -107,54 +99,41 @@ public class TicketClienteDialog extends JDialog {
 
         bottom.add(btnReimprimir);
         bottom.add(btnCerrar);
-
         root.add(bottom, BorderLayout.SOUTH);
 
         setContentPane(root);
     }
-
-    // =====================================================
-    // 2. CARGA DE DATOS
-    // =====================================================
 
     private void loadData() {
         txtTicket.setText(buildTicketText());
         txtTicket.setCaretPosition(0);
     }
 
-    // =====================================================
-    // 3. ACCIONES
-    // =====================================================
-
     private void onReimprimir() {
         TpvDialogUtils.showInfo(
                 this,
-                "Reimprimir ticket",
-                "Reimpresión lógica preparada.\n\nDe momento esta pantalla muestra la vista previa del ticket."
+                I18n.t("ticketClient.reprintTitle"),
+                I18n.t("ticketClient.reprintPrepared")
         );
     }
-
-    // =====================================================
-    // 4. RENDER DEL TICKET
-    // =====================================================
 
     private String buildTicketText() {
         StringBuilder sb = new StringBuilder();
 
-        appendCentered(sb, "TPV CAFETERÍA");
-        appendCentered(sb, "TICKET CLIENTE");
+        appendCentered(sb, I18n.t("receipt.businessName"));
+        appendCentered(sb, I18n.t("receipt.clientTicket"));
         sb.append(line()).append("\n");
 
         if (ticket.getFechaGeneracion() != null) {
-            sb.append("Fecha: ")
+            sb.append(I18n.t("receipt.date")).append(": ")
                     .append(ticket.getFechaGeneracion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")))
                     .append("\n");
         }
 
-        sb.append("Venta: ").append(ticket.getIdVenta()).append("\n");
-        sb.append("Pedido: ").append(safe(ticket.getNombrePedido(), "Cliente")).append("\n");
-        sb.append("Servicio: ").append(formatTipoServicio(ticket.getTipoServicio())).append("\n");
-        sb.append("Pago: ").append(formatMetodoPago(ticket.getMetodoPago())).append("\n");
+        sb.append(I18n.t("receipt.sale")).append(": ").append(ticket.getIdVenta()).append("\n");
+        sb.append(I18n.t("receipt.order")).append(": ").append(safe(ticket.getNombrePedido(), I18n.t("receipt.customer"))).append("\n");
+        sb.append(I18n.t("receipt.service")).append(": ").append(formatTipoServicio(ticket.getTipoServicio())).append("\n");
+        sb.append(I18n.t("receipt.payment")).append(": ").append(formatMetodoPago(ticket.getMetodoPago())).append("\n");
 
         sb.append(line()).append("\n");
 
@@ -165,12 +144,8 @@ public class TicketClienteDialog extends JDialog {
             }
         }
 
-        // =====================================================
-        // COMBOS
-        // =====================================================
         if (ticket.hasCombos()) {
             sb.append(line()).append("\n");
-
             for (TicketClienteComboDTO combo : ticket.getCombos()) {
                 appendCombo(sb, combo);
             }
@@ -178,48 +153,36 @@ public class TicketClienteDialog extends JDialog {
 
         sb.append(line()).append("\n");
 
-        // =====================================================
-        // AHORRO POR COMBOS
-        // =====================================================
         if (ticket.hasCombos()) {
-            sb.append(padRight("AHORRO COMBOS", 24))
+            sb.append(padRight(I18n.t("receipt.comboSavings"), 24))
                     .append(padLeft("-" + formatMoney(ticket.getTotalAhorroCombos()) + " €", 14))
                     .append("\n");
         }
 
-        // =====================================================
-        // DESCUENTO APLICADO
-        // =====================================================
         if (ticket.hasDescuento()) {
             appendDescuento(sb);
         }
 
-        sb.append(padRight("TOTAL", 24))
+        sb.append(padRight(I18n.t("receipt.total"), 24))
                 .append(padLeft(formatMoney(ticket.getTotal()) + " €", 14))
                 .append("\n");
 
-        sb.append(padRight("ENTREGADO", 24))
+        sb.append(padRight(I18n.t("receipt.paid"), 24))
                 .append(padLeft(formatMoney(ticket.getMontoPagado()) + " €", 14))
                 .append("\n");
 
-        sb.append(padRight("CAMBIO", 24))
+        sb.append(padRight(I18n.t("receipt.change"), 24))
                 .append(padLeft(formatMoney(ticket.getCambio()) + " €", 14))
                 .append("\n");
 
         sb.append(line()).append("\n");
-        appendCentered(sb, "Gracias por su visita");
+        appendCentered(sb, I18n.t("receipt.thanks"));
 
         return sb.toString();
     }
 
-    /**
-     * Render de una línea del ticket.
-     *
-     * AJUSTE ACTUAL:
-     * - ahora mete el café debajo del nombre si existe.
-     */
     private void appendItem(StringBuilder sb, TicketClienteItemDTO item) {
-        String nombre = safe(item.getNombreProducto(), "PRODUCTO");
+        String nombre = safe(item.getNombreProducto(), I18n.t("receipt.product"));
         String tamano = safe(item.getTamano(), "");
         String nombreLinea = tamano.isBlank() ? nombre : nombre + " (" + tamano + ")";
 
@@ -230,11 +193,8 @@ public class TicketClienteDialog extends JDialog {
                 .append(padLeft(formatMoney(item.getSubtotal()) + " €", 30))
                 .append("\n");
 
-        // =====================================================
-        // NUEVO BLOQUE: café seleccionado
-        // =====================================================
         if (item.hasTipoCafe()) {
-            sb.append("    Café: ").append(item.getTipoCafe().trim()).append("\n");
+            sb.append("    ").append(I18n.t("receipt.coffee")).append(": ").append(item.getTipoCafe().trim()).append("\n");
         }
 
         if (item.getExtras() != null) {
@@ -265,18 +225,17 @@ public class TicketClienteDialog extends JDialog {
     }
 
     private void appendDescuento(StringBuilder sb) {
-        String nombre = safe(ticket.getNombreDescuento(), "Descuento");
+        String nombre = safe(ticket.getNombreDescuento(), I18n.t("receipt.discount"));
         String codigo = safe(ticket.getCodigoDescuento(), "");
         String origen = safe(ticket.getOrigenDescuento(), "");
 
         sb.append(nombre).append("\n");
 
-        // Solo mostrar código si es una promo/cupón real
         if (!codigo.isBlank() && "PROMOCIONAL".equalsIgnoreCase(origen)) {
-            sb.append("  Código: ").append(codigo).append("\n");
+            sb.append("  ").append(I18n.t("receipt.code")).append(": ").append(codigo).append("\n");
         }
 
-        sb.append(padRight("AHORRO DESCUENTO", 24))
+        sb.append(padRight(I18n.t("receipt.discountSavings"), 24))
                 .append(padLeft("-" + formatMoney(ticket.getImporteDescuento()) + " €", 14))
                 .append("\n");
     }
@@ -292,24 +251,17 @@ public class TicketClienteDialog extends JDialog {
                 .append("\n");
 
         if (combo.getAhorroTotal() != null && combo.getAhorroTotal().compareTo(BigDecimal.ZERO) > 0) {
-            sb.append("    Ahorro: -").append(formatMoney(combo.getAhorroTotal())).append(" €\n");
+            sb.append("    ").append(I18n.t("receipt.saving")).append(": -")
+                    .append(formatMoney(combo.getAhorroTotal())).append(" €\n");
         }
 
         sb.append("\n");
     }
 
-    // =====================================================
-    // 5. HELPERS DE FORMATO
-    // =====================================================
-
-    private String line() {
-        return "----------------------------------------";
-    }
+    private String line() { return "----------------------------------------"; }
 
     private void appendCentered(StringBuilder sb, String text) {
-        if (text == null) {
-            text = "";
-        }
+        if (text == null) text = "";
         int width = 40;
         if (text.length() >= width) {
             sb.append(text).append("\n");
@@ -321,18 +273,12 @@ public class TicketClienteDialog extends JDialog {
 
     private String padRight(String txt, int width) {
         String value = txt == null ? "" : txt;
-        if (value.length() >= width) {
-            return value;
-        }
-        return value + " ".repeat(width - value.length());
+        return value.length() >= width ? value : value + " ".repeat(width - value.length());
     }
 
     private String padLeft(String txt, int width) {
         String value = txt == null ? "" : txt;
-        if (value.length() >= width) {
-            return value;
-        }
-        return " ".repeat(width - value.length()) + value;
+        return value.length() >= width ? value : " ".repeat(width - value.length()) + value;
     }
 
     private String safe(String text, String fallback) {
@@ -342,8 +288,8 @@ public class TicketClienteDialog extends JDialog {
     private String formatTipoServicio(String tipo) {
         if (tipo == null) return "";
         return switch (tipo.trim().toUpperCase()) {
-            case "PARA_LLEVAR" -> "Para llevar";
-            case "PARA_TOMAR" -> "Para tomar";
+            case "PARA_LLEVAR" -> I18n.t("receipt.takeAway");
+            case "PARA_TOMAR" -> I18n.t("receipt.eatIn");
             default -> tipo;
         };
     }
@@ -351,21 +297,17 @@ public class TicketClienteDialog extends JDialog {
     private String formatMetodoPago(String metodo) {
         if (metodo == null) return "";
         return switch (metodo.trim().toUpperCase()) {
-            case "EFECTIVO" -> "Efectivo";
-            case "TARJETA" -> "Tarjeta";
-            case "VALE" -> "Vale";
-            case "MIXTO" -> "Mixto";
+            case "EFECTIVO" -> I18n.t("payment.cash");
+            case "TARJETA" -> I18n.t("payment.card");
+            case "VALE" -> I18n.t("payment.voucher");
+            case "MIXTO" -> I18n.t("payment.mixed");
             default -> metodo;
         };
     }
 
     private String formatMoney(BigDecimal amount) {
         BigDecimal safe = amount != null ? amount : BigDecimal.ZERO;
-
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("es", "ES"));
-        symbols.setDecimalSeparator(',');
-        symbols.setGroupingSeparator('.');
-
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(I18n.getCurrentLocale());
         DecimalFormat df = new DecimalFormat("#,##0.00", symbols);
         return df.format(safe);
     }

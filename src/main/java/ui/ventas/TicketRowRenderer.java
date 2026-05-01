@@ -2,6 +2,7 @@ package ui.ventas;
 
 import model.TicketRow;
 import enums.TicketRowType;
+import ui.theme.InformeUiTheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,8 +22,8 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
         setLayout(new BorderLayout(8, 0));
         setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
 
-        lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 16));
-        lblRight.setFont(new Font("Monospaced", Font.BOLD, 16));
+        lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.PLAIN, 15f));
+        lblRight.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.BOLD, 15f));
         lblRight.setHorizontalAlignment(SwingConstants.RIGHT);
 
         lblLeft.setVerticalAlignment(SwingConstants.TOP);
@@ -78,13 +79,13 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
         // 2) FUENTES SEGÚN TIPO DE FILA
         // =====================================================
         switch (value.getType()) {
-            case ITEM -> lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 16));
-            case EXTRA, PERSONALIZACION -> lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 16));
-            case ASK_ME -> lblLeft.setFont(new Font("Monospaced", Font.PLAIN, 13));
-            case COMBO -> lblLeft.setFont(new Font("Monospaced", Font.BOLD, 16));
-            case AHORRO -> lblLeft.setFont(new Font("Monospaced", Font.ITALIC, 14));
-            case DESCUENTO -> lblLeft.setFont(new Font("Monospaced", Font.BOLD, 16));
-            case AHORRO_DESCUENTO -> lblLeft.setFont(new Font("Monospaced", Font.ITALIC, 14));
+            case ITEM -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.PLAIN, 15f));
+            case EXTRA, PERSONALIZACION -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.PLAIN, 15f));
+            case ASK_ME -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.PLAIN, 13f));
+            case COMBO -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.BOLD, 15f));
+            case AHORRO -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.ITALIC, 14f));
+            case DESCUENTO -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.BOLD, 15f));
+            case AHORRO_DESCUENTO -> lblLeft.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.ITALIC, 14f));
         }
 
         // =====================================================
@@ -95,23 +96,23 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
 
         if (value.getType() == TicketRowType.COMBO
                 || value.getType() == TicketRowType.DESCUENTO) {
-            lblRight.setFont(new Font("Monospaced", Font.BOLD, 16));
+            lblRight.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.BOLD, 15f));
         } else if (value.getType() == TicketRowType.AHORRO
                 || value.getType() == TicketRowType.AHORRO_DESCUENTO) {
-            lblRight.setFont(new Font("Monospaced", Font.BOLD, 14));
+            lblRight.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.BOLD, 14f));
         } else {
-            lblRight.setFont(new Font("Monospaced", Font.BOLD, 16));
+            lblRight.setFont(InformeUiTheme.FONT_TICKET.deriveFont(Font.BOLD, 15f));
         }
 
         // =====================================================
         // 4) COLORES
         // =====================================================
         if (isSelected) {
-            setBackground(new Color(60, 60, 60));
-            lblLeft.setForeground(Color.WHITE);
-            lblRight.setForeground(new Color(255, 210, 0));
+            setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+            lblLeft.setForeground(InformeUiTheme.TEXT_PRIMARY);
+            lblRight.setForeground(InformeUiTheme.ACCENT_GOLD);
         } else {
-            setBackground(new Color(30, 30, 30));
+            setBackground(InformeUiTheme.PANEL_BG);
 
             switch (value.getType()) {
                 case ASK_ME -> {
@@ -120,11 +121,11 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
                 }
 
                 case COMBO -> {
-                    lblLeft.setForeground(new Color(255, 215, 120));
-                    lblRight.setForeground(new Color(255, 215, 120));
+                    lblLeft.setForeground(InformeUiTheme.ACCENT_GOLD);
+                    lblRight.setForeground(InformeUiTheme.ACCENT_GOLD);
                 }
 
-                case AHORRO -> {
+                case AHORRO, AHORRO_DESCUENTO -> {
                     lblLeft.setForeground(new Color(120, 220, 140));
                     lblRight.setForeground(new Color(120, 220, 140));
                 }
@@ -134,14 +135,9 @@ public class TicketRowRenderer extends JPanel implements ListCellRenderer<Ticket
                     lblRight.setForeground(new Color(170, 200, 255));
                 }
 
-                case AHORRO_DESCUENTO -> {
-                    lblLeft.setForeground(new Color(120, 220, 140));
-                    lblRight.setForeground(new Color(120, 220, 140));
-                }
-
                 default -> {
-                    lblLeft.setForeground(new Color(230, 230, 230));
-                    lblRight.setForeground(new Color(200, 200, 200));
+                    lblLeft.setForeground(InformeUiTheme.TEXT_PRIMARY);
+                    lblRight.setForeground(InformeUiTheme.TEXT_SECONDARY);
                 }
             }
         }

@@ -1,6 +1,8 @@
 package ui.common;
 
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -11,18 +13,12 @@ public final class TecladoVirtualDialog {
     private TecladoVirtualDialog() {
     }
 
-    public static void showAlfanumerico(
-            Component parent,
-            JTextField targetField,
-            String titulo,
-            int maxLength
-    ) {
+    public static void showAlfanumerico(Component parent, JTextField targetField, String titulo, int maxLength) {
         if (targetField == null || !targetField.isEnabled() || !targetField.isEditable()) {
             return;
         }
 
         Window owner = resolveOwner(parent);
-
         JDialog dialog = new JDialog(owner, titulo, Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setResizable(false);
@@ -32,10 +28,12 @@ public final class TecladoVirtualDialog {
         root.setBorder(new EmptyBorder(18, 18, 18, 18));
 
         JLabel lblTitle = new JLabel(titulo);
+        lblTitle.setIcon(TpvIconFactory.key(20, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(8);
         lblTitle.setFont(InformeUiTheme.FONT_SECTION);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblHint = new JLabel("Usa el teclado táctil o escribe con el teclado físico.");
+        JLabel lblHint = new JLabel(I18n.t("keyboard.alphaHint"));
         lblHint.setFont(InformeUiTheme.FONT_BODY);
         lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -46,7 +44,9 @@ public final class TecladoVirtualDialog {
         JPanel card = InformeUiTheme.createCardPanel(new BorderLayout(0, 12));
         card.add(new TecladoAlfaNumericoPanel(targetField, maxLength), BorderLayout.CENTER);
 
-        JButton btnCerrar = new JButton("Aceptar");
+        JButton btnCerrar = new JButton(I18n.t("keyboard.accept"));
+        btnCerrar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        btnCerrar.setIconTextGap(8);
         InformeUiTheme.stylePrimaryButton(btnCerrar);
         btnCerrar.addActionListener(e -> dialog.dispose());
 
@@ -66,18 +66,12 @@ public final class TecladoVirtualDialog {
         targetField.requestFocusInWindow();
     }
 
-    public static void showNumerico(
-            Component parent,
-            JTextField targetField,
-            String titulo,
-            int maxLength
-    ) {
+    public static void showNumerico(Component parent, JTextField targetField, String titulo, int maxLength) {
         if (targetField == null || !targetField.isEnabled() || !targetField.isEditable()) {
             return;
         }
 
         Window owner = resolveOwner(parent);
-
         JDialog dialog = new JDialog(owner, titulo, Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setResizable(false);
@@ -87,10 +81,12 @@ public final class TecladoVirtualDialog {
         root.setBorder(new EmptyBorder(18, 18, 18, 18));
 
         JLabel lblTitle = new JLabel(titulo);
+        lblTitle.setIcon(TpvIconFactory.key(20, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(8);
         lblTitle.setFont(InformeUiTheme.FONT_SECTION);
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblHint = new JLabel("Introduce solo números.");
+        JLabel lblHint = new JLabel(I18n.t("keyboard.numericHint"));
         lblHint.setFont(InformeUiTheme.FONT_BODY);
         lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -102,11 +98,13 @@ public final class TecladoVirtualDialog {
         keypad.setOpaque(false);
 
         for (int i = 1; i <= 9; i++) {
-            keypad.add(createNumberButton(String.valueOf(i), () -> append(targetField, String.valueOf(((JButton) KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()).getText()), maxLength)));
+            final String value = String.valueOf(i);
+            keypad.add(createNumberButton(value, () -> append(targetField, value, maxLength)));
         }
 
         JButton btnBorrar = new JButton("←");
         InformeUiTheme.styleKeypadSpecialButton(btnBorrar, false);
+        btnBorrar.setToolTipText(I18n.t("keyboard.delete"));
         btnBorrar.addActionListener(e -> deleteLast(targetField));
 
         JButton btn0 = new JButton("0");
@@ -115,13 +113,16 @@ public final class TecladoVirtualDialog {
 
         JButton btnLimpiar = new JButton("C");
         InformeUiTheme.styleKeypadSpecialButton(btnLimpiar, true);
+        btnLimpiar.setToolTipText(I18n.t("keyboard.clear.tooltip"));
         btnLimpiar.addActionListener(e -> targetField.setText(""));
 
         keypad.add(btnBorrar);
         keypad.add(btn0);
         keypad.add(btnLimpiar);
 
-        JButton btnCerrar = new JButton("Aceptar");
+        JButton btnCerrar = new JButton(I18n.t("keyboard.accept"));
+        btnCerrar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        btnCerrar.setIconTextGap(8);
         InformeUiTheme.stylePrimaryButton(btnCerrar);
         btnCerrar.addActionListener(e -> dialog.dispose());
 
@@ -153,21 +154,17 @@ public final class TecladoVirtualDialog {
 
     private static void append(JTextField field, String value, int maxLength) {
         String current = field.getText() == null ? "" : field.getText();
-
         if (current.length() >= maxLength) {
             return;
         }
-
         field.setText(current + value);
     }
 
     private static void deleteLast(JTextField field) {
         String current = field.getText();
-
         if (current == null || current.isEmpty()) {
             return;
         }
-
         field.setText(current.substring(0, current.length() - 1));
     }
 
@@ -175,11 +172,9 @@ public final class TecladoVirtualDialog {
         if (parent == null) {
             return null;
         }
-
         if (parent instanceof Window window) {
             return window;
         }
-
         return SwingUtilities.getWindowAncestor(parent);
     }
 }

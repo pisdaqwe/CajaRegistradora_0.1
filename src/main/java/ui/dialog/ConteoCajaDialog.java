@@ -2,6 +2,8 @@ package ui.dialog;
 
 import ui.common.InformeUiTheme;
 import ui.common.TpvDialogUtils;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -20,10 +22,10 @@ public class ConteoCajaDialog extends JDialog {
     private BigDecimal importeSeleccionado;
 
     public ConteoCajaDialog(Window owner) {
-        super(owner, "Conteo de caja", ModalityType.APPLICATION_MODAL);
+        super(owner, I18n.t("cashCount.title"), ModalityType.APPLICATION_MODAL);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(400, 620);
+        setSize(430, 650);
         setResizable(false);
         setLocationRelativeTo(owner);
 
@@ -36,11 +38,41 @@ public class ConteoCajaDialog extends JDialog {
         root.setBackground(InformeUiTheme.APP_BG);
         setContentPane(root);
 
-        JLabel lblTitulo = new JLabel("CONTEO DE CAJA", SwingConstants.CENTER);
+        root.add(buildHeader(), BorderLayout.NORTH);
+        root.add(buildCenter(), BorderLayout.CENTER);
+        root.add(buildFooter(), BorderLayout.SOUTH);
+
+        SwingUtilities.invokeLater(() -> txtCantidadContada.requestFocusInWindow());
+    }
+
+    private JComponent buildHeader() {
+        JPanel header = new JPanel(new BorderLayout(12, 0));
+        header.setOpaque(false);
+
+        JLabel icon = new JLabel(TpvIconFactory.cashRegister(34, InformeUiTheme.ACCENT_GOLD));
+        icon.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel texts = new JPanel(new GridLayout(2, 1, 0, 4));
+        texts.setOpaque(false);
+
+        JLabel lblTitulo = new JLabel(I18n.t("cashCount.header.title"));
         lblTitulo.setFont(InformeUiTheme.FONT_TITLE);
         lblTitulo.setForeground(InformeUiTheme.TEXT_PRIMARY);
-        root.add(lblTitulo, BorderLayout.NORTH);
 
+        JLabel lblSubtitulo = new JLabel(I18n.t("cashCount.header.subtitle"));
+        lblSubtitulo.setFont(InformeUiTheme.FONT_SUBTITLE);
+        lblSubtitulo.setForeground(InformeUiTheme.ACCENT_GOLD);
+
+        texts.add(lblTitulo);
+        texts.add(lblSubtitulo);
+
+        header.add(icon, BorderLayout.WEST);
+        header.add(texts, BorderLayout.CENTER);
+
+        return header;
+    }
+
+    private JComponent buildCenter() {
         JPanel panelCentral = new JPanel();
         panelCentral.setOpaque(false);
         panelCentral.setLayout(new BoxLayout(panelCentral, BoxLayout.Y_AXIS));
@@ -48,10 +80,10 @@ public class ConteoCajaDialog extends JDialog {
         txtCantidadContada = new JTextField();
         txtCantidadContada.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(InformeUiTheme.BORDER),
-                "Efectivo contado (€)"
+                I18n.t("cashCount.amountLabel")
         ));
-        txtCantidadContada.setMaximumSize(new Dimension(Integer.MAX_VALUE, 68));
-        txtCantidadContada.setFont(new Font("Monospaced", Font.BOLD, 28));
+        txtCantidadContada.setMaximumSize(new Dimension(Integer.MAX_VALUE, 72));
+        txtCantidadContada.setFont(new Font("Monospaced", Font.BOLD, 30));
         txtCantidadContada.setHorizontalAlignment(JTextField.RIGHT);
         txtCantidadContada.setBackground(InformeUiTheme.CARD_BG_2);
         txtCantidadContada.setForeground(InformeUiTheme.TEXT_PRIMARY);
@@ -71,17 +103,24 @@ public class ConteoCajaDialog extends JDialog {
         }
 
         panelCentral.add(keypad);
-        root.add(panelCentral, BorderLayout.CENTER);
 
+        return panelCentral;
+    }
+
+    private JComponent buildFooter() {
         JPanel panelBotones = new JPanel(new GridLayout(1, 2, 12, 0));
         panelBotones.setOpaque(false);
         panelBotones.setBorder(new EmptyBorder(20, 0, 0, 0));
 
-        JButton btnCancelar = new JButton("Cancelar");
+        JButton btnCancelar = new JButton(I18n.t("common.cancel"));
         InformeUiTheme.styleSecondaryButton(btnCancelar);
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIconTextGap(8);
 
-        JButton btnAceptar = new JButton("Aceptar");
+        JButton btnAceptar = new JButton(I18n.t("common.accept"));
         InformeUiTheme.stylePrimaryButton(btnAceptar);
+        btnAceptar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        btnAceptar.setIconTextGap(8);
 
         btnCancelar.addActionListener(e -> dispose());
         btnAceptar.addActionListener(e -> procesarAceptar());
@@ -89,10 +128,9 @@ public class ConteoCajaDialog extends JDialog {
         panelBotones.add(btnCancelar);
         panelBotones.add(btnAceptar);
 
-        root.add(panelBotones, BorderLayout.SOUTH);
-
         getRootPane().setDefaultButton(btnAceptar);
-        SwingUtilities.invokeLater(() -> txtCantidadContada.requestFocusInWindow());
+
+        return panelBotones;
     }
 
     private JButton createKeypadButton(String label) {
@@ -100,6 +138,11 @@ public class ConteoCajaDialog extends JDialog {
         b.setFont(new Font("Monospaced", Font.BOLD, 24));
         b.setFocusable(false);
         InformeUiTheme.styleSecondaryButton(b);
+
+        if ("←".equals(label)) {
+            b.setIcon(TpvIconFactory.back(16, InformeUiTheme.TEXT_PRIMARY));
+            b.setIconTextGap(6);
+        }
 
         b.addActionListener(e -> {
             if ("←".equals(label)) {
@@ -128,11 +171,11 @@ public class ConteoCajaDialog extends JDialog {
         String texto = txtCantidadContada.getText().trim();
 
         if (texto.isEmpty() || ".".equals(texto)) {
-        	TpvDialogUtils.showError(
-        	        this,
-        	        "Importe inválido",
-        	        "Debe introducir un importe válido."
-        	);
+            TpvDialogUtils.showError(
+                    this,
+                    I18n.t("cashCount.invalidTitle"),
+                    I18n.t("cashCount.invalidRequired")
+            );
             return;
         }
 
@@ -147,11 +190,11 @@ public class ConteoCajaDialog extends JDialog {
             dispose();
 
         } catch (NumberFormatException ex) {
-        	TpvDialogUtils.showError(
-        	        this,
-        	        "Importe inválido",
-        	        "Importe no válido. Máximo 2 decimales."
-        	);
+            TpvDialogUtils.showError(
+                    this,
+                    I18n.t("cashCount.invalidTitle"),
+                    I18n.t("cashCount.invalidFormat")
+            );
         }
     }
 
@@ -165,6 +208,7 @@ public class ConteoCajaDialog extends JDialog {
         @Override
         public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
                 throws BadLocationException {
+
             if (isValid(fb.getDocument().getText(0, fb.getDocument().getLength()), string, offset)) {
                 super.insertString(fb, offset, string, attr);
             }
@@ -173,6 +217,7 @@ public class ConteoCajaDialog extends JDialog {
         @Override
         public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
                 throws BadLocationException {
+
             if (isValidAfterReplace(fb.getDocument().getText(0, fb.getDocument().getLength()), offset, length, text)) {
                 super.replace(fb, offset, length, text, attrs);
             }

@@ -4,6 +4,9 @@ import dtoS.ProductoCatalogoDTO;
 import dtoS.ProductoDTO;
 import dtoS.SubCategoriaDTO;
 import service.AppServices;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -33,7 +36,7 @@ public class SubcategoriaDetallePanel extends JPanel {
         this.onProductoClicked = onProductoClicked;
 
         setLayout(new BorderLayout(12, 12));
-        setBackground(new Color(20, 20, 20));
+        setBackground(InformeUiTheme.APP_BG);
         setBorder(new EmptyBorder(12, 12, 12, 12));
 
         add(buildTopBar(), BorderLayout.NORTH);
@@ -41,18 +44,21 @@ public class SubcategoriaDetallePanel extends JPanel {
     }
 
     private JComponent buildTopBar() {
-        JPanel top = new JPanel(new BorderLayout(12, 12));
-        top.setOpaque(false);
+        JPanel top = InformeUiTheme.createTransparentPanel(new BorderLayout(12, 12));
 
-        JButton btnBack = createDarkButton("← VOLVER");
+        JButton btnBack = createDarkButton(I18n.t("common.back"));
+        btnBack.setIcon(TpvIconFactory.back(18, InformeUiTheme.TEXT_PRIMARY));
+        btnBack.setIconTextGap(8);
         btnBack.addActionListener(e -> {
             if (onBack != null) {
                 onBack.run();
             }
         });
 
-        lblTitle.setFont(new Font("Monospaced", Font.BOLD, 20));
-        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setFont(InformeUiTheme.FONT_TITLE.deriveFont(Font.BOLD, 22f));
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        lblTitle.setIcon(TpvIconFactory.folder(22, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(8);
 
         top.add(btnBack, BorderLayout.WEST);
         top.add(lblTitle, BorderLayout.CENTER);
@@ -65,8 +71,8 @@ public class SubcategoriaDetallePanel extends JPanel {
         grid.setOpaque(false);
 
         JScrollPane sp = new JScrollPane(grid);
+        InformeUiTheme.styleScrollPane(sp);
         sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.getViewport().setBackground(new Color(20, 20, 20));
         sp.getVerticalScrollBar().setUnitIncrement(18);
 
         return sp;
@@ -80,18 +86,20 @@ public class SubcategoriaDetallePanel extends JPanel {
         List<ProductoCatalogoDTO> productos =
                 services.catalogoService.getProductosCatalogoBySubcategoria(sub.getIdSubcategoria());
 
-        for (ProductoCatalogoDTO p : productos) {
-            JButton b = createProductoButton(p);
-            b.addActionListener(e -> {
-                if (!p.isBotonHabilitado()) {
-                    return;
-                }
+        if (productos != null) {
+            for (ProductoCatalogoDTO p : productos) {
+                JButton b = createProductoButton(p);
+                b.addActionListener(e -> {
+                    if (!p.isBotonHabilitado()) {
+                        return;
+                    }
 
-                if (onProductoClicked != null) {
-                    onProductoClicked.accept(toProductoDTO(p));
-                }
-            });
-            grid.add(b);
+                    if (onProductoClicked != null) {
+                        onProductoClicked.accept(toProductoDTO(p));
+                    }
+                });
+                grid.add(b);
+            }
         }
 
         revalidate();
@@ -101,22 +109,26 @@ public class SubcategoriaDetallePanel extends JPanel {
     private JButton createProductoButton(ProductoCatalogoDTO producto) {
         JButton b = new JButton(buildButtonText(producto));
         b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 16));
+        b.setFont(InformeUiTheme.FONT_BUTTON.deriveFont(Font.BOLD, 16f));
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setIcon(TpvIconFactory.product(18, new Color(28, 28, 22)));
+        b.setIconTextGap(8);
 
         if (!producto.isBotonHabilitado()) {
             b.setEnabled(false);
-            b.setBackground(new Color(120, 120, 120));
+            b.setBackground(new Color(96, 106, 100));
             b.setForeground(Color.WHITE);
+            b.setIcon(TpvIconFactory.warning(18, Color.WHITE));
             return b;
         }
 
         if (producto.muestraContador()) {
-            b.setBackground(new Color(255, 230, 120));
-            b.setForeground(Color.BLACK);
+            b.setBackground(new Color(229, 202, 126));
+            b.setForeground(new Color(28, 28, 22));
         } else {
-            b.setBackground(new Color(255, 210, 0));
-            b.setForeground(Color.BLACK);
+            b.setBackground(InformeUiTheme.ACCENT_GOLD);
+            b.setForeground(new Color(28, 28, 22));
         }
 
         return b;
@@ -124,11 +136,13 @@ public class SubcategoriaDetallePanel extends JPanel {
 
     private String buildButtonText(ProductoCatalogoDTO producto) {
         if (!producto.isDisponible()) {
-            return "<html><center>" + producto.getNombre() + "<br><b>NO DISP.</b></center></html>";
+            return "<html><center>" + producto.getNombre() + "<br><b>"
+                    + I18n.t("sales.catalog.unavailable") + "</b></center></html>";
         }
 
         if (producto.isAgotado()) {
-            return "<html><center>" + producto.getNombre() + "<br><b>AGOTADO</b></center></html>";
+            return "<html><center>" + producto.getNombre() + "<br><b>"
+                    + I18n.t("sales.catalog.outOfStock") + "</b></center></html>";
         }
 
         if (producto.muestraContador()) {
@@ -161,11 +175,7 @@ public class SubcategoriaDetallePanel extends JPanel {
 
     private JButton createDarkButton(String text) {
         JButton b = new JButton(text);
-        b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 16));
-        b.setBackground(new Color(45, 45, 45));
-        b.setForeground(Color.WHITE);
-        b.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+        InformeUiTheme.styleSecondaryButton(b);
         return b;
     }
 }

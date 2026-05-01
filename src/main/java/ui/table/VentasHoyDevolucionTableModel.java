@@ -1,6 +1,7 @@
 package ui.table;
 
 import dtoS.TicketHoyRowDTO;
+import util.I18n;
 
 import javax.swing.table.AbstractTableModel;
 import java.math.BigDecimal;
@@ -17,30 +18,22 @@ public class VentasHoyDevolucionTableModel extends AbstractTableModel {
     public static final int COL_TOTAL = 4;
     public static final int COL_EMPLEADO = 5;
 
-    private final String[] columns = {
-            "Venta",
-            "Fecha",
-            "Pedido",
-            "Pago",
-            "Total",
-            "Empleado"
-    };
-
     private final List<TicketHoyRowDTO> rows = new ArrayList<>();
 
-    @Override
-    public int getRowCount() {
-        return rows.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columns.length;
-    }
+    @Override public int getRowCount() { return rows.size(); }
+    @Override public int getColumnCount() { return 6; }
 
     @Override
     public String getColumnName(int column) {
-        return columns[column];
+        return switch (column) {
+            case COL_VENTA -> I18n.t("refund.salesTable.sale");
+            case COL_FECHA -> I18n.t("refund.salesTable.date");
+            case COL_PEDIDO -> I18n.t("refund.salesTable.order");
+            case COL_PAGO -> I18n.t("refund.salesTable.payment");
+            case COL_TOTAL -> I18n.t("refund.salesTable.total");
+            case COL_EMPLEADO -> I18n.t("refund.salesTable.employee");
+            default -> "";
+        };
     }
 
     @Override
@@ -56,7 +49,6 @@ public class VentasHoyDevolucionTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         TicketHoyRowDTO row = rows.get(rowIndex);
-
         return switch (columnIndex) {
             case COL_VENTA -> row.getIdVenta();
             case COL_FECHA -> row.getFechaGeneracion();
@@ -81,7 +73,5 @@ public class VentasHoyDevolucionTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    public TicketHoyRowDTO getRowAtModel(int rowIndex) {
-        return rows.get(rowIndex);
-    }
+    public TicketHoyRowDTO getRowAtModel(int rowIndex) { return rows.get(rowIndex); }
 }

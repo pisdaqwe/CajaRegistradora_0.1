@@ -3,6 +3,7 @@ package ui.common;
 import app.AppContext;
 import service.AppServices;
 import ui.dialog.MonitorPreparacionDialog;
+import util.I18n;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,13 +54,15 @@ public abstract class BaseTpvFrame extends JFrame {
      */
     protected final void requireAuthenticatedOrExit() {
         if (!AppContext.isAuthenticated()) {
-        	TpvDialogUtils.showWarning(
-        	        this,
-        	        "Sesión requerida",
-        	        "No hay sesión activa. Volviendo al login."
-        	);
+            TpvDialogUtils.showWarning(
+                    this,
+                    I18n.t("base.sessionRequired.title"),
+                    I18n.t("base.sessionRequired.message")
+            );
             safeDispose();
-            if (onLogoutNavigate != null) onLogoutNavigate.run();
+            if (onLogoutNavigate != null) {
+                onLogoutNavigate.run();
+            }
         }
     }
 
@@ -68,16 +71,20 @@ public abstract class BaseTpvFrame extends JFrame {
      * - limpia AppContext
      * - cierra frame
      * - navega a login mediante callback
+     *
+     * Decisión de cierre del proyecto: NO se bloquea aquí aunque exista sesión de caja abierta.
      */
     protected final void doLogout() {
         AppContext.clear();
         safeDispose();
 
-        if (onLogoutNavigate != null) onLogoutNavigate.run();
+        if (onLogoutNavigate != null) {
+            onLogoutNavigate.run();
+        }
     }
 
     /**
-     * Actualizar cabecera (por si cambias usuario/rol).
+     * Actualizar cabecera (por si cambias usuario/rol/caja).
      */
     protected final void refreshHeader() {
         topBar.refreshUser();

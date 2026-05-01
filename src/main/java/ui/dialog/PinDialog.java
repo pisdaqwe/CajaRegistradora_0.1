@@ -2,6 +2,8 @@ package ui.dialog;
 
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,12 +28,18 @@ public class PinDialog extends JDialog {
         PIN
     }
 
+    private enum KeypadAction {
+        DIGIT,
+        CLEAR,
+        BACK
+    }
+
     private static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 24);
     private static final Font FONT_SUBTITLE = new Font("SansSerif", Font.PLAIN, 13);
     private static final Font FONT_LABEL = new Font("SansSerif", Font.BOLD, 13);
     private static final Font FONT_DISPLAY = new Font("SansSerif", Font.BOLD, 18);
     private static final Font FONT_KEYPAD = new Font("SansSerif", Font.BOLD, 24);
-    private static final Font FONT_KEYPAD_SPECIAL = new Font("SansSerif", Font.BOLD, 16);
+    private static final Font FONT_KEYPAD_SPECIAL = new Font("SansSerif", Font.BOLD, 15);
 
     private final PinDialogMode mode;
     private PinDialogResult result;
@@ -47,7 +55,10 @@ public class PinDialog extends JDialog {
         super(parent, true);
         this.mode = mode;
 
-        setTitle(mode == PinDialogMode.LOGIN_COMPLETO ? "Login Manual" : "Partner Sign-In");
+        setTitle(mode == PinDialogMode.LOGIN_COMPLETO
+                ? I18n.t("pin.title.manual")
+                : I18n.t("pin.title.quick"));
+
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setSize(460, 760);
         setResizable(false);
@@ -71,7 +82,7 @@ public class PinDialog extends JDialog {
         card.setBorder(InformeUiTheme.createCardBorder());
 
         card.add(buildHeaderPanel(nombreVisible), BorderLayout.NORTH);
-        card.add(buildCenterPanel(nombreVisible), BorderLayout.CENTER);
+        card.add(buildCenterPanel(), BorderLayout.CENTER);
         card.add(buildActionsPanel(), BorderLayout.SOUTH);
 
         root.add(card, BorderLayout.CENTER);
@@ -93,8 +104,16 @@ public class PinDialog extends JDialog {
         header.setOpaque(false);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
 
+        JLabel lblIcon = new JLabel();
+        lblIcon.setIcon(mode == PinDialogMode.LOGIN_COMPLETO
+                ? TpvIconFactory.user(34, InformeUiTheme.ACCENT_GOLD)
+                : TpvIconFactory.check(34, InformeUiTheme.ACCENT_GOLD));
+        lblIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel lblTitulo = new JLabel(
-                mode == PinDialogMode.LOGIN_COMPLETO ? "LOGIN MANUAL" : "PARTNER SIGN-IN",
+                mode == PinDialogMode.LOGIN_COMPLETO
+                        ? I18n.t("pin.header.manual")
+                        : I18n.t("pin.header.quick"),
                 SwingConstants.CENTER
         );
         lblTitulo.setFont(FONT_TITLE);
@@ -103,14 +122,16 @@ public class PinDialog extends JDialog {
 
         JLabel lblSubtitulo = new JLabel(
                 mode == PinDialogMode.LOGIN_COMPLETO
-                        ? "Introduce usuario y PIN para acceder"
-                        : "Introduce el PIN para continuar",
+                        ? I18n.t("pin.subtitle.manual")
+                        : I18n.t("pin.subtitle.quick"),
                 SwingConstants.CENTER
         );
         lblSubtitulo.setFont(FONT_SUBTITLE);
         lblSubtitulo.setForeground(InformeUiTheme.TEXT_SECONDARY);
         lblSubtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        header.add(lblIcon);
+        header.add(Box.createVerticalStrut(10));
         header.add(lblTitulo);
         header.add(Box.createVerticalStrut(8));
         header.add(lblSubtitulo);
@@ -134,21 +155,27 @@ public class PinDialog extends JDialog {
         badge.setMaximumSize(new Dimension(Integer.MAX_VALUE, 54));
         badge.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lbl = new JLabel("Usuario: " + (nombreVisible != null ? nombreVisible : "Desconocido"));
+        String nombre = nombreVisible != null && !nombreVisible.isBlank()
+                ? nombreVisible
+                : I18n.t("pin.unknownUser");
+
+        JLabel lbl = new JLabel(I18n.t("pin.quickUser", nombre));
         lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
         lbl.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lbl.setIcon(TpvIconFactory.user(18, InformeUiTheme.TEXT_PRIMARY));
+        lbl.setIconTextGap(8);
 
         badge.add(lbl, BorderLayout.CENTER);
         return badge;
     }
 
-    private JPanel buildCenterPanel(String nombreVisible) {
+    private JPanel buildCenterPanel() {
         JPanel center = new JPanel();
         center.setOpaque(false);
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 
         if (mode == PinDialogMode.LOGIN_COMPLETO) {
-            center.add(createFieldLabel("Usuario"));
+            center.add(createFieldLabel(I18n.t("pin.user")));
             center.add(Box.createVerticalStrut(6));
 
             txtUsuario = new JTextField();
@@ -160,7 +187,7 @@ public class PinDialog extends JDialog {
             center.add(Box.createVerticalStrut(14));
         }
 
-        center.add(createFieldLabel("PIN"));
+        center.add(createFieldLabel(I18n.t("pin.pin")));
         center.add(Box.createVerticalStrut(6));
 
         txtPin = new JPasswordField();
@@ -211,12 +238,12 @@ public class PinDialog extends JDialog {
         keypad.setPreferredSize(new Dimension(0, 310));
 
         for (int i = 1; i <= 9; i++) {
-            keypad.add(createKeypadBtn(String.valueOf(i), false, false));
+            keypad.add(createKeypadBtn(String.valueOf(i), false, false, KeypadAction.DIGIT));
         }
 
-        keypad.add(createKeypadBtn("C", true, true));
-        keypad.add(createKeypadBtn("0", false, false));
-        keypad.add(createKeypadBtn("←", true, false));
+        keypad.add(createKeypadBtn(I18n.t("common.clean"), true, true, KeypadAction.CLEAR));
+        keypad.add(createKeypadBtn("0", false, false, KeypadAction.DIGIT));
+        keypad.add(createKeypadBtn(I18n.t("common.back"), true, false, KeypadAction.BACK));
 
         wrapper.add(keypad, BorderLayout.CENTER);
         return wrapper;
@@ -227,14 +254,20 @@ public class PinDialog extends JDialog {
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(8, 0, 0, 0));
 
-        btnCancelar = new JButton("Cancelar");
-        btnAceptar = new JButton("Aceptar");
+        btnCancelar = new JButton(I18n.t("common.cancel"));
+        btnAceptar = new JButton(I18n.t("common.accept"));
 
         InformeUiTheme.styleSecondaryButton(btnCancelar);
         InformeUiTheme.stylePrimaryButton(btnAceptar);
 
         btnCancelar.setFont(new Font("SansSerif", Font.BOLD, 16));
         btnAceptar.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIconTextGap(8);
+
+        btnAceptar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        btnAceptar.setIconTextGap(8);
 
         btnCancelar.addActionListener(e -> dispose());
         btnAceptar.addActionListener(e -> procesarAceptar());
@@ -244,7 +277,7 @@ public class PinDialog extends JDialog {
         return actions;
     }
 
-    private JButton createKeypadBtn(String label, boolean special, boolean danger) {
+    private JButton createKeypadBtn(String label, boolean special, boolean danger, KeypadAction action) {
         JButton b = new JButton(label);
         b.setFocusable(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -254,6 +287,15 @@ public class PinDialog extends JDialog {
             b.setForeground(Color.WHITE);
             b.setBackground(danger ? InformeUiTheme.DANGER : InformeUiTheme.STARBUCKS_GREEN_SOFT);
             b.setBorder(new EmptyBorder(12, 10, 12, 10));
+
+            if (action == KeypadAction.CLEAR) {
+                b.setIcon(TpvIconFactory.cancel(16, Color.WHITE));
+            } else if (action == KeypadAction.BACK) {
+                b.setIcon(TpvIconFactory.back(16, Color.WHITE));
+            }
+
+            b.setIconTextGap(6);
+
         } else {
             b.setFont(FONT_KEYPAD);
             b.setForeground(InformeUiTheme.TEXT_PRIMARY);
@@ -264,37 +306,39 @@ public class PinDialog extends JDialog {
             ));
         }
 
-        b.addActionListener(e -> {
-            JTextField tf = getCampoDestino();
-
-            if ("C".equals(label)) {
-                tf.setText("");
-                tf.requestFocusInWindow();
-                return;
-            }
-
-            if ("←".equals(label)) {
-                int start = tf.getSelectionStart();
-                int end = tf.getSelectionEnd();
-
-                if (start != end) {
-                    tf.replaceSelection("");
-                } else if (start > 0) {
-                    try {
-                        tf.getDocument().remove(start - 1, 1);
-                    } catch (Exception ignored) {
-                    }
-                }
-
-                tf.requestFocusInWindow();
-                return;
-            }
-
-            tf.replaceSelection(label);
-            tf.requestFocusInWindow();
-        });
+        b.addActionListener(e -> procesarTeclado(label, action));
 
         return b;
+    }
+
+    private void procesarTeclado(String label, KeypadAction action) {
+        JTextField tf = getCampoDestino();
+
+        if (action == KeypadAction.CLEAR) {
+            tf.setText("");
+            tf.requestFocusInWindow();
+            return;
+        }
+
+        if (action == KeypadAction.BACK) {
+            int start = tf.getSelectionStart();
+            int end = tf.getSelectionEnd();
+
+            if (start != end) {
+                tf.replaceSelection("");
+            } else if (start > 0) {
+                try {
+                    tf.getDocument().remove(start - 1, 1);
+                } catch (Exception ignored) {
+                }
+            }
+
+            tf.requestFocusInWindow();
+            return;
+        }
+
+        tf.replaceSelection(label);
+        tf.requestFocusInWindow();
     }
 
     private JTextField getCampoDestino() {
@@ -336,22 +380,22 @@ public class PinDialog extends JDialog {
         String pin = new String(txtPin.getPassword()).trim();
 
         if (mode == PinDialogMode.LOGIN_COMPLETO && usuario.isEmpty()) {
-        	TpvDialogUtils.showWarning(
-        	        this,
-        	        "Dato obligatorio",
-        	        "Ingrese usuario."
-        	);
+            TpvDialogUtils.showWarning(
+                    this,
+                    I18n.t("pin.requiredDataTitle"),
+                    I18n.t("pin.requiredUser")
+            );
             txtUsuario.requestFocusInWindow();
             campoActivo = CampoActivo.USUARIO;
             return;
         }
 
         if (pin.isEmpty()) {
-        	TpvDialogUtils.showWarning(
-        	        this,
-        	        "Dato obligatorio",
-        	        "Ingrese PIN."
-        	);
+            TpvDialogUtils.showWarning(
+                    this,
+                    I18n.t("pin.requiredDataTitle"),
+                    I18n.t("pin.requiredPin")
+            );
             txtPin.requestFocusInWindow();
             campoActivo = CampoActivo.PIN;
             return;

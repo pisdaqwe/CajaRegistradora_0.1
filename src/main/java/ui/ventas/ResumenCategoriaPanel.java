@@ -4,6 +4,9 @@ import dtoS.ProductoCatalogoDTO;
 import dtoS.ProductoDTO;
 import dtoS.SubCategoriaDTO;
 import service.AppServices;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -33,15 +36,15 @@ public class ResumenCategoriaPanel extends JPanel {
         this.onProductoClicked = onProductoClicked;
 
         setLayout(new BorderLayout());
-        setBackground(new Color(20, 20, 20));
+        setBackground(InformeUiTheme.APP_BG);
 
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(new Color(20, 20, 20));
+        content.setBackground(InformeUiTheme.APP_BG);
         content.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         scroll = new JScrollPane(content);
+        InformeUiTheme.styleScrollPane(scroll);
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.getViewport().setBackground(new Color(20, 20, 20));
         scroll.getVerticalScrollBar().setUnitIncrement(18);
 
         add(scroll, BorderLayout.CENTER);
@@ -52,9 +55,11 @@ public class ResumenCategoriaPanel extends JPanel {
 
         List<SubCategoriaDTO> subcats = services.catalogoService.getSubcategoriasByCategoria(idCategoria);
 
-        for (SubCategoriaDTO sub : subcats) {
-            content.add(buildSubcategoriaSection(sub));
-            content.add(Box.createVerticalStrut(14));
+        if (subcats != null) {
+            for (SubCategoriaDTO sub : subcats) {
+                content.add(buildSubcategoriaSection(sub));
+                content.add(Box.createVerticalStrut(14));
+            }
         }
 
         revalidate();
@@ -63,8 +68,7 @@ public class ResumenCategoriaPanel extends JPanel {
     }
 
     private JComponent buildSubcategoriaSection(SubCategoriaDTO sub) {
-        JPanel section = new JPanel(new BorderLayout(10, 10));
-        section.setOpaque(false);
+        JPanel section = InformeUiTheme.createTransparentPanel(new BorderLayout(10, 10));
 
         JButton header = createHeaderButton(sub.getNombre());
         header.addActionListener(e -> {
@@ -78,21 +82,22 @@ public class ResumenCategoriaPanel extends JPanel {
         List<ProductoCatalogoDTO> top =
                 services.catalogoService.getTopProductosCatalogoBySubcategoria(sub.getIdSubcategoria(), 6);
 
-        JPanel grid = new JPanel(new GridLayout(2, 3, 12, 12));
-        grid.setOpaque(false);
+        JPanel grid = InformeUiTheme.createTransparentPanel(new GridLayout(2, 3, 12, 12));
 
-        for (ProductoCatalogoDTO p : top) {
-            JButton b = createProductoButton(p);
-            b.addActionListener(e -> {
-                if (!p.isBotonHabilitado()) {
-                    return;
-                }
+        if (top != null) {
+            for (ProductoCatalogoDTO p : top) {
+                JButton b = createProductoButton(p);
+                b.addActionListener(e -> {
+                    if (!p.isBotonHabilitado()) {
+                        return;
+                    }
 
-                if (onProductoClicked != null) {
-                    onProductoClicked.accept(toProductoDTO(p));
-                }
-            });
-            grid.add(b);
+                    if (onProductoClicked != null) {
+                        onProductoClicked.accept(toProductoDTO(p));
+                    }
+                });
+                grid.add(b);
+            }
         }
 
         section.add(grid, BorderLayout.CENTER);
@@ -103,32 +108,39 @@ public class ResumenCategoriaPanel extends JPanel {
         JButton b = new JButton(text + "  ▶");
         b.setFocusPainted(false);
         b.setHorizontalAlignment(SwingConstants.LEFT);
-        b.setFont(new Font("Monospaced", Font.BOLD, 18));
-        b.setBackground(new Color(45, 45, 45));
-        b.setForeground(Color.WHITE);
+        b.setFont(InformeUiTheme.FONT_SECTION);
+        b.setBackground(InformeUiTheme.CARD_BG_2);
+        b.setForeground(InformeUiTheme.TEXT_PRIMARY);
         b.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setIcon(TpvIconFactory.folder(18, InformeUiTheme.ACCENT_GOLD));
+        b.setIconTextGap(8);
         return b;
     }
 
     private JButton createProductoButton(ProductoCatalogoDTO producto) {
         JButton b = new JButton(buildButtonText(producto));
         b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 15));
+        b.setFont(InformeUiTheme.FONT_BUTTON.deriveFont(Font.BOLD, 15f));
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setIcon(TpvIconFactory.product(18, new Color(28, 28, 22)));
+        b.setIconTextGap(8);
 
         if (!producto.isBotonHabilitado()) {
             b.setEnabled(false);
-            b.setBackground(new Color(120, 120, 120));
+            b.setBackground(new Color(96, 106, 100));
             b.setForeground(Color.WHITE);
+            b.setIcon(TpvIconFactory.warning(18, Color.WHITE));
             return b;
         }
 
         if (producto.muestraContador()) {
-            b.setBackground(new Color(255, 230, 120));
-            b.setForeground(Color.BLACK);
+            b.setBackground(new Color(229, 202, 126));
+            b.setForeground(new Color(28, 28, 22));
         } else {
-            b.setBackground(new Color(255, 210, 0));
-            b.setForeground(Color.BLACK);
+            b.setBackground(InformeUiTheme.ACCENT_GOLD);
+            b.setForeground(new Color(28, 28, 22));
         }
 
         return b;
@@ -136,11 +148,13 @@ public class ResumenCategoriaPanel extends JPanel {
 
     private String buildButtonText(ProductoCatalogoDTO producto) {
         if (!producto.isDisponible()) {
-            return "<html><center>" + producto.getNombre() + "<br><b>NO DISP.</b></center></html>";
+            return "<html><center>" + producto.getNombre() + "<br><b>"
+                    + I18n.t("sales.catalog.unavailable") + "</b></center></html>";
         }
 
         if (producto.isAgotado()) {
-            return "<html><center>" + producto.getNombre() + "<br><b>AGOTADO</b></center></html>";
+            return "<html><center>" + producto.getNombre() + "<br><b>"
+                    + I18n.t("sales.catalog.outOfStock") + "</b></center></html>";
         }
 
         if (producto.muestraContador()) {

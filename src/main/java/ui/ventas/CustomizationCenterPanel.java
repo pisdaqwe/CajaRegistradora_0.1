@@ -5,8 +5,12 @@ import dtoS.PersonalizacionDTO;
 import dtoS.ProductoCustomizationDTO;
 import dtoS.TipoCafeDTO;
 import enums.CustomizationCard;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -17,7 +21,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.math.BigDecimal;
@@ -30,29 +34,8 @@ import java.util.Map;
 /**
  * Panel central grande de customización.
  *
- * RESPONSABILIDAD:
- * - Vive dentro de CARD_CUSTOM de VentasCenterPanel.
- * - Contiene un CardLayout interno.
- * - Cada card representa una categoría de customización.
- *
- * ESTADO ANTERIOR:
- * - SHOTS
- * - SYRUPS
- * - TOPPINGS
- * - MILK
- * - PREP
- * - PREP_FOOD
- * - OPCIONES_FOOD
- *
- * AÑADIDO AHORA:
- * - CAFE
- *
- * IMPORTANTE:
- * - NO toca TicketSession directamente.
- * - Recibe ProductoCustomizationDTO desde fuera.
- * - Emite callbacks al pulsar opciones.
- *
- * Base actual tomada de tu clase real: :contentReference[oaicite:1]{index=1}
+ * Vive dentro de CARD_CUSTOM de VentasCenterPanel, contiene un CardLayout
+ * interno y emite callbacks hacia VentasFrame sin tocar TicketSession.
  */
 public class CustomizationCenterPanel extends JPanel {
 
@@ -62,9 +45,6 @@ public class CustomizationCenterPanel extends JPanel {
 
     /**
      * Card actualmente visible.
-     *
-     * Se mantiene para no perder la pestaña elegida por el usuario
-     * al recargar la customización del producto seleccionado.
      */
     private CustomizationCard currentCard = CustomizationCard.MILK;
 
@@ -75,8 +55,6 @@ public class CustomizationCenterPanel extends JPanel {
 
     /**
      * Datos actualmente cargados.
-     *
-     * Ahora incluyen también tiposCafe.
      */
     private ProductoCustomizationDTO currentData =
             new ProductoCustomizationDTO(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -90,12 +68,9 @@ public class CustomizationCenterPanel extends JPanel {
 
     public interface CustomizationActionListener {
         void onExtraClicked(ExtraDTO extra);
+
         void onPersonalizacionClicked(PersonalizacionDTO personalizacion);
 
-        /**
-         * NUEVO:
-         * callback cuando el usuario pulsa un tipo de café.
-         */
         void onTipoCafeClicked(TipoCafeDTO tipoCafe);
 
         void onAskMeClicked();
@@ -103,20 +78,16 @@ public class CustomizationCenterPanel extends JPanel {
 
     public CustomizationCenterPanel() {
         setLayout(cardLayout);
-        setBackground(new Color(20, 20, 20));
+        setBackground(InformeUiTheme.APP_BG);
 
-        // =====================================================
-        // NUEVA CARD AÑADIDA
-        // =====================================================
-        add(buildEmptyDynamicCard("CAFE", CustomizationCard.CAFE), CustomizationCard.CAFE.name());
-
-        add(buildEmptyDynamicCard("SHOTS", CustomizationCard.SHOTS), CustomizationCard.SHOTS.name());
-        add(buildEmptyDynamicCard("SYRUPS", CustomizationCard.SYRUPS), CustomizationCard.SYRUPS.name());
-        add(buildEmptyDynamicCard("TOPPINGS", CustomizationCard.TOPPINGS), CustomizationCard.TOPPINGS.name());
-        add(buildEmptyDynamicCard("MILK", CustomizationCard.MILK), CustomizationCard.MILK.name());
-        add(buildEmptyDynamicCard("PREP", CustomizationCard.PREP), CustomizationCard.PREP.name());
-        add(buildEmptyDynamicCard("PREP_FOOD", CustomizationCard.PREP_FOOD), CustomizationCard.PREP_FOOD.name());
-        add(buildEmptyDynamicCard("OPCIONES_FOOD", CustomizationCard.OPCIONES_FOOD), CustomizationCard.OPCIONES_FOOD.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.cafe"), CustomizationCard.CAFE), CustomizationCard.CAFE.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.shots"), CustomizationCard.SHOTS), CustomizationCard.SHOTS.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.syrups"), CustomizationCard.SYRUPS), CustomizationCard.SYRUPS.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.toppings"), CustomizationCard.TOPPINGS), CustomizationCard.TOPPINGS.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.milk"), CustomizationCard.MILK), CustomizationCard.MILK.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.prep"), CustomizationCard.PREP), CustomizationCard.PREP.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.prepFood"), CustomizationCard.PREP_FOOD), CustomizationCard.PREP_FOOD.name());
+        add(buildEmptyDynamicCard(I18n.t("sales.custom.card.foodExtras"), CustomizationCard.OPCIONES_FOOD), CustomizationCard.OPCIONES_FOOD.name());
 
         showCard(CustomizationCard.MILK);
         clearCustomizationData();
@@ -160,8 +131,6 @@ public class CustomizationCenterPanel extends JPanel {
         );
 
         rebuildAllCards();
-
-        // Mantener también aquí la card actual
         showCard(currentCard);
     }
 
@@ -170,20 +139,20 @@ public class CustomizationCenterPanel extends JPanel {
     // =========================================================
 
     private JComponent buildEmptyDynamicCard(String title, CustomizationCard card) {
-        JPanel panel = new JPanel(new BorderLayout(12, 12));
-        panel.setBackground(new Color(20, 20, 20));
+        JPanel panel = InformeUiTheme.createTransparentPanel(new BorderLayout(12, 12));
         panel.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         JLabel lblTitle = new JLabel(title, SwingConstants.LEFT);
-        lblTitle.setFont(new Font("Monospaced", Font.BOLD, 26));
-        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setFont(InformeUiTheme.FONT_TITLE.deriveFont(Font.BOLD, 24f));
+        lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        lblTitle.setIcon(resolveCardIcon(card, 24, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(10);
 
-        JPanel grid = new JPanel(new GridLayout(0, 3, 12, 12));
-        grid.setOpaque(false);
+        JPanel grid = InformeUiTheme.createTransparentPanel(new GridLayout(0, 3, 12, 12));
 
         JScrollPane scroll = new JScrollPane(grid);
+        InformeUiTheme.styleScrollPane(scroll);
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.getViewport().setBackground(new Color(20, 20, 20));
         scroll.getVerticalScrollBar().setUnitIncrement(18);
 
         panel.add(lblTitle, BorderLayout.NORTH);
@@ -199,10 +168,6 @@ public class CustomizationCenterPanel extends JPanel {
     // =========================================================
 
     private void rebuildAllCards() {
-        // =====================================================
-        // NUEVO BLOQUE AÑADIDO:
-        // reconstrucción de la card CAFE
-        // =====================================================
         rebuildCafeCard(filterTiposCafe());
 
         rebuildExtrasCard(CustomizationCard.SHOTS, filterExtrasByCard(CustomizationCard.SHOTS));
@@ -217,10 +182,6 @@ public class CustomizationCenterPanel extends JPanel {
         rebuildPrepCard(CustomizationCard.PREP_FOOD, preps);
     }
 
-    /**
-     * NUEVO:
-     * reconstruye la card de tipos de café.
-     */
     private void rebuildCafeCard(List<TipoCafeDTO> tiposCafe) {
         JPanel grid = gridByCard.get(CustomizationCard.CAFE);
         if (grid == null) {
@@ -230,7 +191,7 @@ public class CustomizationCenterPanel extends JPanel {
         grid.removeAll();
 
         if (tiposCafe.isEmpty()) {
-            grid.add(createEmptyState("No hay cafés disponibles"));
+            grid.add(createEmptyState(I18n.t("sales.custom.empty.noCoffee")));
         } else {
             for (TipoCafeDTO tipoCafe : tiposCafe) {
                 grid.add(createTipoCafeButton(tipoCafe));
@@ -250,7 +211,7 @@ public class CustomizationCenterPanel extends JPanel {
         grid.removeAll();
 
         if (extras.isEmpty()) {
-            grid.add(createEmptyState("No hay opciones disponibles"));
+            grid.add(createEmptyState(I18n.t("sales.custom.empty.noOptions")));
         } else {
             for (ExtraDTO extra : extras) {
                 grid.add(createExtraButton(extra));
@@ -273,7 +234,7 @@ public class CustomizationCenterPanel extends JPanel {
         grid.add(createAskMeButton());
 
         if (preps.isEmpty()) {
-            grid.add(createEmptyState("No hay opciones disponibles"));
+            grid.add(createEmptyState(I18n.t("sales.custom.empty.noOptions")));
         } else {
             for (PersonalizacionDTO p : preps) {
                 grid.add(createPersonalizacionButton(p));
@@ -288,10 +249,6 @@ public class CustomizationCenterPanel extends JPanel {
     // FILTRADO DE DATOS
     // =========================================================
 
-    /**
-     * NUEVO:
-     * devuelve los tipos de café disponibles del DTO actual.
-     */
     private List<TipoCafeDTO> filterTiposCafe() {
         List<TipoCafeDTO> result = new ArrayList<>();
 
@@ -394,25 +351,18 @@ public class CustomizationCenterPanel extends JPanel {
     }
 
     private JButton createAskMeButton() {
-        JButton b = new JButton("ASK ME");
+        JButton b = new JButton(I18n.t("sales.custom.askMe"));
+        b.setIcon(TpvIconFactory.info(18, new Color(28, 28, 22)));
         styleOptionButton(b);
         b.addActionListener(e -> fireAskMeClicked());
         return b;
     }
 
-    /**
-     * NUEVO:
-     * botón visual para un tipo de café.
-     *
-     * Muestra:
-     * - nombre
-     * - suplemento si lo tiene
-     * - marca "(DEFAULT)" si viene como café por defecto del producto
-     */
     private JButton createTipoCafeButton(TipoCafeDTO tipoCafe) {
         String text = buildTipoCafeButtonText(tipoCafe);
 
         JButton b = new JButton(text);
+        b.setIcon(TpvIconFactory.product(18, new Color(28, 28, 22)));
         styleOptionButton(b);
 
         b.addActionListener(e -> {
@@ -426,6 +376,9 @@ public class CustomizationCenterPanel extends JPanel {
 
     private JButton createExtraButton(ExtraDTO extra) {
         JButton b = new JButton(buildButtonText(extra.getNombre(), extra.getPrecio()));
+        b.setIcon(extra.isDisponible()
+                ? TpvIconFactory.product(18, new Color(28, 28, 22))
+                : TpvIconFactory.warning(18, Color.WHITE));
         styleExtraButton(b, extra);
 
         if (extra.isDisponible()) {
@@ -441,6 +394,7 @@ public class CustomizationCenterPanel extends JPanel {
 
     private JButton createPersonalizacionButton(PersonalizacionDTO p) {
         JButton b = new JButton(buildButtonText(p.getNombre(), p.getPrecio()));
+        b.setIcon(TpvIconFactory.settings(18, new Color(28, 28, 22)));
         styleOptionButton(b);
 
         b.addActionListener(e -> {
@@ -454,26 +408,30 @@ public class CustomizationCenterPanel extends JPanel {
 
     private void styleOptionButton(JButton b) {
         b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 15));
-        b.setBackground(new Color(255, 210, 0));
-        b.setForeground(Color.BLACK);
+        b.setFont(InformeUiTheme.FONT_BUTTON.deriveFont(Font.BOLD, 15f));
+        b.setBackground(InformeUiTheme.ACCENT_GOLD);
+        b.setForeground(new Color(28, 28, 22));
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setIconTextGap(8);
     }
 
     private void styleExtraButton(JButton b, ExtraDTO extra) {
         b.setFocusPainted(false);
-        b.setFont(new Font("Monospaced", Font.BOLD, 15));
+        b.setFont(InformeUiTheme.FONT_BUTTON.deriveFont(Font.BOLD, 15f));
         b.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        b.setIconTextGap(8);
 
         if (!extra.isDisponible()) {
             b.setEnabled(false);
-            b.setBackground(new Color(120, 120, 120));
+            b.setBackground(new Color(96, 106, 100));
             b.setForeground(Color.WHITE);
             return;
         }
 
-        b.setBackground(new Color(255, 210, 0));
-        b.setForeground(Color.BLACK);
+        b.setBackground(InformeUiTheme.ACCENT_GOLD);
+        b.setForeground(new Color(28, 28, 22));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private String buildButtonText(String nombre, BigDecimal precio) {
@@ -483,13 +441,8 @@ public class CustomizationCenterPanel extends JPanel {
         return nombre;
     }
 
-    /**
-     * NUEVO:
-     * construye el texto del botón de café, mostrando suplemento
-     * y marcando el default si aplica.
-     */
     private String buildTipoCafeButtonText(TipoCafeDTO tipoCafe) {
-        String nombre = tipoCafe.getNombre() != null ? tipoCafe.getNombre() : "CAFÉ";
+        String nombre = tipoCafe.getNombre() != null ? tipoCafe.getNombre() : I18n.t("sales.custom.card.cafe");
 
         if (tipoCafe.getSuplementoPrecio() != null
                 && tipoCafe.getSuplementoPrecio().compareTo(BigDecimal.ZERO) > 0) {
@@ -497,7 +450,7 @@ public class CustomizationCenterPanel extends JPanel {
         }
 
         if (tipoCafe.isPorDefecto()) {
-            nombre += " [DEFAULT]";
+            nombre += " " + I18n.t("sales.custom.defaultTag");
         }
 
         return nombre;
@@ -505,13 +458,21 @@ public class CustomizationCenterPanel extends JPanel {
 
     private JComponent createEmptyState(String text) {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setForeground(new Color(210, 210, 210));
-        lbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        lbl.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lbl.setFont(InformeUiTheme.FONT_BODY.deriveFont(Font.PLAIN, 16f));
+        lbl.setIcon(TpvIconFactory.info(18, InformeUiTheme.TEXT_SECONDARY));
+        lbl.setIconTextGap(8);
 
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
+        JPanel wrapper = InformeUiTheme.createTransparentPanel(new BorderLayout());
         wrapper.add(lbl, BorderLayout.CENTER);
         return wrapper;
+    }
+
+    private Icon resolveCardIcon(CustomizationCard card, int size, Color color) {
+        return switch (card) {
+            case PREP, PREP_FOOD -> TpvIconFactory.settings(size, color);
+            default -> TpvIconFactory.product(size, color);
+        };
     }
 
     public void ensureValidCurrentCardForMode(enums.CustomizationMode mode) {

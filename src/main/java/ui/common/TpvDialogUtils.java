@@ -1,6 +1,7 @@
 package ui.common;
 
 import ui.theme.InformeUiTheme;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -60,7 +61,7 @@ public final class TpvDialogUtils {
         card.add(icon, BorderLayout.WEST);
         card.add(textPanel, BorderLayout.CENTER);
 
-        JButton btnOk = new JButton("Aceptar");
+        JButton btnOk = new JButton(I18n.t("common.accept"));
         InformeUiTheme.stylePrimaryButton(btnOk);
         btnOk.addActionListener(e -> dialog.dispose());
 
@@ -132,10 +133,10 @@ public final class TpvDialogUtils {
         card.add(header, BorderLayout.NORTH);
         card.add(scrollPane, BorderLayout.CENTER);
 
-        JButton btnCancel = new JButton("Cancelar");
+        JButton btnCancel = new JButton(I18n.t("common.cancel"));
         InformeUiTheme.styleSecondaryButton(btnCancel);
 
-        JButton btnAccept = new JButton("Aceptar");
+        JButton btnAccept = new JButton(I18n.t("common.accept"));
         InformeUiTheme.stylePrimaryButton(btnAccept);
 
         btnCancel.addActionListener(e -> {
@@ -212,10 +213,10 @@ public final class TpvDialogUtils {
         card.add(icon, BorderLayout.WEST);
         card.add(textPanel, BorderLayout.CENTER);
 
-        JButton btnCancel = new JButton("Cancelar");
+        JButton btnCancel = new JButton(I18n.t("common.cancel"));
         InformeUiTheme.styleSecondaryButton(btnCancel);
 
-        JButton btnAccept = new JButton("Aceptar");
+        JButton btnAccept = new JButton(I18n.t("common.accept"));
         InformeUiTheme.stylePrimaryButton(btnAccept);
 
         btnCancel.addActionListener(e -> {
@@ -247,7 +248,7 @@ public final class TpvDialogUtils {
 
     private static String toHtml(String text) {
         if (text == null || text.isBlank()) {
-            return "<html><body style='width:330px;'>Sin detalles.</body></html>";
+            return "<html><body style='width:330px;'>" + I18n.t("dialog.noDetails") + "</body></html>";
         }
 
         String safe = text

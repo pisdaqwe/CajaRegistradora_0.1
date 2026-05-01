@@ -3,6 +3,8 @@ package ui.ventas;
 import enums.TipoServicio;
 import ui.common.TecladoVirtualDialog;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -56,20 +58,20 @@ public class NombrePedidoPanel extends JPanel {
         btnTeclado = new JButton("⌨");
         InformeUiTheme.styleSecondaryButton(btnTeclado);
         btnTeclado.setPreferredSize(new Dimension(58, 48));
-        btnTeclado.setToolTipText("Abrir teclado táctil");
+        btnTeclado.setToolTipText(I18n.t("common.openTouchKeyboard"));
         btnTeclado.addActionListener(e ->
                 TecladoVirtualDialog.showAlfanumerico(
                         this,
                         txtNombrePedido,
-                        "Teclado - Nombre del pedido",
+                        I18n.t("sales.orderName.keyboard"),
                         MAX_NOMBRE_PEDIDO
                 )
         );
 
         tipoServicioGroup = new ButtonGroup();
 
-        btnParaTomar = new JToggleButton("Para tomar");
-        btnParaLlevar = new JToggleButton("Para llevar");
+        btnParaTomar = new JToggleButton(I18n.t("sales.service.dineIn"));
+        btnParaLlevar = new JToggleButton(I18n.t("sales.service.takeAway"));
 
         configurarToggleServicio(btnParaTomar);
         configurarToggleServicio(btnParaLlevar);
@@ -89,11 +91,15 @@ public class NombrePedidoPanel extends JPanel {
 
         card.add(center, BorderLayout.CENTER);
 
-        btnVolver = new JButton("Volver");
+        btnVolver = new JButton(I18n.t("common.back"));
+        btnVolver.setIcon(TpvIconFactory.back(18, InformeUiTheme.TEXT_PRIMARY));
+        btnVolver.setIconTextGap(8);
         InformeUiTheme.styleSecondaryButton(btnVolver);
         btnVolver.setPreferredSize(new Dimension(140, 44));
 
-        btnContinuar = new JButton("Continuar");
+        btnContinuar = new JButton(I18n.t("sales.orderName.continue"));
+        btnContinuar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        btnContinuar.setIconTextGap(8);
         InformeUiTheme.stylePrimaryButton(btnContinuar);
         btnContinuar.setPreferredSize(new Dimension(160, 44));
 
@@ -116,24 +122,22 @@ public class NombrePedidoPanel extends JPanel {
                 listener.onContinuar(txtNombrePedido.getText(), getTipoServicio())
         );
 
-        btnParaTomar.addActionListener(e -> {
-            actualizarEstiloTipoServicio();
-        });
-
-        btnParaLlevar.addActionListener(e -> {
-            actualizarEstiloTipoServicio();
-        });
+        btnParaTomar.addActionListener(e -> actualizarEstiloTipoServicio());
+        btnParaLlevar.addActionListener(e -> actualizarEstiloTipoServicio());
     }
 
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout(0, 4));
         header.setOpaque(false);
 
-        JLabel title = new JLabel("NOMBRE DEL PEDIDO", SwingConstants.CENTER);
+        JLabel title = new JLabel(I18n.t("sales.orderName.title"), SwingConstants.CENTER);
+        title.setIcon(TpvIconFactory.user(22, InformeUiTheme.ACCENT_GOLD));
+        title.setHorizontalTextPosition(SwingConstants.RIGHT);
+        title.setIconTextGap(10);
         title.setFont(new Font("SansSerif", Font.BOLD, 23));
         title.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel subtitle = new JLabel("Aparecerá en el ticket del cliente y en preparación", SwingConstants.CENTER);
+        JLabel subtitle = new JLabel(I18n.t("sales.orderName.subtitle"), SwingConstants.CENTER);
         subtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
         subtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -148,7 +152,7 @@ public class NombrePedidoPanel extends JPanel {
         panel.setOpaque(false);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 95));
 
-        JLabel label = InformeUiTheme.createFieldLabel("Nombre del pedido");
+        JLabel label = InformeUiTheme.createFieldLabel(I18n.t("sales.orderName.field"));
 
         JPanel inputWrapper = new JPanel(new BorderLayout(8, 0));
         inputWrapper.setOpaque(false);
@@ -165,7 +169,7 @@ public class NombrePedidoPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
         panel.setOpaque(false);
 
-        JLabel label = InformeUiTheme.createFieldLabel("Tipo de servicio");
+        JLabel label = InformeUiTheme.createFieldLabel(I18n.t("sales.orderName.serviceType"));
         label.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel buttons = new JPanel(new GridLayout(1, 2, 12, 0));

@@ -2,6 +2,9 @@ package ui.ventas;
 
 import model.TicketRow;
 import model.TicketSession;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,9 +26,6 @@ public class TicketPanel extends JPanel {
     private final DefaultListModel<TicketRow> model = new DefaultListModel<>();
     private final JList<TicketRow> list = new JList<>(model);
 
-    // =========================================================
-    // RESUMEN ECONÓMICO
-    // =========================================================
     private final JLabel lblSubtotalValue = new JLabel("0,00€", SwingConstants.RIGHT);
     private final JLabel lblAhorroCombosValue = new JLabel("0,00€", SwingConstants.RIGHT);
     private final JLabel lblDescuentoNombreValue = new JLabel("-", SwingConstants.RIGHT);
@@ -37,7 +37,7 @@ public class TicketPanel extends JPanel {
         this.onSelectionChanged = onSelectionChanged;
 
         setLayout(new BorderLayout(8, 8));
-        setBackground(new Color(20, 20, 20));
+        setBackground(InformeUiTheme.APP_BG);
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         add(buildHeader(), BorderLayout.NORTH);
@@ -46,27 +46,24 @@ public class TicketPanel extends JPanel {
     }
 
     private JComponent buildHeader() {
-        JLabel title = new JLabel("TICKET");
+        JLabel title = new JLabel(I18n.t("sales.ticket.title"));
+        title.setIcon(TpvIconFactory.report(18, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(8);
         title.setFont(new Font("Monospaced", Font.BOLD, 18));
-        title.setForeground(Color.WHITE);
+        title.setForeground(InformeUiTheme.TEXT_PRIMARY);
         return title;
     }
 
     private JComponent buildList() {
         list.setCellRenderer(new TicketRowRenderer());
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setBackground(new Color(30, 30, 30));
+        list.setBackground(InformeUiTheme.PANEL_BG);
+        list.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        list.setSelectionBackground(InformeUiTheme.STARBUCKS_GREEN);
+        list.setSelectionForeground(Color.WHITE);
 
-        /**
-         * CAMBIO:
-         * subimos la altura fija porque ahora la fila ITEM
-         * puede mostrar dos líneas:
-         * - producto + tamaño
-         * - café seleccionado
-         */
         list.setFixedCellHeight(58);
-
-        list.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60)));
+        list.setBorder(BorderFactory.createLineBorder(InformeUiTheme.BORDER));
 
         list.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
@@ -81,16 +78,16 @@ public class TicketPanel extends JPanel {
         });
 
         JScrollPane sp = new JScrollPane(list);
-        sp.setBorder(BorderFactory.createEmptyBorder());
+        InformeUiTheme.styleScrollPane(sp);
         sp.getVerticalScrollBar().setUnitIncrement(16);
         return sp;
     }
 
     private JComponent buildSummaryPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(24, 24, 24));
+        panel.setBackground(InformeUiTheme.CARD_BG);
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 60, 60)),
+                BorderFactory.createLineBorder(InformeUiTheme.BORDER),
                 new EmptyBorder(10, 10, 10, 10)
         ));
 
@@ -99,17 +96,17 @@ public class TicketPanel extends JPanel {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        addSummaryRow(panel, gbc, "Subtotal", lblSubtotalValue, new Color(220, 220, 220), false);
-        addSummaryRow(panel, gbc, "Ahorro combos", lblAhorroCombosValue, new Color(120, 220, 140), false);
-        addSummaryRow(panel, gbc, "Descuento", lblDescuentoNombreValue, new Color(170, 200, 255), false);
-        addSummaryRow(panel, gbc, "Ahorro descuento", lblAhorroDescuentoValue, new Color(120, 220, 140), false);
-        addSummaryRow(panel, gbc, "TOTAL", lblTotalValue, new Color(255, 215, 120), true);
+        addSummaryRow(panel, gbc, I18n.t("sales.ticket.subtotal"), lblSubtotalValue, new Color(220, 220, 220), false);
+        addSummaryRow(panel, gbc, I18n.t("sales.ticket.comboSavings"), lblAhorroCombosValue, new Color(120, 220, 140), false);
+        addSummaryRow(panel, gbc, I18n.t("sales.ticket.discount"), lblDescuentoNombreValue, new Color(170, 200, 255), false);
+        addSummaryRow(panel, gbc, I18n.t("sales.ticket.discountSavings"), lblAhorroDescuentoValue, new Color(120, 220, 140), false);
+        addSummaryRow(panel, gbc, I18n.t("sales.ticket.total"), lblTotalValue, InformeUiTheme.ACCENT_GOLD, true);
 
         styleSummaryValueLabel(lblSubtotalValue, new Color(220, 220, 220), false);
         styleSummaryValueLabel(lblAhorroCombosValue, new Color(120, 220, 140), false);
         styleSummaryValueLabel(lblDescuentoNombreValue, new Color(170, 200, 255), false);
         styleSummaryValueLabel(lblAhorroDescuentoValue, new Color(120, 220, 140), false);
-        styleSummaryValueLabel(lblTotalValue, new Color(255, 215, 120), true);
+        styleSummaryValueLabel(lblTotalValue, InformeUiTheme.ACCENT_GOLD, true);
 
         return panel;
     }
@@ -178,10 +175,6 @@ public class TicketPanel extends JPanel {
         return df.format(amount != null ? amount : BigDecimal.ZERO);
     }
 
-    // =========================================================
-    // API pública del panel
-    // =========================================================
-
     public void refreshFromTicket() {
         syncingSelection = true;
         try {
@@ -226,4 +219,3 @@ public class TicketPanel extends JPanel {
         return list;
     }
 }
-

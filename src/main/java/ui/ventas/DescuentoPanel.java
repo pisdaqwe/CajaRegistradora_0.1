@@ -2,6 +2,9 @@ package ui.ventas;
 
 import model.DescuentoAplicado;
 import model.TicketSession;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,12 +29,12 @@ public class DescuentoPanel extends JPanel {
 
     private DescuentoActionListener actionListener;
 
-    private final JButton btnCodigoPromo = new JButton("Código promocional");
-    private final JButton btnDescuentoEmpleado = new JButton("Descuento empleado");
-    private final JButton btnQuitarDescuento = new JButton("Quitar descuento");
-    private final JButton btnVolver = new JButton("Volver");
+    private final JButton btnCodigoPromo = new JButton(I18n.t("sales.discounts.promoCode"));
+    private final JButton btnDescuentoEmpleado = new JButton(I18n.t("sales.discounts.employeeDiscount"));
+    private final JButton btnQuitarDescuento = new JButton(I18n.t("sales.discounts.removeDiscount"));
+    private final JButton btnVolver = new JButton(I18n.t("common.back"));
 
-    private final JLabel lblEstado = new JLabel("Sin descuento aplicado");
+    private final JLabel lblEstado = new JLabel(I18n.t("sales.discounts.noDiscount"));
     private final JLabel lblNombre = new JLabel("-");
     private final JLabel lblCodigo = new JLabel("-");
     private final JLabel lblOrigen = new JLabel("-");
@@ -43,7 +46,7 @@ public class DescuentoPanel extends JPanel {
 
         setLayout(new BorderLayout(16, 16));
         setOpaque(true);
-        setBackground(new Color(20, 20, 20));
+        setBackground(InformeUiTheme.APP_BG);
         setBorder(new EmptyBorder(18, 18, 18, 18));
 
         add(buildHeader(), BorderLayout.NORTH);
@@ -58,13 +61,15 @@ public class DescuentoPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
 
-        JLabel title = new JLabel("DESCUENTOS");
+        JLabel title = new JLabel(I18n.t("sales.discounts.title"));
+        title.setIcon(TpvIconFactory.product(24, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(10);
         title.setFont(new Font("SansSerif", Font.BOLD, 24));
-        title.setForeground(Color.WHITE);
+        title.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel subtitle = new JLabel("Aplicar promociones o descuentos de empleado");
+        JLabel subtitle = new JLabel(I18n.t("sales.discounts.subtitle"));
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        subtitle.setForeground(new Color(180, 180, 180));
+        subtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
         JPanel left = new JPanel();
         left.setOpaque(false);
@@ -91,9 +96,14 @@ public class DescuentoPanel extends JPanel {
         JPanel panel = createCardPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel lbl = new JLabel("Acciones");
+        JLabel lbl = new JLabel(I18n.t("sales.discounts.actions"));
         lbl.setFont(new Font("SansSerif", Font.BOLD, 18));
-        lbl.setForeground(Color.WHITE);
+        lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        btnCodigoPromo.setIcon(TpvIconFactory.product(18, Color.WHITE));
+        btnDescuentoEmpleado.setIcon(TpvIconFactory.idCard(18, Color.WHITE));
+        btnQuitarDescuento.setIcon(TpvIconFactory.cancel(18, Color.WHITE));
+        btnVolver.setIcon(TpvIconFactory.back(18, InformeUiTheme.TEXT_PRIMARY));
 
         stylePrimaryButton(btnCodigoPromo);
         stylePrimaryButton(btnDescuentoEmpleado);
@@ -117,9 +127,11 @@ public class DescuentoPanel extends JPanel {
         JPanel panel = createCardPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel lbl = new JLabel("Resumen descuento");
+        JLabel lbl = new JLabel(I18n.t("sales.discounts.summary"));
+        lbl.setIcon(TpvIconFactory.info(18, InformeUiTheme.ACCENT_GOLD));
+        lbl.setIconTextGap(8);
         lbl.setFont(new Font("SansSerif", Font.BOLD, 18));
-        lbl.setForeground(Color.WHITE);
+        lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
         lblEstado.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblEstado.setForeground(new Color(170, 200, 255));
@@ -129,15 +141,15 @@ public class DescuentoPanel extends JPanel {
         panel.add(lblEstado);
         panel.add(Box.createVerticalStrut(18));
 
-        panel.add(buildInfoRow("Nombre", lblNombre));
+        panel.add(buildInfoRow(I18n.t("sales.discounts.name"), lblNombre));
         panel.add(Box.createVerticalStrut(8));
-        panel.add(buildInfoRow("Código", lblCodigo));
+        panel.add(buildInfoRow(I18n.t("sales.discounts.code"), lblCodigo));
         panel.add(Box.createVerticalStrut(8));
-        panel.add(buildInfoRow("Origen", lblOrigen));
+        panel.add(buildInfoRow(I18n.t("sales.discounts.origin"), lblOrigen));
         panel.add(Box.createVerticalStrut(8));
-        panel.add(buildInfoRow("Ahorro", lblAhorro));
+        panel.add(buildInfoRow(I18n.t("sales.discounts.savings"), lblAhorro));
         panel.add(Box.createVerticalStrut(8));
-        panel.add(buildInfoRow("Total final", lblTotalFinal));
+        panel.add(buildInfoRow(I18n.t("sales.discounts.finalTotal"), lblTotalFinal));
 
         return panel;
     }
@@ -147,10 +159,10 @@ public class DescuentoPanel extends JPanel {
         row.setOpaque(false);
 
         JLabel left = new JLabel(leftText);
-        left.setForeground(new Color(210, 210, 210));
+        left.setForeground(InformeUiTheme.TEXT_SECONDARY);
         left.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-        rightLabel.setForeground(Color.WHITE);
+        rightLabel.setForeground(InformeUiTheme.TEXT_PRIMARY);
         rightLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         rightLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -169,9 +181,9 @@ public class DescuentoPanel extends JPanel {
     private JPanel createCardPanel() {
         JPanel panel = new JPanel();
         panel.setOpaque(true);
-        panel.setBackground(new Color(32, 32, 32));
+        panel.setBackground(InformeUiTheme.CARD_BG);
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 60, 60)),
+                BorderFactory.createLineBorder(InformeUiTheme.BORDER, 1, true),
                 new EmptyBorder(16, 16, 16, 16)
         ));
         return panel;
@@ -179,29 +191,35 @@ public class DescuentoPanel extends JPanel {
 
     private void stylePrimaryButton(JButton button) {
         button.setFocusPainted(false);
-        button.setBackground(new Color(46, 125, 50));
+        button.setBackground(InformeUiTheme.STARBUCKS_GREEN);
         button.setForeground(Color.WHITE);
         button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setIconTextGap(8);
         button.setPreferredSize(new Dimension(0, 44));
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private void styleSecondaryButton(JButton button) {
         button.setFocusPainted(false);
-        button.setBackground(new Color(70, 70, 70));
-        button.setForeground(Color.WHITE);
+        button.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+        button.setForeground(InformeUiTheme.TEXT_PRIMARY);
         button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setIconTextGap(8);
         button.setPreferredSize(new Dimension(0, 44));
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private void styleDangerButton(JButton button) {
         button.setFocusPainted(false);
-        button.setBackground(new Color(160, 40, 40));
+        button.setBackground(InformeUiTheme.DANGER);
         button.setForeground(Color.WHITE);
         button.setFont(new Font("SansSerif", Font.BOLD, 15));
+        button.setIconTextGap(8);
         button.setPreferredSize(new Dimension(0, 44));
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private void wireActions() {
@@ -238,7 +256,7 @@ public class DescuentoPanel extends JPanel {
         DescuentoAplicado descuento = ticketSession.getDescuentoAplicado();
 
         if (descuento == null) {
-            lblEstado.setText("Sin descuento aplicado");
+            lblEstado.setText(I18n.t("sales.discounts.noDiscount"));
             lblNombre.setText("-");
             lblCodigo.setText("-");
             lblOrigen.setText("-");
@@ -248,7 +266,7 @@ public class DescuentoPanel extends JPanel {
             return;
         }
 
-        lblEstado.setText("Descuento aplicado correctamente");
+        lblEstado.setText(I18n.t("sales.discounts.applied"));
         lblNombre.setText(safeText(descuento.getNombre()));
         lblCodigo.setText(safeText(descuento.getCodigoIntroducido()));
         lblOrigen.setText(safeText(descuento.getOrigen()));

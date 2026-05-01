@@ -2,6 +2,9 @@ package ui.common;
 
 import app.AppContext;
 import model.Usuario;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,18 +13,22 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Barra superior TPV: título + usuario/rol + reloj + acceso rápido al monitor de preparación.
+ * Barra superior TPV: título + usuario/rol/caja + reloj + acceso rápido al monitor de preparación.
  * Se reutiliza en TODAS las pantallas para que el reloj sea siempre visible.
  */
 public class TpvTopBar extends JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     private static final DateTimeFormatter CLOCK_FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     private final JLabel lblTitle = new JLabel();
     private final JLabel lblUser = new JLabel();
+    private final JLabel lblRole = new JLabel();
+    private final JLabel lblCashBox = new JLabel();
     private final JLabel lblClock = new JLabel();
-    private final JButton btnPrep = new JButton("Prep");
+    private final JButton btnPrep = new JButton();
 
     private final Timer clockTimer;
 
@@ -42,48 +49,52 @@ public class TpvTopBar extends JPanel {
      */
     public TpvTopBar(String screenTitle, Runnable onPrepClicked) {
 
-        setLayout(new BorderLayout(12, 0));
-        setBorder(new EmptyBorder(10, 12, 10, 12));
-        setBackground(new Color(15, 60, 45)); // verde oscuro
+        setLayout(new BorderLayout(18, 0));
+        setBorder(new EmptyBorder(10, 14, 10, 14));
+        setBackground(new Color(15, 60, 45));
 
         // ----------------------------
         // TÍTULO (IZQUIERDA)
         // ----------------------------
-        lblTitle.setText(screenTitle);
+        lblTitle.setText(screenTitle != null ? screenTitle : "");
         lblTitle.setForeground(Color.WHITE);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+        lblTitle.setIcon(TpvIconFactory.cashRegister(22, InformeUiTheme.ACCENT_GOLD));
+        lblTitle.setIconTextGap(10);
 
         // ----------------------------
-        // USUARIO / ROL
+        // USUARIO / ROL / CAJA / RELOJ
         // ----------------------------
-        lblUser.setForeground(Color.WHITE);
-        lblUser.setFont(new Font("Arial", Font.PLAIN, 14));
+        configureInfoLabel(lblUser, TpvIconFactory.user(15, InformeUiTheme.ACCENT_GOLD));
+        configureInfoLabel(lblRole, TpvIconFactory.shield(15, InformeUiTheme.ACCENT_GOLD));
+        configureInfoLabel(lblCashBox, TpvIconFactory.cashRegister(15, InformeUiTheme.ACCENT_GOLD));
+        configureInfoLabel(lblClock, TpvIconFactory.clock(15, InformeUiTheme.ACCENT_GOLD));
+        lblClock.setFont(new Font("Consolas", Font.BOLD, 13));
 
-        // ----------------------------
-        // RELOJ
-        // ----------------------------
-        lblClock.setForeground(Color.WHITE);
-        lblClock.setFont(new Font("Consolas", Font.BOLD, 14));
+        JPanel sessionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        sessionPanel.setOpaque(false);
+        sessionPanel.add(lblCashBox);
+        sessionPanel.add(lblUser);
+        sessionPanel.add(lblRole);
 
-        // ----------------------------
-        // PANEL DE INFO DERECHA
-        // ----------------------------
-        JPanel infoPanel = new JPanel(new GridLayout(2, 1, 0, 2));
-        infoPanel.setOpaque(false);
-        infoPanel.add(lblUser);
-        infoPanel.add(lblClock);
+        JPanel rightInfo = new JPanel(new GridLayout(2, 1, 0, 3));
+        rightInfo.setOpaque(false);
+        rightInfo.add(sessionPanel);
+
+        JPanel clockPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        clockPanel.setOpaque(false);
+        clockPanel.add(lblClock);
+        rightInfo.add(clockPanel);
 
         // ----------------------------
         // BOTÓN PREP
         // ----------------------------
         configurePrepButton(onPrepClicked);
 
-        // Panel derecho principal
-        JPanel right = new JPanel(new BorderLayout(10, 0));
+        JPanel right = new JPanel(new BorderLayout(12, 0));
         right.setOpaque(false);
-        right.add(infoPanel, BorderLayout.CENTER);
+        right.add(rightInfo, BorderLayout.CENTER);
 
-        // Solo se añade si hay callback
         if (onPrepClicked != null) {
             right.add(btnPrep, BorderLayout.EAST);
         }
@@ -102,17 +113,27 @@ public class TpvTopBar extends JPanel {
         refreshClock();
     }
 
+    private void configureInfoLabel(JLabel label, Icon icon) {
+        label.setForeground(Color.WHITE);
+        label.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        label.setIcon(icon);
+        label.setIconTextGap(6);
+    }
+
     /**
      * Configura el botón del monitor de preparación.
      */
     private void configurePrepButton(Runnable onPrepClicked) {
+        btnPrep.setText(I18n.t("topbar.preparation"));
+        btnPrep.setToolTipText(I18n.t("topbar.preparation.tooltip"));
+        btnPrep.setIcon(TpvIconFactory.product(17, Color.BLACK));
+        btnPrep.setIconTextGap(7);
         btnPrep.setFocusable(false);
-        btnPrep.setFont(new Font("Arial", Font.BOLD, 12));
-        btnPrep.setMargin(new Insets(6, 12, 6, 12));
-
-        // Colores discretos pero visibles
-        btnPrep.setBackground(new Color(212, 175, 55));
+        btnPrep.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btnPrep.setMargin(new Insets(7, 12, 7, 12));
+        btnPrep.setBackground(InformeUiTheme.ACCENT_GOLD);
         btnPrep.setForeground(Color.BLACK);
+        btnPrep.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         if (onPrepClicked != null) {
             btnPrep.addActionListener(e -> onPrepClicked.run());
@@ -120,21 +141,55 @@ public class TpvTopBar extends JPanel {
     }
 
     /**
-     * Actualiza el texto del usuario/rol leyendo AppContext.
+     * Actualiza el texto del usuario/rol/caja leyendo AppContext.
      * Si no hay sesión, muestra "Sin sesión".
      */
     public final void refreshUser() {
         if (!AppContext.isAuthenticated()) {
-            lblUser.setText("Sin sesión");
+            lblUser.setText(I18n.t("topbar.noSession"));
+            lblRole.setText(I18n.t("topbar.noRole"));
+            lblCashBox.setText(resolveCashBoxText());
             return;
         }
 
         Usuario u = AppContext.getUsuario();
-        String rol = (u.getRol() != null && u.getRol().getNombre() != null)
-                ? u.getRol().getNombre()
-                : "SIN_ROL";
+        String userName = u.getNombre() != null && !u.getNombre().isBlank()
+                ? u.getNombre().trim()
+                : "-";
 
-        lblUser.setText("Usuario: " + u.getNombre() + "  |  Rol: " + rol);
+        String rol = (u.getRol() != null && u.getRol().getNombre() != null && !u.getRol().getNombre().isBlank())
+                ? u.getRol().getNombre().trim()
+                : I18n.t("topbar.noRole");
+
+        lblUser.setText(I18n.t("topbar.user") + ": " + userName);
+        lblRole.setText(I18n.t("topbar.role") + ": " + rol);
+        lblCashBox.setText(resolveCashBoxText());
+    }
+
+    private String resolveCashBoxText() {
+        String cashBoxName = null;
+
+        try {
+            if (AppContext.hasSesionCajaActual()) {
+                cashBoxName = AppContext.getSesionCajaActual().getNombreCaja();
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (cashBoxName == null || cashBoxName.isBlank()) {
+            try {
+                if (AppContext.hasTerminalContext()) {
+                    cashBoxName = AppContext.getNombreCajaTerminal();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (cashBoxName == null || cashBoxName.isBlank()) {
+            cashBoxName = I18n.t("topbar.noCashBox");
+        }
+
+        return I18n.t("topbar.cashBox") + ": " + cashBoxName.trim();
     }
 
     /**

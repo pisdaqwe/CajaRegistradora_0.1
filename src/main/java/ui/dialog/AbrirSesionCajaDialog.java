@@ -3,14 +3,17 @@ package ui.dialog;
 import dtoS.CajaEstadoDTO;
 import dtoS.FichajeActivoDTO;
 import service.AppServices;
-import ui.common.InformeUiTheme;
 import ui.common.TpvDialogUtils;
 import ui.table.EmpleadosFichadosTableModel;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.math.BigDecimal;
@@ -21,6 +24,12 @@ public class AbrirSesionCajaDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat MONEY = new DecimalFormat("#,##0.00");
+
+    private static final Color OK_GREEN = new Color(46, 125, 50);
+    private static final Color SELECTED_ORANGE = new Color(189, 110, 65);
+    private static final Color OCCUPIED_RED = new Color(134, 58, 58);
+    private static final Color DISABLED_GRAY = new Color(85, 85, 85);
+    private static final Color DISABLED_TEXT = new Color(170, 170, 170);
 
     private final AppServices services;
 
@@ -48,7 +57,7 @@ public class AbrirSesionCajaDialog extends JDialog {
     private BigDecimal importeSeleccionado;
 
     public AbrirSesionCajaDialog(Window owner, AppServices services) {
-        super(owner, "Abrir sesión de caja", ModalityType.APPLICATION_MODAL);
+        super(owner, I18n.t("cashOpen.title"), ModalityType.APPLICATION_MODAL);
         this.services = services;
 
         buildUI();
@@ -56,7 +65,8 @@ public class AbrirSesionCajaDialog extends JDialog {
         cargarCajas();
         actualizarResumenYEstado();
 
-        setSize(1120, 960);
+        setSize(1180, 850);
+        setMinimumSize(new Dimension(1050, 720));
         setLocationRelativeTo(owner);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
@@ -73,28 +83,36 @@ public class AbrirSesionCajaDialog extends JDialog {
     }
 
     private JComponent buildHeader() {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 10));
-        wrapper.setOpaque(false);
+        JPanel wrapper = transparentPanel(new BorderLayout(0, 10));
 
-        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 4));
-        textPanel.setOpaque(false);
+        JPanel textPanel = transparentPanel(new BorderLayout(14, 0));
 
-        JLabel title = new JLabel("Abrir sesión de caja");
+        JLabel icon = new JLabel(TpvIconFactory.cashRegister(40, InformeUiTheme.ACCENT_GOLD));
+        icon.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel texts = transparentPanel();
+        texts.setLayout(new BoxLayout(texts, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel(I18n.t("cashOpen.header.title"));
         title.setFont(InformeUiTheme.FONT_TITLE);
         title.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel subtitle = new JLabel("Selecciona empleado, caja e importe inicial para abrir la sesión");
+        JLabel subtitle = new JLabel(I18n.t("cashOpen.header.subtitle"));
         subtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
         subtitle.setForeground(InformeUiTheme.ACCENT_GOLD);
 
-        textPanel.add(title);
-        textPanel.add(subtitle);
+        texts.add(title);
+        texts.add(Box.createVerticalStrut(4));
+        texts.add(subtitle);
+
+        textPanel.add(icon, BorderLayout.WEST);
+        textPanel.add(texts, BorderLayout.CENTER);
 
         JPanel pasos = InformeUiTheme.createCardPanel(new GridLayout(1, 4, 10, 0));
-        pasos.add(createPasoLabel("1. Empleado"));
-        pasos.add(createPasoLabel("2. Caja"));
-        pasos.add(createPasoLabel("3. Importe"));
-        pasos.add(createPasoLabel("4. Confirmar"));
+        pasos.add(createPasoLabel(I18n.t("cashOpen.step.employee"), TpvIconFactory.user(16, InformeUiTheme.ACCENT_GOLD)));
+        pasos.add(createPasoLabel(I18n.t("cashOpen.step.cashBox"), TpvIconFactory.cashRegister(16, InformeUiTheme.ACCENT_GOLD)));
+        pasos.add(createPasoLabel(I18n.t("cashOpen.step.amount"), TpvIconFactory.cashRegister(16, InformeUiTheme.ACCENT_GOLD)));
+        pasos.add(createPasoLabel(I18n.t("cashOpen.step.confirm"), TpvIconFactory.check(16, InformeUiTheme.ACCENT_GOLD)));
 
         wrapper.add(textPanel, BorderLayout.NORTH);
         wrapper.add(pasos, BorderLayout.CENTER);
@@ -102,10 +120,12 @@ public class AbrirSesionCajaDialog extends JDialog {
         return wrapper;
     }
 
-    private JLabel createPasoLabel(String text) {
+    private JLabel createPasoLabel(String text, Icon icon) {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setFont(InformeUiTheme.FONT_LABEL);
         lbl.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        lbl.setIcon(icon);
+        lbl.setIconTextGap(6);
         return lbl;
     }
 
@@ -114,9 +134,10 @@ public class AbrirSesionCajaDialog extends JDialog {
         JPanel right = buildRightPanel();
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
-        split.setResizeWeight(0.56);
-        split.setDividerLocation(590);
+        split.setResizeWeight(0.52);
+        split.setDividerLocation(560);
         split.setBorder(null);
+        split.setOpaque(false);
 
         return split;
     }
@@ -124,25 +145,38 @@ public class AbrirSesionCajaDialog extends JDialog {
     private JPanel buildEmpleadoPanel() {
         JPanel panel = InformeUiTheme.createCardPanel(new BorderLayout(10, 10));
 
-        JPanel top = new JPanel(new BorderLayout(10, 0));
-        top.setOpaque(false);
+        JPanel top = transparentPanel(new BorderLayout(14, 0));
 
-        JPanel leftTop = new JPanel(new GridLayout(2, 1, 0, 2));
-        leftTop.setOpaque(false);
+        JPanel titlePanel = transparentPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        JLabel title = InformeUiTheme.createSectionTitle("Empleados fichados");
-        lblTotalEmpleados = new JLabel("0 empleados");
+        JLabel title = InformeUiTheme.createSectionTitle(I18n.t("cashOpen.clockedEmployees.title"));
+        title.setIcon(TpvIconFactory.users(20, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(8);
+
+        lblTotalEmpleados = new JLabel(I18n.t("cashOpen.clockedEmployees.count", 0));
         lblTotalEmpleados.setFont(InformeUiTheme.FONT_SUBTITLE);
         lblTotalEmpleados.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
-        leftTop.add(title);
-        leftTop.add(lblTotalEmpleados);
+        titlePanel.add(title);
+        titlePanel.add(Box.createVerticalStrut(4));
+        titlePanel.add(lblTotalEmpleados);
 
-        JTextField txtBuscar = new JTextField(20);
+        JTextField txtBuscar = new JTextField(18);
         InformeUiTheme.styleTextField(txtBuscar);
+        txtBuscar.setPreferredSize(new Dimension(230, 38));
 
-        top.add(leftTop, BorderLayout.WEST);
-        top.add(txtBuscar, BorderLayout.EAST);
+        JLabel lblBuscar = InformeUiTheme.createFieldLabel(I18n.t("common.search"));
+        lblBuscar.setIcon(TpvIconFactory.search(16, InformeUiTheme.TEXT_SECONDARY));
+        lblBuscar.setIconTextGap(6);
+
+        JPanel searchPanel = transparentPanel(new BorderLayout(8, 0));
+        searchPanel.setBorder(new EmptyBorder(4, 0, 0, 0));
+        searchPanel.add(lblBuscar, BorderLayout.WEST);
+        searchPanel.add(txtBuscar, BorderLayout.CENTER);
+
+        top.add(titlePanel, BorderLayout.WEST);
+        top.add(searchPanel, BorderLayout.EAST);
 
         panel.add(top, BorderLayout.NORTH);
 
@@ -151,6 +185,8 @@ public class AbrirSesionCajaDialog extends JDialog {
         InformeUiTheme.styleTable(tablaEmpleados);
         tablaEmpleados.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tablaEmpleados.setRowHeight(34);
+
+        configurarTablaEmpleados();
 
         sorter = new TableRowSorter<>(tableModel);
         tablaEmpleados.setRowSorter(sorter);
@@ -210,21 +246,57 @@ public class AbrirSesionCajaDialog extends JDialog {
 
         JScrollPane scroll = new JScrollPane(tablaEmpleados);
         InformeUiTheme.styleScrollPane(scroll);
+        scroll.setPreferredSize(new Dimension(520, 430));
+
         panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
     }
 
-    private JPanel buildRightPanel() {
-        JPanel panel = new JPanel();
-        panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    private void configurarTablaEmpleados() {
+        if (tablaEmpleados.getColumnModel().getColumnCount() < 4) {
+            return;
+        }
 
-        panel.add(buildResumenPanel());
-        panel.add(Box.createVerticalStrut(12));
-        panel.add(buildCajasPanel());
-        panel.add(Box.createVerticalStrut(12));
-        panel.add(buildImportePanel());
+        tablaEmpleados.getColumnModel().getColumn(0).setHeaderValue(I18n.t("cashOpen.clockedEmployees.table.id"));
+        tablaEmpleados.getColumnModel().getColumn(1).setHeaderValue(I18n.t("cashOpen.clockedEmployees.table.employee"));
+        tablaEmpleados.getColumnModel().getColumn(2).setHeaderValue(I18n.t("cashOpen.clockedEmployees.table.entry"));
+        tablaEmpleados.getColumnModel().getColumn(3).setHeaderValue(I18n.t("cashOpen.clockedEmployees.table.status"));
+
+        tablaEmpleados.getColumnModel().getColumn(0).setPreferredWidth(60);
+        tablaEmpleados.getColumnModel().getColumn(1).setPreferredWidth(220);
+        tablaEmpleados.getColumnModel().getColumn(2).setPreferredWidth(140);
+        tablaEmpleados.getColumnModel().getColumn(3).setPreferredWidth(110);
+
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        tablaEmpleados.getColumnModel().getColumn(0).setCellRenderer(center);
+
+        tablaEmpleados.getTableHeader().repaint();
+    }
+
+    private JPanel buildRightPanel() {
+        JPanel panel = transparentPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+
+        gbc.gridy = 0;
+        gbc.weighty = 0.22;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        panel.add(buildResumenPanel(), gbc);
+
+        gbc.gridy = 1;
+        gbc.weighty = 0.48;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        panel.add(buildCajasPanel(), gbc);
+
+        gbc.gridy = 2;
+        gbc.weighty = 0.30;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        panel.add(buildImportePanel(), gbc);
 
         return panel;
     }
@@ -232,14 +304,16 @@ public class AbrirSesionCajaDialog extends JDialog {
     private JPanel buildResumenPanel() {
         JPanel panel = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
 
-        JLabel title = InformeUiTheme.createSectionTitle("Resumen de apertura");
+        JLabel title = InformeUiTheme.createSectionTitle(I18n.t("cashOpen.summary.title"));
+        title.setIcon(TpvIconFactory.info(20, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(8);
+
         panel.add(title, BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new GridBagLayout());
-        content.setOpaque(false);
+        JPanel content = transparentPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.insets = new Insets(5, 8, 5, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         lblEmpleadoSeleccionado = createResumenValueLabel();
@@ -248,10 +322,10 @@ public class AbrirSesionCajaDialog extends JDialog {
         lblEstadoResumen = createResumenValueLabel();
 
         int y = 0;
-        addResumenRow(content, gbc, y++, "Empleado:", lblEmpleadoSeleccionado);
-        addResumenRow(content, gbc, y++, "Caja:", lblCajaSeleccionada);
-        addResumenRow(content, gbc, y++, "Importe inicial:", lblImporteSeleccionado);
-        addResumenRow(content, gbc, y, "Estado:", lblEstadoResumen);
+        addResumenRow(content, gbc, y++, I18n.t("cashOpen.summary.employee"), TpvIconFactory.user(16, InformeUiTheme.TEXT_SECONDARY), lblEmpleadoSeleccionado);
+        addResumenRow(content, gbc, y++, I18n.t("cashOpen.summary.cashBox"), TpvIconFactory.cashRegister(16, InformeUiTheme.TEXT_SECONDARY), lblCajaSeleccionada);
+        addResumenRow(content, gbc, y++, I18n.t("cashOpen.summary.amount"), TpvIconFactory.cashRegister(16, InformeUiTheme.TEXT_SECONDARY), lblImporteSeleccionado);
+        addResumenRow(content, gbc, y, I18n.t("cashOpen.summary.status"), TpvIconFactory.warning(16, InformeUiTheme.TEXT_SECONDARY), lblEstadoResumen);
 
         panel.add(content, BorderLayout.CENTER);
         return panel;
@@ -264,39 +338,54 @@ public class AbrirSesionCajaDialog extends JDialog {
         return lbl;
     }
 
-    private void addResumenRow(JPanel panel, GridBagConstraints gbc, int row, String label, JLabel value) {
+    private void addResumenRow(JPanel panel, GridBagConstraints gbc, int row, String label, Icon icon, JLabel value) {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0;
-        panel.add(InformeUiTheme.createFieldLabel(label), gbc);
+
+        JLabel lbl = InformeUiTheme.createFieldLabel(label);
+        lbl.setIcon(icon);
+        lbl.setIconTextGap(6);
+        panel.add(lbl, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         panel.add(value, gbc);
     }
 
+   
     private JPanel buildCajasPanel() {
         JPanel wrapper = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
 
-        JLabel title = InformeUiTheme.createSectionTitle("Cajas disponibles");
+        JLabel title = InformeUiTheme.createSectionTitle(I18n.t("cashOpen.cashBoxes.title"));
+        title.setIcon(TpvIconFactory.cashRegister(20, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(8);
+
         wrapper.add(title, BorderLayout.NORTH);
 
-        panelCajas = new JPanel(new GridLayout(0, 2, 10, 10));
+        panelCajas = new JPanel();
         panelCajas.setOpaque(false);
+        panelCajas.setBorder(new EmptyBorder(4, 4, 4, 4));
 
         wrapper.add(panelCajas, BorderLayout.CENTER);
+
         return wrapper;
     }
 
     private void cargarCajas() {
         panelCajas.removeAll();
         grupoCajas = new ButtonGroup();
-        cajaSeleccionada = null;
 
         List<CajaEstadoDTO> cajas = services.sesionCajaService.getEstadoCajas();
 
+        int total = cajas.size();
+        int columnas = calcularColumnasCajas(total);
+        int filas = (int) Math.ceil(total / (double) columnas);
+
+        panelCajas.setLayout(new GridLayout(filas, columnas, 10, 10));
+
         for (CajaEstadoDTO caja : cajas) {
-            JToggleButton btn = crearBotonCaja(caja);
+            JToggleButton btn = crearBotonCaja(caja, columnas);
             grupoCajas.add(btn);
             panelCajas.add(btn);
         }
@@ -304,29 +393,75 @@ public class AbrirSesionCajaDialog extends JDialog {
         panelCajas.revalidate();
         panelCajas.repaint();
     }
+    private int calcularColumnasCajas(int totalCajas) {
+        if (totalCajas <= 1) {
+            return 1;
+        }
 
-    private JToggleButton crearBotonCaja(CajaEstadoDTO caja) {
+        if (totalCajas == 2) {
+            return 2;
+        }
+
+        if (totalCajas == 3) {
+            return 3;
+        }
+
+        return 2;
+    }
+
+    private JToggleButton crearBotonCaja(CajaEstadoDTO caja, int columnas) {
         JToggleButton btn = new JToggleButton();
         btn.setFocusPainted(false);
-        btn.setFont(InformeUiTheme.FONT_BODY);
-        btn.setForeground(InformeUiTheme.TEXT_PRIMARY);
+        btn.setFont(new Font("SansSerif", Font.BOLD, columnas >= 3 ? 10 : 9));
+        btn.setForeground(Color.WHITE);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(180, 84));
         btn.setBorder(InformeUiTheme.createInnerCardBorder());
+        btn.setHorizontalTextPosition(SwingConstants.CENTER);
+        btn.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btn.setIconTextGap(4);
 
-        String texto = "<html><center><b>" + safe(caja.getNombreCaja()) + "</b><br/>";
+        if (columnas >= 3) {
+            btn.setPreferredSize(new Dimension(150, 70));
+            btn.setMinimumSize(new Dimension(140, 68));
+        } else {
+            btn.setPreferredSize(new Dimension(230, 76));
+            btn.setMinimumSize(new Dimension(200, 72));
+        }
+
+        String nombreCaja = safe(caja.getNombreCaja());
+        String empleado = safe(caja.getEmpleadoAsignado());
 
         if (!caja.isOperativa()) {
-            texto += "Fuera de servicio</center></html>";
-            btn.setBackground(new Color(85, 85, 85));
+            btn.setText(
+                    "<html><center><b>" + nombreCaja + "</b><br>"
+                            + I18n.t("cashOpen.cashBoxes.status.outOfService")
+                            + "</center></html>"
+            );
+            btn.setBackground(DISABLED_GRAY);
+            btn.setIcon(TpvIconFactory.cancel(16, Color.WHITE));
             btn.setEnabled(false);
+
         } else if (caja.isOcupada()) {
-            texto += "Ocupada<br/>(" + safe(caja.getEmpleadoAsignado()) + ")</center></html>";
-            btn.setBackground(new Color(134, 58, 58));
+            btn.setText(
+                    "<html><center><b>" + nombreCaja + "</b><br>"
+                            + I18n.t("cashOpen.cashBoxes.status.occupied")
+                            + (empleado.isBlank()
+                                    ? ""
+                                    : "<br><span style='font-size:8px;'>(" + empleado + ")</span>")
+                            + "</center></html>"
+            );
+            btn.setBackground(OCCUPIED_RED);
+            btn.setIcon(TpvIconFactory.warning(16, Color.WHITE));
             btn.setEnabled(false);
+
         } else {
-            texto += "Disponible</center></html>";
+            btn.setText(
+                    "<html><center><b>" + nombreCaja + "</b><br>"
+                            + I18n.t("cashOpen.cashBoxes.status.available")
+                            + "</center></html>"
+            );
             btn.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
+            btn.setIcon(TpvIconFactory.check(16, Color.WHITE));
             btn.setEnabled(true);
 
             btn.addActionListener(e -> {
@@ -336,7 +471,8 @@ public class AbrirSesionCajaDialog extends JDialog {
             });
         }
 
-        btn.setText(texto);
+        btn.setToolTipText(nombreCaja);
+
         return btn;
     }
 
@@ -346,18 +482,20 @@ public class AbrirSesionCajaDialog extends JDialog {
                 btn.setBackground(InformeUiTheme.STARBUCKS_GREEN_SOFT);
             }
         }
-        botonSeleccionado.setBackground(new Color(189, 110, 65));
+
+        botonSeleccionado.setBackground(SELECTED_ORANGE);
     }
 
     private JPanel buildImportePanel() {
         JPanel panel = InformeUiTheme.createCardPanel(new BorderLayout(8, 8));
 
-        JLabel title = InformeUiTheme.createSectionTitle("Importe inicial");
+        JLabel title = InformeUiTheme.createSectionTitle(I18n.t("cashOpen.amount.title"));
+        title.setIcon(TpvIconFactory.cashRegister(20, InformeUiTheme.ACCENT_GOLD));
+        title.setIconTextGap(8);
+
         panel.add(title, BorderLayout.NORTH);
 
-        JPanel content = new JPanel();
-        content.setOpaque(false);
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        JPanel content = transparentPanel(new BorderLayout(0, 12));
 
         grupoImportes = new ButtonGroup();
 
@@ -369,12 +507,15 @@ public class AbrirSesionCajaDialog extends JDialog {
         gridImportes.add(createImporteButton(new BigDecimal("250")));
         gridImportes.add(createImporteButton(new BigDecimal("300")));
 
-        JPanel custom = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        custom.setOpaque(false);
+        JPanel custom = transparentPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 
-        JLabel lblCustom = InformeUiTheme.createFieldLabel("Importe manual:");
+        JLabel lblCustom = InformeUiTheme.createFieldLabel(I18n.t("cashOpen.amount.manual"));
+        lblCustom.setIcon(TpvIconFactory.key(16, InformeUiTheme.TEXT_SECONDARY));
+        lblCustom.setIconTextGap(6);
+
         txtImporteCustom = new JTextField(10);
         InformeUiTheme.styleTextField(txtImporteCustom);
+        txtImporteCustom.setPreferredSize(new Dimension(130, 38));
 
         txtImporteCustom.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -396,9 +537,8 @@ public class AbrirSesionCajaDialog extends JDialog {
         custom.add(lblCustom);
         custom.add(txtImporteCustom);
 
-        content.add(gridImportes);
-        content.add(Box.createVerticalStrut(12));
-        content.add(custom);
+        content.add(gridImportes, BorderLayout.CENTER);
+        content.add(custom, BorderLayout.SOUTH);
 
         panel.add(content, BorderLayout.CENTER);
         return panel;
@@ -407,14 +547,17 @@ public class AbrirSesionCajaDialog extends JDialog {
     private JToggleButton createImporteButton(BigDecimal importe) {
         JToggleButton btn = new JToggleButton(MONEY.format(importe) + " €");
         btn.setFocusPainted(false);
-        btn.setFont(InformeUiTheme.FONT_BUTTON);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
         btn.setBackground(InformeUiTheme.CARD_BG_2);
         btn.setForeground(InformeUiTheme.TEXT_PRIMARY);
         btn.setBorder(InformeUiTheme.createInnerCardBorder());
+        btn.setIcon(TpvIconFactory.cashRegister(15, InformeUiTheme.ACCENT_GOLD));
+        btn.setIconTextGap(8);
+        btn.setPreferredSize(new Dimension(100, 48));
 
         btn.addActionListener(e -> {
-            importeSeleccionado = importe;
             txtImporteCustom.setText("");
+            importeSeleccionado = importe;
             actualizarResumenYEstado();
         });
 
@@ -423,7 +566,7 @@ public class AbrirSesionCajaDialog extends JDialog {
     }
 
     private void onImporteCustomChanged() {
-        String texto = txtImporteCustom.getText().trim();
+        String texto = txtImporteCustom.getText().trim().replace(",", ".");
 
         if (texto.isEmpty()) {
             importeSeleccionado = null;
@@ -434,6 +577,7 @@ public class AbrirSesionCajaDialog extends JDialog {
 
         try {
             BigDecimal valor = new BigDecimal(texto);
+
             if (valor.compareTo(BigDecimal.ZERO) < 0) {
                 throw new NumberFormatException();
             }
@@ -449,26 +593,31 @@ public class AbrirSesionCajaDialog extends JDialog {
     }
 
     private JComponent buildFooter() {
-        JPanel footer = new JPanel(new BorderLayout());
-        footer.setOpaque(false);
+        JPanel footer = transparentPanel(new BorderLayout());
 
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        left.setOpaque(false);
+        JPanel left = transparentPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
-        lblEstadoFooter = new JLabel("Selecciona un empleado");
+        lblEstadoFooter = new JLabel(I18n.t("cashOpen.status.selectEmployee"));
         lblEstadoFooter.setFont(InformeUiTheme.FONT_BODY);
         lblEstadoFooter.setForeground(InformeUiTheme.TEXT_SECONDARY);
+        lblEstadoFooter.setIcon(TpvIconFactory.info(18, InformeUiTheme.TEXT_SECONDARY));
+        lblEstadoFooter.setIconTextGap(8);
         left.add(lblEstadoFooter);
-        
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
-        right.setOpaque(false);
 
-        JButton btnCancelar = new JButton("Cancelar");
+        JPanel right = transparentPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+
+        JButton btnCancelar = new JButton(I18n.t("common.cancel"));
         InformeUiTheme.styleSecondaryButton(btnCancelar);
+        btnCancelar.setPreferredSize(new Dimension(150, 48));
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIconTextGap(8);
         btnCancelar.addActionListener(e -> dispose());
 
-        btnConfirmar = new JButton("Abrir sesión de caja");
+        btnConfirmar = new JButton(I18n.t("cashOpen.confirmButton"));
         InformeUiTheme.stylePrimaryButton(btnConfirmar);
+        btnConfirmar.setPreferredSize(new Dimension(230, 48));
+        btnConfirmar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        btnConfirmar.setIconTextGap(8);
         btnConfirmar.setEnabled(false);
         btnConfirmar.addActionListener(e -> confirmarAperturaCaja());
 
@@ -484,12 +633,18 @@ public class AbrirSesionCajaDialog extends JDialog {
     private void cargarEmpleadosFichados() {
         List<FichajeActivoDTO> datos = services.fichajeService.findFichajesActivos();
         tableModel.setDatos(datos);
+        configurarTablaEmpleados();
         actualizarTotalVisible();
     }
 
     private void actualizarTotalVisible() {
         int total = tablaEmpleados.getRowCount();
-        lblTotalEmpleados.setText(total + (total == 1 ? " empleado visible" : " empleados visibles"));
+
+        lblTotalEmpleados.setText(
+                total == 1
+                        ? I18n.t("cashOpen.clockedEmployees.countOne")
+                        : I18n.t("cashOpen.clockedEmployees.count", total)
+        );
     }
 
     private void actualizarResumenYEstado() {
@@ -512,26 +667,39 @@ public class AbrirSesionCajaDialog extends JDialog {
         );
 
         String estado;
+        Icon estadoIcon;
+        Color estadoColor;
+
         if (empleadoSeleccionado == null) {
-            estado = "Selecciona un empleado";
+            estado = I18n.t("cashOpen.status.selectEmployee");
+            estadoIcon = TpvIconFactory.info(16, InformeUiTheme.TEXT_SECONDARY);
+            estadoColor = InformeUiTheme.TEXT_SECONDARY;
+
         } else if (cajaSeleccionada == null) {
-            estado = "Selecciona una caja disponible";
+            estado = I18n.t("cashOpen.status.selectCashBox");
+            estadoIcon = TpvIconFactory.warning(16, InformeUiTheme.ACCENT_GOLD);
+            estadoColor = InformeUiTheme.TEXT_SECONDARY;
+
         } else if (importeSeleccionado == null) {
-            estado = "Indica un importe inicial";
+            estado = I18n.t("cashOpen.status.selectAmount");
+            estadoIcon = TpvIconFactory.warning(16, InformeUiTheme.ACCENT_GOLD);
+            estadoColor = InformeUiTheme.TEXT_SECONDARY;
+
         } else {
-            estado = "Todo listo para abrir la sesión";
+            estado = I18n.t("cashOpen.status.ready");
+            estadoIcon = TpvIconFactory.check(16, OK_GREEN);
+            estadoColor = OK_GREEN;
         }
-        
-        if (empleadoSeleccionado == null || cajaSeleccionada == null || importeSeleccionado == null) {
-            lblEstadoResumen.setForeground(InformeUiTheme.TEXT_SECONDARY);
-            lblEstadoFooter.setForeground(InformeUiTheme.TEXT_SECONDARY);
-        } else {
-            lblEstadoResumen.setForeground(new Color(105, 197, 125));
-            lblEstadoFooter.setForeground(new Color(105, 197, 125));
-        }
-        
+
         lblEstadoResumen.setText(estado);
+        lblEstadoResumen.setIcon(estadoIcon);
+        lblEstadoResumen.setIconTextGap(6);
+        lblEstadoResumen.setForeground(estadoColor);
+
         lblEstadoFooter.setText(estado);
+        lblEstadoFooter.setIcon(estadoIcon);
+        lblEstadoFooter.setIconTextGap(8);
+        lblEstadoFooter.setForeground(estadoColor);
 
         boolean ok = empleadoSeleccionado != null
                 && cajaSeleccionada != null
@@ -539,33 +707,41 @@ public class AbrirSesionCajaDialog extends JDialog {
                 && importeSeleccionado.compareTo(BigDecimal.ZERO) >= 0;
 
         btnConfirmar.setEnabled(ok);
+
+        if (ok) {
+            btnConfirmar.setForeground(Color.WHITE);
+            btnConfirmar.setIcon(TpvIconFactory.check(18, Color.WHITE));
+        } else {
+            btnConfirmar.setForeground(DISABLED_TEXT);
+            btnConfirmar.setIcon(TpvIconFactory.check(18, DISABLED_TEXT));
+        }
     }
 
     private void confirmarAperturaCaja() {
         if (empleadoSeleccionado == null) {
-        	TpvDialogUtils.showWarning(
-        	        this,
-        	        "Abrir sesión",
-        	        "Debes seleccionar un empleado fichado."
-        	);
+            TpvDialogUtils.showWarning(
+                    this,
+                    I18n.t("cashOpen.title"),
+                    I18n.t("cashOpen.validation.employee")
+            );
             return;
         }
 
         if (cajaSeleccionada == null) {
-        	TpvDialogUtils.showWarning(
-        	        this,
-        	        "Abrir sesión",
-        	        "Debes seleccionar una caja disponible."
-        	);
+            TpvDialogUtils.showWarning(
+                    this,
+                    I18n.t("cashOpen.title"),
+                    I18n.t("cashOpen.validation.cashBox")
+            );
             return;
         }
 
         if (importeSeleccionado == null || importeSeleccionado.compareTo(BigDecimal.ZERO) < 0) {
-        	TpvDialogUtils.showWarning(
-        	        this,
-        	        "Abrir sesión",
-        	        "Debes indicar un importe inicial válido."
-        	);
+            TpvDialogUtils.showWarning(
+                    this,
+                    I18n.t("cashOpen.title"),
+                    I18n.t("cashOpen.validation.amount")
+            );
             return;
         }
 
@@ -578,22 +754,34 @@ public class AbrirSesionCajaDialog extends JDialog {
 
             TpvDialogUtils.showInfo(
                     this,
-                    "Sesión abierta",
-                    "Sesión de caja abierta correctamente."
+                    I18n.t("cashOpen.success.title"),
+                    I18n.t("cashOpen.success.message")
             );
 
             dispose();
 
         } catch (Exception ex) {
-        	TpvDialogUtils.showError(
-        	        this,
-        	        "Error al abrir la sesión de caja",
-        	        ex.getMessage()
-        	);
+            TpvDialogUtils.showError(
+                    this,
+                    I18n.t("cashOpen.error.title"),
+                    ex.getMessage()
+            );
         }
     }
 
     private String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private JPanel transparentPanel() {
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private JPanel transparentPanel(LayoutManager layout) {
+        JPanel panel = new JPanel(layout);
+        panel.setOpaque(false);
+        return panel;
     }
 }

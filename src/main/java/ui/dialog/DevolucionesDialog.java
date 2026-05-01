@@ -14,6 +14,8 @@ import ui.common.TpvDialogUtils;
 import ui.table.DevolucionRowVM;
 import ui.table.DevolucionTableModel;
 import ui.table.VentasHoyDevolucionTableModel;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -72,8 +74,8 @@ public class DevolucionesDialog extends JDialog {
     // =====================================================
 
     private final JTextField txtBuscar = new JTextField();
-    private final JButton btnBuscar = new JButton("BUSCAR");
-    private final JButton btnResetHoy = new JButton("HOY");
+    private final JButton btnBuscar = new JButton(I18n.t("refund.search"));
+    private final JButton btnResetHoy = new JButton(I18n.t("refund.today"));
 
     private final VentasHoyDevolucionTableModel ventasModel = new VentasHoyDevolucionTableModel();
     private final JTable tableVentas = new JTable(ventasModel);
@@ -107,8 +109,8 @@ public class DevolucionesDialog extends JDialog {
     private final JButton btnMenos = new JButton("−");
     private final JLabel lblCantidadGrande = new JLabel("0", SwingConstants.CENTER);
     private final JButton btnMas = new JButton("+");
-    private final JButton btnDevolverTodo = new JButton("DEVOLVER TODO");
-    private final JToggleButton toggleReponeStock = new JToggleButton("REPONE STOCK: NO");
+    private final JButton btnDevolverTodo = new JButton(I18n.t("refund.returnAll"));
+    private final JToggleButton toggleReponeStock = new JToggleButton(I18n.t("refund.restockNo"));
 
     // =====================================================
     // 7) DATOS DE LA DEVOLUCIÓN
@@ -119,8 +121,8 @@ public class DevolucionesDialog extends JDialog {
     private final JTextArea txtObservaciones = new JTextArea(3, 20);
     private final JLabel lblTotalDevolucion = new JLabel("0,00 €");
 
-    private final JButton btnConfirmar = new JButton("CONFIRMAR DEVOLUCIÓN");
-    private final JButton btnCerrar = new JButton("CERRAR");
+    private final JButton btnConfirmar = new JButton(I18n.t("refund.confirmButton"));
+    private final JButton btnCerrar = new JButton(I18n.t("common.close"));
 
     // =====================================================
     // 8) ESTADO
@@ -133,7 +135,7 @@ public class DevolucionesDialog extends JDialog {
     // =====================================================
 
     public DevolucionesDialog(Window owner, AppServices services) {
-        super(owner, "Devoluciones", ModalityType.APPLICATION_MODAL);
+        super(owner, I18n.t("refund.title"), ModalityType.APPLICATION_MODAL);
 
         this.services = services;
 
@@ -198,11 +200,11 @@ public class DevolucionesDialog extends JDialog {
         panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(0, 2, 2, 2));
 
-        JLabel title = new JLabel("DEVOLUCIONES");
+        JLabel title = new JLabel(I18n.t("refund.header"));
         title.setFont(new Font("SansSerif", Font.BOLD, 21));
         title.setForeground(TEXT_MAIN);
 
-        JLabel subtitle = new JLabel("Selecciona una venta, ajusta líneas y confirma");
+        JLabel subtitle = new JLabel(I18n.t("refund.subtitle"));
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
         subtitle.setForeground(TEXT_SOFT);
 
@@ -238,7 +240,7 @@ public class DevolucionesDialog extends JDialog {
                 new EmptyBorder(12, 12, 12, 12)
         ));
 
-        JLabel title = new JLabel("VENTAS");
+        JLabel title = new JLabel(I18n.t("refund.sales.title"));
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
         title.setForeground(TEXT_MAIN);
 
@@ -254,12 +256,12 @@ public class DevolucionesDialog extends JDialog {
         JButton btnTecladoBuscar = new JButton("⌨");
         styleSecondaryButton(btnTecladoBuscar);
         btnTecladoBuscar.setPreferredSize(new Dimension(52, 42));
-        btnTecladoBuscar.setToolTipText("Abrir teclado táctil");
+        btnTecladoBuscar.setToolTipText(I18n.t("keyboard.open"));
         btnTecladoBuscar.addActionListener(e ->
                 TecladoVirtualDialog.showAlfanumerico(
                         this,
                         txtBuscar,
-                        "Teclado - Buscar venta",
+                        I18n.t("refund.keyboard.searchSale"),
                         60
                 )
         );
@@ -302,12 +304,12 @@ public class DevolucionesDialog extends JDialog {
                 new EmptyBorder(12, 12, 12, 12)
         ));
 
-        panel.add(buildInfoBox("Venta", lblVenta));
-        panel.add(buildInfoBox("Fecha", lblFecha));
-        panel.add(buildInfoBox("Pedido", lblPedido));
-        panel.add(buildInfoBox("Servicio", lblServicio));
-        panel.add(buildInfoBox("Pago original", lblPagoOriginal));
-        panel.add(buildInfoBox("Total venta", lblTotalVenta));
+        panel.add(buildInfoBox(I18n.t("refund.info.sale"), lblVenta));
+        panel.add(buildInfoBox(I18n.t("refund.info.date"), lblFecha));
+        panel.add(buildInfoBox(I18n.t("refund.info.order"), lblPedido));
+        panel.add(buildInfoBox(I18n.t("refund.info.service"), lblServicio));
+        panel.add(buildInfoBox(I18n.t("refund.info.originalPayment"), lblPagoOriginal));
+        panel.add(buildInfoBox(I18n.t("refund.info.saleTotal"), lblTotalVenta));
 
         return panel;
     }
@@ -337,7 +339,7 @@ public class DevolucionesDialog extends JDialog {
                 new EmptyBorder(12, 12, 12, 12)
         ));
 
-        JLabel title = new JLabel("LÍNEAS DEL PEDIDO");
+        JLabel title = new JLabel(I18n.t("refund.lines.title"));
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
         title.setForeground(TEXT_MAIN);
 
@@ -357,7 +359,7 @@ public class DevolucionesDialog extends JDialog {
                 new EmptyBorder(8, 10, 8, 10)
         ));
 
-        JLabel title = new JLabel("AJUSTE DE DEVOLUCIÓN");
+        JLabel title = new JLabel(I18n.t("refund.adjust.title"));
         title.setFont(new Font("SansSerif", Font.BOLD, 17));
         title.setForeground(TEXT_MAIN);
 
@@ -366,10 +368,10 @@ public class DevolucionesDialog extends JDialog {
         // ==============================
         JPanel info = new JPanel(new GridLayout(1, 4, 10, 4));
         info.setOpaque(false);
-        info.add(buildCompactInfoBox("Producto", lblLineaProducto));
-        info.add(buildCompactInfoBox("Tamaño", lblLineaTamano));
-        info.add(buildCompactInfoBox("Disponible", lblLineaDisponible));
-        info.add(buildCompactInfoBox("Final línea", lblLineaFinal));
+        info.add(buildCompactInfoBox(I18n.t("refund.info.product"), lblLineaProducto));
+        info.add(buildCompactInfoBox(I18n.t("refund.info.size"), lblLineaTamano));
+        info.add(buildCompactInfoBox(I18n.t("refund.info.available"), lblLineaDisponible));
+        info.add(buildCompactInfoBox(I18n.t("refund.info.lineFinal"), lblLineaFinal));
 
         // ==============================
         // CONTROLES CANTIDAD
@@ -377,6 +379,7 @@ public class DevolucionesDialog extends JDialog {
         styleTouchButton(btnMenos);
         styleTouchButton(btnMas);
         styleWideTouchButton(btnDevolverTodo);
+        btnDevolverTodo.setIcon(TpvIconFactory.refresh(18, TEXT_MAIN));
         styleToggle(toggleReponeStock);
 
         lblCantidadGrande.setFont(new Font("SansSerif", Font.BOLD, 26));
@@ -424,12 +427,12 @@ public class DevolucionesDialog extends JDialog {
         JButton btnTecladoMotivo = new JButton("⌨");
         styleSecondaryButton(btnTecladoMotivo);
         btnTecladoMotivo.setPreferredSize(new Dimension(44, 34));
-        btnTecladoMotivo.setToolTipText("Abrir teclado táctil");
+        btnTecladoMotivo.setToolTipText(I18n.t("keyboard.open"));
         btnTecladoMotivo.addActionListener(e ->
                 TecladoVirtualDialog.showAlfanumerico(
                         this,
                         txtMotivo,
-                        "Teclado - Motivo devolución",
+                        I18n.t("refund.keyboard.reason"),
                         80
                 )
         );
@@ -449,12 +452,12 @@ public class DevolucionesDialog extends JDialog {
         gbc.weightx = 0.55;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 0;
-        formPanel.add(buildCompactLabeledField("Método reembolso", cmbMetodoReembolso), gbc);
+        formPanel.add(buildCompactLabeledField(I18n.t("refund.method"), cmbMetodoReembolso), gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 0.45;
-        formPanel.add(buildCompactInfoBox("Total devolución", lblTotalDevolucion), gbc);
+        formPanel.add(buildCompactInfoBox(I18n.t("refund.total"), lblTotalDevolucion), gbc);
 
         // Fila 2: motivo + observaciones
         gbc.gridx = 0;
@@ -462,14 +465,14 @@ public class DevolucionesDialog extends JDialog {
         gbc.weightx = 0.55;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 0;
-        formPanel.add(buildCompactLabeledField("Motivo", motivoWrapper), gbc);
+        formPanel.add(buildCompactLabeledField(I18n.t("refund.reason"), motivoWrapper), gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 0.45;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1.0;
-        formPanel.add(buildCompactLabeledField("Observaciones", obsScroll), gbc);
+        formPanel.add(buildCompactLabeledField(I18n.t("refund.notes"), obsScroll), gbc);
 
         // ==============================
         // CONTENIDO
@@ -666,10 +669,26 @@ public class DevolucionesDialog extends JDialog {
         styleCombo(cmbMetodoReembolso);
         styleTextArea(txtObservaciones);
 
+        cmbMetodoReembolso.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value != null) {
+                    label.setText(formatPaymentLabel(String.valueOf(value)));
+                }
+                return label;
+            }
+        });
+
         stylePrimaryButton(btnBuscar);
         styleSecondaryButton(btnResetHoy);
         styleSecondaryButton(btnCerrar);
         styleDangerButton(btnConfirmar);
+
+        btnBuscar.setIcon(TpvIconFactory.search(18, TEXT_MAIN));
+        btnResetHoy.setIcon(TpvIconFactory.calendar(18, TEXT_MAIN));
+        btnCerrar.setIcon(TpvIconFactory.cancel(18, TEXT_MAIN));
+        btnConfirmar.setIcon(TpvIconFactory.check(18, TEXT_MAIN));
     }
 
     private void styleTextField(JTextField field) {
@@ -796,7 +815,7 @@ public class DevolucionesDialog extends JDialog {
         } catch (Exception e) {
             TpvDialogUtils.showError(
                     this,
-                    "Error buscando ventas",
+                    I18n.t("refund.error.searchSales"),
                     e.getMessage()
             );
         }
@@ -829,7 +848,7 @@ public class DevolucionesDialog extends JDialog {
         } catch (Exception ex) {
             TpvDialogUtils.showError(
                     this,
-                    "Error cargando venta",
+                    I18n.t("refund.error.loadSale"),
                     ex.getMessage()
             );
             clearVentaSeleccionada();
@@ -946,7 +965,7 @@ public class DevolucionesDialog extends JDialog {
             lblCantidadGrande.setText("0");
             toggleReponeStock.setSelected(false);
             toggleReponeStock.setEnabled(false);
-            toggleReponeStock.setText("REPONE STOCK: NO");
+            toggleReponeStock.setText(I18n.t("refund.restockNo"));
             btnMas.setEnabled(false);
             btnMenos.setEnabled(false);
             btnDevolverTodo.setEnabled(false);
@@ -962,7 +981,7 @@ public class DevolucionesDialog extends JDialog {
         boolean enabledStock = row.isPermiteReponerStock() && row.getCantidadADevolver() > 0;
         toggleReponeStock.setEnabled(enabledStock);
         toggleReponeStock.setSelected(enabledStock && row.isReponeStock());
-        toggleReponeStock.setText(toggleReponeStock.isSelected() ? "REPONE STOCK: SÍ" : "REPONE STOCK: NO");
+        toggleReponeStock.setText(toggleReponeStock.isSelected() ? I18n.t("refund.restockYes") : I18n.t("refund.restockNo"));
 
         btnMas.setEnabled(row.getCantidadDisponible() > 0);
         btnMenos.setEnabled(row.getCantidadADevolver() > 0);
@@ -979,8 +998,8 @@ public class DevolucionesDialog extends JDialog {
 
             boolean confirm = TpvDialogUtils.confirm(
                     this,
-                    "Confirmar devolución",
-                    "¿Confirmar devolución por " + formatMoney(calcularTotalRequest()) + "?"
+                    I18n.t("refund.confirm.title"),
+                    I18n.t("refund.confirm.message", formatMoney(calcularTotalRequest()))
             );
 
             if (!confirm) {
@@ -1001,10 +1020,8 @@ public class DevolucionesDialog extends JDialog {
             } else {
                 TpvDialogUtils.showInfo(
                         this,
-                        "Devolución registrada",
-                        "Devolución registrada correctamente.\n\n"
-                                + "ID devolución: " + result.getIdDevolucion() + "\n"
-                                + "Total devuelto: " + formatMoney(result.getImporteTotalDevuelto())
+                        I18n.t("refund.registered.title"),
+                        I18n.t("refund.registered.message", result.getIdDevolucion(), formatMoney(result.getImporteTotalDevuelto()))
                 );
             }
 
@@ -1017,7 +1034,7 @@ public class DevolucionesDialog extends JDialog {
         } catch (Exception e) {
             TpvDialogUtils.showError(
                     this,
-                    "Error registrando devolución",
+                    I18n.t("refund.error.register"),
                     e.getMessage()
             );
         }
@@ -1029,12 +1046,12 @@ public class DevolucionesDialog extends JDialog {
 
     private RegistrarDevolucionRequest buildRequest() {
         if (ventaActual == null) {
-            throw new IllegalStateException("No hay una venta seleccionada.");
+            throw new IllegalStateException(I18n.t("refund.validation.noSale"));
         }
 
         List<DevolucionRowVM> selectedRows = devolucionModel.getSelectedForReturn();
         if (selectedRows.isEmpty()) {
-            throw new IllegalStateException("Debes indicar una cantidad en alguna línea.");
+            throw new IllegalStateException(I18n.t("refund.validation.noLines"));
         }
 
         RegistrarDevolucionRequest request = new RegistrarDevolucionRequest();
@@ -1157,6 +1174,17 @@ public class DevolucionesDialog extends JDialog {
 
     private String normalize(String text) {
         return text == null ? null : text.trim();
+    }
+
+    private String formatPaymentLabel(String value) {
+        if (value == null) {
+            return "-";
+        }
+        return switch (value.toUpperCase(Locale.ROOT)) {
+            case "EFECTIVO" -> I18n.t("payment.cash");
+            case "TARJETA" -> I18n.t("payment.card");
+            default -> value;
+        };
     }
 
     private String formatMoney(BigDecimal amount) {

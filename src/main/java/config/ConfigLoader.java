@@ -152,6 +152,51 @@ public final class ConfigLoader {
 
         return "es";
     }
+    public static String getAppLookAndFeel() {
+        checkLoaded();
+
+        String value = properties.getProperty("app.lookAndFeel", "cafe");
+
+        if (value == null || value.isBlank()) {
+            return "cafe";
+        }
+
+        return normalizeLookAndFeel(value);
+    }
+    public static synchronized void updateAppLookAndFeel(String lookAndFeel) {
+        checkLoaded();
+
+        String normalized = normalizeLookAndFeel(lookAndFeel);
+
+        properties.setProperty("app.lookAndFeel", normalized);
+        saveProperties();
+    }
+
+    private static String normalizeLookAndFeel(String lookAndFeel) {
+        if (lookAndFeel == null || lookAndFeel.isBlank()) {
+            return "cafe";
+        }
+
+        String value = lookAndFeel.trim().toLowerCase();
+
+        if ("flat_light".equals(value) || "flatlight".equals(value) || "light".equals(value)) {
+            return "flat_light";
+        }
+
+        if ("flat_dark".equals(value) || "flatdark".equals(value) || "dark".equals(value)) {
+            return "flat_dark";
+        }
+
+        if ("flat_intellij".equals(value) || "flatintellij".equals(value) || "intellij".equals(value)) {
+            return "flat_intellij";
+        }
+
+        if ("flat_darcula".equals(value) || "flatdarcula".equals(value) || "darcula".equals(value)) {
+            return "flat_darcula";
+        }
+
+        return "cafe";
+    }
 
     // =========================================
     // TERMINAL

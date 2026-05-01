@@ -2,6 +2,8 @@ package ui.ventas;
 
 import enums.TipoServicio;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -78,20 +80,23 @@ public class PagoPanel extends JPanel {
         JPanel header = new JPanel(new BorderLayout(0, 6));
         header.setOpaque(false);
 
-        JLabel lblTitulo = new JLabel("PAGO", SwingConstants.CENTER);
+        JLabel lblTitulo = new JLabel(I18n.t("sales.payment.title"), SwingConstants.CENTER);
+        lblTitulo.setIcon(TpvIconFactory.creditCard(22, InformeUiTheme.ACCENT_GOLD));
+        lblTitulo.setHorizontalTextPosition(SwingConstants.RIGHT);
+        lblTitulo.setIconTextGap(10);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 23));
         lblTitulo.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
         JPanel resumen = new JPanel(new GridLayout(1, 3, 12, 0));
         resumen.setOpaque(false);
 
-        lblNombrePedido = createInfoLabel("Pedido: Cliente");
-        lblTipoServicio = createInfoLabel("Servicio: Para tomar");
-        lblTotal = createTotalLabel("Total: 0,00 €");
+        lblNombrePedido = createInfoLabel(I18n.t("sales.payment.customer.default"));
+        lblTipoServicio = createInfoLabel(I18n.t("sales.service.dineIn"));
+        lblTotal = createTotalLabel("0,00 €");
 
-        resumen.add(createInfoBox("Pedido", lblNombrePedido));
-        resumen.add(createInfoBox("Servicio", lblTipoServicio));
-        resumen.add(createInfoBox("Total", lblTotal));
+        resumen.add(createInfoBox(I18n.t("sales.payment.order"), lblNombrePedido));
+        resumen.add(createInfoBox(I18n.t("sales.payment.service"), lblTipoServicio));
+        resumen.add(createInfoBox(I18n.t("sales.payment.total"), lblTotal));
 
         header.add(lblTitulo, BorderLayout.NORTH);
         header.add(resumen, BorderLayout.CENTER);
@@ -150,11 +155,16 @@ public class PagoPanel extends JPanel {
         acciones.setOpaque(false);
         acciones.setLayout(new BoxLayout(acciones, BoxLayout.Y_AXIS));
 
-        btnLimpiar = createSecondaryActionButton("Limpiar");
-        btnVolver = createSecondaryActionButton("Volver");
-        btnTarjeta = createCardPaymentButton("Tarjeta");
-        btnEfectivo = createPrimaryPaymentButton("Efectivo");
-        btnEfectivoExacto = createPrimaryPaymentButton("Efectivo exacto");
+        btnLimpiar = createSecondaryActionButton(I18n.t("common.clean"));
+        btnVolver = createSecondaryActionButton(I18n.t("common.back"));
+        btnTarjeta = createCardPaymentButton(I18n.t("sales.payment.card"));
+        btnEfectivo = createPrimaryPaymentButton(I18n.t("sales.payment.cash"));
+        btnEfectivoExacto = createPrimaryPaymentButton(I18n.t("sales.payment.exactCash"));
+
+        btnVolver.setIcon(TpvIconFactory.back(18, InformeUiTheme.TEXT_PRIMARY));
+        btnTarjeta.setIcon(TpvIconFactory.creditCard(18, new Color(25, 25, 25)));
+        btnEfectivo.setIcon(TpvIconFactory.cashRegister(18, Color.WHITE));
+        btnEfectivoExacto.setIcon(TpvIconFactory.check(18, Color.WHITE));
 
         addActionButton(acciones, btnLimpiar);
         acciones.add(Box.createVerticalStrut(8));
@@ -188,14 +198,8 @@ public class PagoPanel extends JPanel {
         btnLimpiar.addActionListener(e -> limpiarImporte());
 
         btnVolver.addActionListener(e -> listener.onVolver());
-
         btnTarjeta.addActionListener(e -> listener.onCobroTarjeta());
-
-        btnEfectivo.addActionListener(e -> {
-            BigDecimal importe = getImporte();
-            listener.onCobroEfectivo(importe);
-        });
-
+        btnEfectivo.addActionListener(e -> listener.onCobroEfectivo(getImporte()));
         btnEfectivoExacto.addActionListener(e -> listener.onCobroEfectivoExacto());
     }
 
@@ -239,11 +243,11 @@ public class PagoPanel extends JPanel {
     public void setData(String nombrePedido, TipoServicio tipoServicio, BigDecimal total) {
         String nombreFinal = (nombrePedido != null && !nombrePedido.isBlank())
                 ? nombrePedido.trim()
-                : "Cliente";
+                : I18n.t("sales.payment.customer.default");
 
         String servicioFinal = (tipoServicio == TipoServicio.PARA_LLEVAR)
-                ? "Para llevar"
-                : "Para tomar";
+                ? I18n.t("sales.service.takeAway")
+                : I18n.t("sales.service.dineIn");
 
         this.totalActual = (total != null) ? total : BigDecimal.ZERO;
 
@@ -256,8 +260,8 @@ public class PagoPanel extends JPanel {
 
     public void clear() {
         this.totalActual = BigDecimal.ZERO;
-        lblNombrePedido.setText("Cliente");
-        lblTipoServicio.setText("Para tomar");
+        lblNombrePedido.setText(I18n.t("sales.payment.customer.default"));
+        lblTipoServicio.setText(I18n.t("sales.service.dineIn"));
         lblTotal.setText("0,00 €");
         txtImporte.setText("");
     }
@@ -361,6 +365,7 @@ public class PagoPanel extends JPanel {
     private JButton createSecondaryActionButton(String text) {
         JButton button = new JButton(text);
         InformeUiTheme.styleSecondaryButton(button);
+        button.setIconTextGap(8);
         button.setMaximumSize(new Dimension(170, 42));
         button.setPreferredSize(new Dimension(170, 42));
         return button;
@@ -369,6 +374,7 @@ public class PagoPanel extends JPanel {
     private JButton createPrimaryPaymentButton(String text) {
         JButton button = new JButton(text);
         InformeUiTheme.stylePrimaryButton(button);
+        button.setIconTextGap(8);
         button.setMaximumSize(new Dimension(170, 48));
         button.setPreferredSize(new Dimension(170, 48));
         return button;
@@ -380,6 +386,7 @@ public class PagoPanel extends JPanel {
         button.setFont(new Font("SansSerif", Font.BOLD, 16));
         button.setBackground(InformeUiTheme.ACCENT_GOLD);
         button.setForeground(new Color(25, 25, 25));
+        button.setIconTextGap(8);
         button.setMaximumSize(new Dimension(170, 48));
         button.setPreferredSize(new Dimension(170, 48));
         button.setBorder(new EmptyBorder(12, 18, 12, 18));

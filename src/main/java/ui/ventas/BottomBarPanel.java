@@ -2,6 +2,9 @@ package ui.ventas;
 
 import enums.ModoOperacion;
 import model.TicketSession;
+import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,12 +24,12 @@ public class BottomBarPanel extends JPanel {
     private final Runnable onDescuentos;
     private final Runnable onEliminar;
 
-    private final JLabel lblTotal = new JLabel("TOTAL: 0.00€", SwingConstants.LEFT);
-    private final JButton btnCobrar = new JButton("COBRAR");
-    private final JButton btnCancelar = new JButton("CANCELAR");
-    private final JButton btnOpciones = new JButton("OPCIONES");
-    private final JButton btnDescuentos = new JButton("DESCUENTOS");
-    private final JButton btnEliminar = new JButton("ELIMINAR");
+    private final JLabel lblTotal = new JLabel(I18n.t("sales.bottom.total", "0.00"), SwingConstants.LEFT);
+    private final JButton btnCobrar = new JButton(I18n.t("sales.bottom.charge"));
+    private final JButton btnCancelar = new JButton(I18n.t("common.cancel"));
+    private final JButton btnOpciones = new JButton(I18n.t("sales.bottom.options"));
+    private final JButton btnDescuentos = new JButton(I18n.t("sales.bottom.discounts"));
+    private final JButton btnEliminar = new JButton(I18n.t("common.delete"));
 
     public BottomBarPanel(
             TicketSession ticketSession,
@@ -55,15 +58,13 @@ public class BottomBarPanel extends JPanel {
         this.onOpciones = onOpciones;
         this.onDescuentos = onDescuentos;
         this.onEliminar = onEliminar;
-        
-
 
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
         setBorder(new EmptyBorder(8, 8, 8, 8));
 
         lblTotal.setFont(new Font("Monospaced", Font.BOLD, 22));
-        lblTotal.setForeground(new Color(255, 210, 0));
+        lblTotal.setForeground(InformeUiTheme.ACCENT_GOLD);
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         left.setOpaque(false);
@@ -71,6 +72,12 @@ public class BottomBarPanel extends JPanel {
 
         JPanel right = new JPanel(new GridLayout(1, 5, 10, 10));
         right.setOpaque(false);
+
+        btnDescuentos.setIcon(TpvIconFactory.product(18, InformeUiTheme.TEXT_PRIMARY));
+        btnOpciones.setIcon(TpvIconFactory.settings(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCobrar.setIcon(TpvIconFactory.creditCard(18, Color.WHITE));
+        btnEliminar.setIcon(TpvIconFactory.cancel(18, Color.WHITE));
 
         styleBtn(btnDescuentos);
         styleBtn(btnOpciones);
@@ -109,24 +116,26 @@ public class BottomBarPanel extends JPanel {
 
     private void applyModeVisuals() {
         if (modoOperacion == ModoOperacion.MERMA) {
-            btnCobrar.setText("REGISTRAR MERMA");
-            btnCancelar.setText("CANCELAR MERMA");
+            btnCobrar.setText(I18n.t("sales.bottom.registerWaste"));
+            btnCobrar.setIcon(TpvIconFactory.warning(18, Color.WHITE));
+            btnCancelar.setText(I18n.t("sales.bottom.cancelWaste"));
             btnDescuentos.setVisible(false);
         } else {
-            btnCobrar.setText("COBRAR");
-            btnCancelar.setText("CANCELAR");
+            btnCobrar.setText(I18n.t("sales.bottom.charge"));
+            btnCobrar.setIcon(TpvIconFactory.creditCard(18, Color.WHITE));
+            btnCancelar.setText(I18n.t("common.cancel"));
             btnDescuentos.setVisible(true);
         }
     }
 
     public void refresh() {
         BigDecimal total = ticketSession.getTotal();
-        lblTotal.setText("TOTAL: " + total.toPlainString() + "€");
+        lblTotal.setText(I18n.t("sales.bottom.total", total.toPlainString()));
 
         boolean hasItems = !ticketSession.isEmpty();
 
         btnCobrar.setEnabled(hasItems);
-        btnCancelar.setEnabled(hasItems||modoOperacion==ModoOperacion.MERMA);
+        btnCancelar.setEnabled(hasItems || modoOperacion == ModoOperacion.MERMA);
         btnEliminar.setEnabled(hasItems);
         btnDescuentos.setEnabled(hasItems && modoOperacion != ModoOperacion.MERMA);
 
@@ -137,21 +146,30 @@ public class BottomBarPanel extends JPanel {
     private void styleBtn(JButton b) {
         b.setFocusPainted(false);
         b.setFont(new Font("Monospaced", Font.BOLD, 16));
-        b.setBackground(new Color(255, 210, 0));
+        b.setBackground(InformeUiTheme.ACCENT_GOLD);
         b.setForeground(Color.BLACK);
+        b.setIconTextGap(8);
         b.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private void stylePrimaryBtn(JButton b) {
-        styleBtn(b);
+        b.setFocusPainted(false);
         b.setFont(new Font("Monospaced", Font.BOLD, 18));
+        b.setBackground(InformeUiTheme.STARBUCKS_GREEN);
+        b.setForeground(Color.WHITE);
+        b.setIconTextGap(8);
+        b.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private void styleDangerBtn(JButton b) {
         b.setFocusPainted(false);
         b.setFont(new Font("Monospaced", Font.BOLD, 16));
-        b.setBackground(new Color(220, 53, 69));
+        b.setBackground(InformeUiTheme.DANGER);
         b.setForeground(Color.WHITE);
+        b.setIconTextGap(8);
         b.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 }

@@ -2,6 +2,7 @@ package ui.dialog;
 
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,7 +26,7 @@ public class SkuDialog extends JDialog {
     private String result;
 
     public SkuDialog(JFrame owner) {
-        super(owner, "Buscar por SKU", true);
+        super(owner, I18n.t("sales.sku.title"), true);
 
         initDialog();
         initComponents();
@@ -107,11 +108,11 @@ public class SkuDialog extends JDialog {
         panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(0, 2, 4, 2));
 
-        JLabel lblTitle = new JLabel("INTRODUCE SKU", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel(I18n.t("sales.sku.header"), SwingConstants.CENTER);
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitle.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblSubtitle = new JLabel("Búsqueda rápida de producto por código", SwingConstants.CENTER);
+        JLabel lblSubtitle = new JLabel(I18n.t("sales.sku.subtitle"), SwingConstants.CENTER);
         lblSubtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
         lblSubtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -133,7 +134,7 @@ public class SkuDialog extends JDialog {
         JPanel card = InformeUiTheme.createCardPanel(new BorderLayout(0, 8));
         card.setBorder(InformeUiTheme.createCardBorder());
 
-        JLabel lblCampo = InformeUiTheme.createFieldLabel("SKU / Código de producto");
+        JLabel lblCampo = InformeUiTheme.createFieldLabel(I18n.t("sales.sku.field"));
         lblCampo.setHorizontalAlignment(SwingConstants.CENTER);
 
         txtSku.setPreferredSize(new Dimension(0, 76));
@@ -176,13 +177,13 @@ public class SkuDialog extends JDialog {
         JPanel row = new JPanel(new GridLayout(1, 3, BUTTON_GAP, BUTTON_GAP));
         row.setOpaque(false);
 
-        JButton btnBackspace = createActionButton("BORRAR");
+        JButton btnBackspace = createActionButton(I18n.t("common.backspace"));
         btnBackspace.addActionListener(e -> backspace());
 
-        JButton btnClear = createDangerActionButton("LIMPIAR");
+        JButton btnClear = createDangerActionButton(I18n.t("common.clean"));
         btnClear.addActionListener(e -> clearAll());
 
-        JButton btnCancelar = createSecondaryActionButton("CANCELAR");
+        JButton btnCancelar = createSecondaryActionButton(I18n.t("common.cancel"));
         btnCancelar.addActionListener(e -> cancel());
 
         row.add(btnBackspace);
@@ -196,7 +197,7 @@ public class SkuDialog extends JDialog {
         JPanel row = new JPanel(new GridLayout(1, 1, BUTTON_GAP, BUTTON_GAP));
         row.setOpaque(false);
 
-        JButton btnAceptar = createPrimaryActionButton("ACEPTAR");
+        JButton btnAceptar = createPrimaryActionButton(I18n.t("common.accept"));
         btnAceptar.addActionListener(e -> accept());
 
         row.add(btnAceptar);
@@ -323,8 +324,8 @@ public class SkuDialog extends JDialog {
         if (sku.isEmpty()) {
             TpvDialogUtils.showWarning(
                     this,
-                    "SKU",
-                    "Introduce un SKU antes de aceptar."
+                    I18n.t("sales.sku.title"),
+                    I18n.t("sales.sku.validation.empty")
             );
             txtSku.requestFocusInWindow();
             return;

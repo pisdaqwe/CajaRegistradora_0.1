@@ -3,6 +3,8 @@ package ui.dialog;
 import ui.common.TecladoVirtualDialog;
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,7 +20,7 @@ public class MermaDialog extends JDialog {
     private MermaDialogResult result = MermaDialogResult.cancelled();
 
     public MermaDialog(Window owner) {
-        super(owner, "Registrar merma", ModalityType.APPLICATION_MODAL);
+        super(owner, I18n.t("sales.waste.title"), ModalityType.APPLICATION_MODAL);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(true);
@@ -84,20 +86,18 @@ public class MermaDialog extends JDialog {
         JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 0));
         textPanel.setOpaque(false);
 
-        JLabel lblTitulo = new JLabel("REGISTRAR MERMA");
+        JLabel lblTitulo = new JLabel(I18n.t("sales.waste.header"));
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitulo.setForeground(InformeUiTheme.TEXT_PRIMARY);
 
-        JLabel lblSub = new JLabel("Selecciona productos en modo merma y registra todos de una vez");
+        JLabel lblSub = new JLabel(I18n.t("sales.waste.subtitle"));
         lblSub.setFont(InformeUiTheme.FONT_SUBTITLE);
         lblSub.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
         textPanel.add(lblTitulo);
         textPanel.add(lblSub);
 
-        JLabel lblIcon = new JLabel("⚠", SwingConstants.RIGHT);
-        lblIcon.setFont(new Font("SansSerif", Font.BOLD, 28));
-        lblIcon.setForeground(InformeUiTheme.ACCENT_GOLD);
+        JLabel lblIcon = new JLabel(TpvIconFactory.warning(32, InformeUiTheme.ACCENT_GOLD), SwingConstants.RIGHT);
         lblIcon.setPreferredSize(new Dimension(48, 42));
 
         panel.add(textPanel, BorderLayout.CENTER);
@@ -129,15 +129,10 @@ public class MermaDialog extends JDialog {
                 new EmptyBorder(12, 14, 12, 14)
         ));
 
-        JLabel lblIcon = new JLabel("ℹ", SwingConstants.CENTER);
-        lblIcon.setFont(new Font("SansSerif", Font.BOLD, 22));
-        lblIcon.setForeground(InformeUiTheme.ACCENT_GOLD);
+        JLabel lblIcon = new JLabel(TpvIconFactory.info(22, InformeUiTheme.ACCENT_GOLD), SwingConstants.CENTER);
         lblIcon.setPreferredSize(new Dimension(34, 34));
 
-        JLabel lblInfo = new JLabel(
-                "<html><b>¿Qué se registrará?</b><br>"
-                        + "Se registrarán los items añadidos al ticket en modo merma.</html>"
-        );
+        JLabel lblInfo = new JLabel(I18n.t("sales.waste.infoHtml"));
         lblInfo.setFont(InformeUiTheme.FONT_BODY);
         lblInfo.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -162,12 +157,12 @@ public class MermaDialog extends JDialog {
         JButton btnTecladoMotivo = new JButton("⌨");
         InformeUiTheme.styleSecondaryButton(btnTecladoMotivo);
         btnTecladoMotivo.setPreferredSize(new Dimension(60, 38));
-        btnTecladoMotivo.setToolTipText("Abrir teclado táctil");
+        btnTecladoMotivo.setToolTipText(I18n.t("common.openTouchKeyboard"));
         btnTecladoMotivo.addActionListener(e ->
                 TecladoVirtualDialog.showAlfanumerico(
                         this,
                         txtMotivo,
-                        "Teclado - Motivo de merma",
+                        I18n.t("sales.waste.keyboard.reason"),
                         80
                 )
         );
@@ -183,7 +178,7 @@ public class MermaDialog extends JDialog {
         scrollObs.setBorder(BorderFactory.createLineBorder(InformeUiTheme.BORDER, 1));
         scrollObs.setPreferredSize(new Dimension(0, 120));
 
-        JLabel lblHint = new JLabel("Ejemplo: producto caducado, bebida mal preparada, caída al suelo...");
+        JLabel lblHint = new JLabel(I18n.t("sales.waste.reason.hint"));
         lblHint.setFont(new Font("SansSerif", Font.ITALIC, 12));
         lblHint.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
@@ -194,7 +189,7 @@ public class MermaDialog extends JDialog {
         gbc.gridx = 0;
 
         gbc.gridy = 0;
-        form.add(createLabel("Motivo de la merma *"), gbc);
+        form.add(createLabel(I18n.t("sales.waste.reason")), gbc);
 
         gbc.gridy = 1;
         form.add(motivoWrapper, gbc);
@@ -203,7 +198,7 @@ public class MermaDialog extends JDialog {
         form.add(Box.createVerticalStrut(4), gbc);
 
         gbc.gridy = 3;
-        form.add(createLabel("Observaciones"), gbc);
+        form.add(createLabel(I18n.t("sales.waste.notes")), gbc);
 
         gbc.gridy = 4;
         gbc.fill = GridBagConstraints.BOTH;
@@ -236,19 +231,23 @@ public class MermaDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setOpaque(false);
 
-        JLabel lblFooter = new JLabel("La merma quedará registrada y se usará para el control de stock.");
+        JLabel lblFooter = new JLabel(I18n.t("sales.waste.footer"));
         lblFooter.setFont(new Font("SansSerif", Font.PLAIN, 12));
         lblFooter.setForeground(InformeUiTheme.TEXT_SECONDARY);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);
 
-        JButton btnCancelar = new JButton("Cancelar");
+        JButton btnCancelar = new JButton(I18n.t("common.cancel"));
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIconTextGap(8);
         InformeUiTheme.styleSecondaryButton(btnCancelar);
         btnCancelar.setPreferredSize(new Dimension(140, 42));
         btnCancelar.addActionListener(e -> cancelar());
 
-        JButton btnAceptar = new JButton("Registrar merma");
+        JButton btnAceptar = new JButton(I18n.t("sales.waste.register"));
+        btnAceptar.setIcon(TpvIconFactory.warning(18, Color.WHITE));
+        btnAceptar.setIconTextGap(8);
         InformeUiTheme.styleDangerButton(btnAceptar);
         btnAceptar.setPreferredSize(new Dimension(190, 42));
         btnAceptar.addActionListener(e -> onAceptar());
@@ -279,8 +278,8 @@ public class MermaDialog extends JDialog {
         if (motivo.isBlank()) {
             TpvDialogUtils.showWarning(
                     this,
-                    "Motivo obligatorio",
-                    "Debes indicar un motivo para registrar la merma."
+                    I18n.t("sales.waste.reason.required.title"),
+                    I18n.t("sales.waste.reason.required.message")
             );
             txtMotivo.requestFocusInWindow();
             return;

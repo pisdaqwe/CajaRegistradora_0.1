@@ -4,6 +4,7 @@ import dtoS.ProductoBusquedaRowDTO;
 import ui.common.TecladoVirtualDialog;
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -50,7 +51,7 @@ public class BuscarProductoDialog extends JDialog {
     private ProductoBusquedaRowDTO result;
 
     public BuscarProductoDialog(JFrame owner, List<ProductoBusquedaRowDTO> rows) {
-        super(owner, "Buscar producto", true);
+        super(owner, I18n.t("sales.searchProduct.title"), true);
         this.rows = rows != null ? rows : new ArrayList<>();
 
         initDialog();
@@ -161,12 +162,12 @@ public class BuscarProductoDialog extends JDialog {
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
 
-        JLabel lblTitle = new JLabel("BUSCAR PRODUCTO");
+        JLabel lblTitle = new JLabel(I18n.t("sales.searchProduct.header"));
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 23));
         lblTitle.setForeground(TEXT_MAIN);
 
-        JLabel lblSubtitle = new JLabel("Busca por nombre y añade solo productos vendibles");
+        JLabel lblSubtitle = new JLabel(I18n.t("sales.searchProduct.subtitle"));
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
         lblSubtitle.setForeground(TEXT_SOFT);
@@ -182,7 +183,7 @@ public class BuscarProductoDialog extends JDialog {
                 new EmptyBorder(8, 10, 8, 10)
         ));
 
-        JLabel lblBuscar = new JLabel("Buscar:");
+        JLabel lblBuscar = new JLabel(I18n.t("common.search") + ":");
         lblBuscar.setFont(new Font("SansSerif", Font.BOLD, 15));
         lblBuscar.setForeground(TEXT_MAIN);
 
@@ -191,12 +192,12 @@ public class BuscarProductoDialog extends JDialog {
         inputWrap.add(txtBuscar, BorderLayout.CENTER);
 
         JButton btnTeclado = createSmallActionButton("⌨");
-        btnTeclado.setToolTipText("Abrir teclado táctil");
+        btnTeclado.setToolTipText(I18n.t("common.openTouchKeyboard"));
         btnTeclado.addActionListener(e ->
                 TecladoVirtualDialog.showAlfanumerico(
                         this,
                         txtBuscar,
-                        "Teclado - Buscar producto",
+                        I18n.t("sales.searchProduct.keyboard"),
                         60
                 )
         );
@@ -232,15 +233,15 @@ public class BuscarProductoDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setOpaque(false);
 
-        JLabel lblHint = new JLabel("Doble clic sobre un producto para añadirlo.");
+        JLabel lblHint = new JLabel(I18n.t("sales.searchProduct.hint"));
         lblHint.setFont(new Font("SansSerif", Font.PLAIN, 12));
         lblHint.setForeground(TEXT_SOFT);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);
 
-        JButton btnCancelar = createSecondaryActionButton("CANCELAR");
-        JButton btnAceptar = createPrimaryActionButton("AÑADIR");
+        JButton btnCancelar = createSecondaryActionButton(I18n.t("common.cancel"));
+        JButton btnAceptar = createPrimaryActionButton(I18n.t("sales.searchProduct.add"));
 
         btnCancelar.addActionListener(e -> cancel());
         btnAceptar.addActionListener(e -> acceptSelected());
@@ -386,8 +387,8 @@ public class BuscarProductoDialog extends JDialog {
         if (viewRow < 0) {
             TpvDialogUtils.showWarning(
                     this,
-                    "Búsqueda de productos",
-                    "Selecciona un producto de la tabla."
+                    I18n.t("sales.searchProduct.title"),
+                    I18n.t("sales.searchProduct.validation.select")
             );
             return;
         }
@@ -398,8 +399,8 @@ public class BuscarProductoDialog extends JDialog {
         if (!selected.isBotonHabilitado()) {
             TpvDialogUtils.showWarning(
                     this,
-                    "Producto no disponible",
-                    "Ese producto no se puede vender ahora.\n\nEstado: " + selected.getTextoEstado()
+                    I18n.t("sales.searchProduct.unavailable.title"),
+                    I18n.t("sales.searchProduct.unavailable.message", selected.getTextoEstado())
             );
             return;
         }
@@ -422,7 +423,7 @@ public class BuscarProductoDialog extends JDialog {
 
         private static final long serialVersionUID = 1L;
 
-        private final String[] columns = {"Producto", "Tamaño", "Precio", "Estado"};
+        private final String[] columns = {I18n.t("sales.searchProduct.table.product"), I18n.t("sales.searchProduct.table.size"), I18n.t("sales.searchProduct.table.price"), I18n.t("sales.searchProduct.table.status")};
         private final List<ProductoBusquedaRowDTO> rows;
 
         private ProductoBusquedaTableModel(List<ProductoBusquedaRowDTO> rows) {

@@ -1,5 +1,7 @@
 package ui.table;
 
+import util.I18n;
+
 import javax.swing.table.AbstractTableModel;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -18,34 +20,26 @@ public class DevolucionTableModel extends AbstractTableModel {
     public static final int COL_A_DEVOLVER = 8;
     public static final int COL_REPONE_STOCK = 9;
 
-    private final String[] columns = {
-            "Producto",
-            "Tamaño",
-            "Vendida",
-            "Ya devuelta",
-            "Disponible",
-            "Bruto",
-            "Descuento",
-            "Final",
-            "A devolver",
-            "Repone stock"
-    };
-
     private final List<DevolucionRowVM> rows = new ArrayList<>();
 
-    @Override
-    public int getRowCount() {
-        return rows.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columns.length;
-    }
+    @Override public int getRowCount() { return rows.size(); }
+    @Override public int getColumnCount() { return 10; }
 
     @Override
     public String getColumnName(int column) {
-        return columns[column];
+        return switch (column) {
+            case COL_PRODUCTO -> I18n.t("refund.table.product");
+            case COL_TAMANO -> I18n.t("refund.table.size");
+            case COL_VENDIDA -> I18n.t("refund.table.sold");
+            case COL_YA_DEVUELTA -> I18n.t("refund.table.alreadyRefunded");
+            case COL_DISPONIBLE -> I18n.t("refund.table.available");
+            case COL_BRUTO -> I18n.t("refund.table.gross");
+            case COL_DESCUENTO -> I18n.t("refund.table.discount");
+            case COL_FINAL -> I18n.t("refund.table.final");
+            case COL_A_DEVOLVER -> I18n.t("refund.table.toRefund");
+            case COL_REPONE_STOCK -> I18n.t("refund.table.restock");
+            default -> "";
+        };
     }
 
     @Override
@@ -58,15 +52,11 @@ public class DevolucionTableModel extends AbstractTableModel {
         };
     }
 
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return false;
-    }
+    @Override public boolean isCellEditable(int rowIndex, int columnIndex) { return false; }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         DevolucionRowVM row = rows.get(rowIndex);
-
         return switch (columnIndex) {
             case COL_PRODUCTO -> row.getNombreProducto();
             case COL_TAMANO -> row.getTamano();
@@ -95,17 +85,9 @@ public class DevolucionTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    public int size() {
-        return rows.size();
-    }
-
-    public DevolucionRowVM getRowAt(int modelRow) {
-        return rows.get(modelRow);
-    }
-
-    public void updateRow(int modelRow) {
-        fireTableRowsUpdated(modelRow, modelRow);
-    }
+    public int size() { return rows.size(); }
+    public DevolucionRowVM getRowAt(int modelRow) { return rows.get(modelRow); }
+    public void updateRow(int modelRow) { fireTableRowsUpdated(modelRow, modelRow); }
 
     public List<DevolucionRowVM> getSelectedForReturn() {
         List<DevolucionRowVM> result = new ArrayList<>();
@@ -117,7 +99,5 @@ public class DevolucionTableModel extends AbstractTableModel {
         return result;
     }
 
-    private BigDecimal safe(BigDecimal value) {
-        return value != null ? value : BigDecimal.ZERO;
-    }
+    private BigDecimal safe(BigDecimal value) { return value != null ? value : BigDecimal.ZERO; }
 }

@@ -94,7 +94,75 @@ public final class TpvIconFactory {
     public static Icon logout(int size, Color color) {
         return icon(IconType.LOGOUT, size, color);
     }
+    public static Icon location(int size, Color color) {
+        return icon(IconType.LOCATION, size, color);
+    }
 
+    public static Icon branch(int size, Color color) {
+        return icon(IconType.BRANCH, size, color);
+    }
+
+    public static Icon folder(int size, Color color) {
+        return icon(IconType.FOLDER, size, color);
+    }
+    public static Icon filter(int size, Color color) {
+        return icon(IconType.FILTER, size, color);
+    }
+
+    public static Icon search(int size, Color color) {
+        return icon(IconType.SEARCH, size, color);
+    }
+
+    public static Icon calendar(int size, Color color) {
+        return icon(IconType.CALENDAR, size, color);
+    }
+
+    public static Icon eye(int size, Color color) {
+        return icon(IconType.EYE, size, color);
+    }
+
+    public static Icon refresh(int size, Color color) {
+        return icon(IconType.REFRESH, size, color);
+    }
+
+    public static Icon history(int size, Color color) {
+        return icon(IconType.HISTORY, size, color);
+    }
+
+    public static Icon shield(int size, Color color) {
+        return icon(IconType.SHIELD, size, color);
+    }
+
+    public static Icon table(int size, Color color) {
+        return icon(IconType.TABLE, size, color);
+    }
+    public static Icon chartBar(int size, Color color) {
+        return icon(IconType.CHART_BAR, size, color);
+    }
+
+    public static Icon creditCard(int size, Color color) {
+        return icon(IconType.CREDIT_CARD, size, color);
+    }
+
+    public static Icon product(int size, Color color) {
+        return icon(IconType.PRODUCT, size, color);
+    }
+
+    public static Icon users(int size, Color color) {
+        return icon(IconType.USERS, size, color);
+    }
+
+    public static Icon idCard(int size, Color color) {
+        return icon(IconType.ID_CARD, size, color);
+    }
+
+    public static Icon clock(int size, Color color) {
+        return icon(IconType.CLOCK, size, color);
+    }
+
+    public static Icon key(int size, Color color) {
+        return icon(IconType.KEY, size, color);
+    }
     public static Icon icon(IconType type, int size, Color color) {
         return new VectorIcon(
                 type != null ? type : IconType.INFO,
@@ -118,7 +186,25 @@ public final class TpvIconFactory {
         USER,
         REPORT,
         AUDIT,
-        LOGOUT
+        LOGOUT,
+        LOCATION,
+        BRANCH,
+        FOLDER,
+        FILTER,
+        SEARCH,
+        CALENDAR,
+        EYE,
+        REFRESH,
+        HISTORY,
+        SHIELD,
+        TABLE,
+        CHART_BAR,
+        CREDIT_CARD,
+        PRODUCT,
+        USERS,
+        ID_CARD,
+        CLOCK,
+        KEY
     }
 
     private static final class VectorIcon implements Icon {
@@ -213,10 +299,260 @@ public final class TpvIconFactory {
                 case LOGOUT:
                     paintLogout(g2);
                     break;
+                case LOCATION:
+                    paintLocation(g2);
+                    break;
+
+                case BRANCH:
+                    paintBranch(g2);
+                    break;
+
+                case FOLDER:
+                    paintFolder(g2);
+                    break;
+                case FILTER:
+                    paintFilter(g2);
+                    break;
+
+                case SEARCH:
+                    paintSearch(g2);
+                    break;
+
+                case CALENDAR:
+                    paintCalendar(g2);
+                    break;
+
+                case EYE:
+                    paintEye(g2);
+                    break;
+
+                case REFRESH:
+                    paintRefresh(g2);
+                    break;
+
+                case HISTORY:
+                    paintHistory(g2);
+                    break;
+
+                case SHIELD:
+                    paintShield(g2);
+                    break;
+
+                case TABLE:
+                    paintTable(g2);
+                    break;
+                case CHART_BAR:
+                    paintChartBar(g2);
+                    break;
+
+                case CREDIT_CARD:
+                    paintCreditCard(g2);
+                    break;
+
+                case PRODUCT:
+                    paintProduct(g2);
+                    break;
+                case USERS:
+                    paintUsers(g2);
+                    break;
+
+                case ID_CARD:
+                    paintIdCard(g2);
+                    break;
+
+                case CLOCK:
+                    paintClock(g2);
+                    break;
+
+                case KEY:
+                    paintKey(g2);
+                    break;
                 default:
                     paintInfo(g2);
                     break;
             }
+        }
+        private void paintUsers(Graphics2D g2) {
+            g2.draw(new Ellipse2D.Double(8.2, 4.2, 7.6, 7.6));
+
+            Path2D main = new Path2D.Double();
+            main.moveTo(5, 20);
+            main.curveTo(6, 15.6, 8.8, 13.5, 12, 13.5);
+            main.curveTo(15.2, 13.5, 18, 15.6, 19, 20);
+            g2.draw(main);
+
+            g2.draw(new Ellipse2D.Double(3.8, 7, 5.2, 5.2));
+            Path2D left = new Path2D.Double();
+            left.moveTo(2.5, 19);
+            left.curveTo(3.2, 15.8, 5, 14.2, 7.3, 14.1);
+            g2.draw(left);
+
+            g2.draw(new Ellipse2D.Double(15, 7, 5.2, 5.2));
+            Path2D right = new Path2D.Double();
+            right.moveTo(21.5, 19);
+            right.curveTo(20.8, 15.8, 19, 14.2, 16.7, 14.1);
+            g2.draw(right);
+        }
+
+        private void paintIdCard(Graphics2D g2) {
+            g2.draw(new RoundRectangle2D.Double(3.5, 5, 17, 14, 2, 2));
+
+            g2.draw(new Ellipse2D.Double(6.5, 8, 4.8, 4.8));
+
+            Path2D person = new Path2D.Double();
+            person.moveTo(5.5, 16);
+            person.curveTo(6.2, 13.8, 7.8, 13, 9, 13);
+            person.curveTo(10.2, 13, 11.8, 13.8, 12.5, 16);
+            g2.draw(person);
+
+            g2.draw(new Line2D.Double(14, 9, 18, 9));
+            g2.draw(new Line2D.Double(14, 12, 18.5, 12));
+            g2.draw(new Line2D.Double(14, 15, 17, 15));
+        }
+
+        private void paintClock(Graphics2D g2) {
+            g2.draw(new Ellipse2D.Double(4, 4, 16, 16));
+            g2.draw(new Line2D.Double(12, 7, 12, 12));
+            g2.draw(new Line2D.Double(12, 12, 15.5, 14));
+        }
+
+        private void paintKey(Graphics2D g2) {
+            g2.draw(new Ellipse2D.Double(4.5, 8, 6.5, 6.5));
+            g2.draw(new Line2D.Double(10.5, 11.2, 20, 11.2));
+            g2.draw(new Line2D.Double(16, 11.2, 16, 15));
+            g2.draw(new Line2D.Double(19, 11.2, 19, 14));
+        }
+        private void paintFilter(Graphics2D g2) {
+            Path2D p = new Path2D.Double();
+            p.moveTo(4, 5);
+            p.lineTo(20, 5);
+            p.lineTo(14, 12);
+            p.lineTo(14, 19);
+            p.lineTo(10, 21);
+            p.lineTo(10, 12);
+            p.closePath();
+            g2.draw(p);
+        }
+        private void paintChartBar(Graphics2D g2) {
+            g2.draw(new Line2D.Double(4, 20, 20, 20));
+            g2.draw(new Line2D.Double(4, 4, 4, 20));
+
+            g2.draw(new RoundRectangle2D.Double(7, 13, 2.8, 7, 1, 1));
+            g2.draw(new RoundRectangle2D.Double(11, 9, 2.8, 11, 1, 1));
+            g2.draw(new RoundRectangle2D.Double(15, 6, 2.8, 14, 1, 1));
+        }
+
+        private void paintCreditCard(Graphics2D g2) {
+            g2.draw(new RoundRectangle2D.Double(3.8, 6, 16.4, 12, 2, 2));
+            g2.draw(new Line2D.Double(3.8, 10, 20.2, 10));
+            g2.draw(new Line2D.Double(7, 14.5, 11, 14.5));
+            g2.draw(new Line2D.Double(14, 14.5, 17, 14.5));
+        }
+
+        private void paintProduct(Graphics2D g2) {
+            Path2D tag = new Path2D.Double();
+            tag.moveTo(5, 5);
+            tag.lineTo(14, 5);
+            tag.lineTo(20, 11);
+            tag.lineTo(11, 20);
+            tag.lineTo(5, 14);
+            tag.closePath();
+
+            g2.draw(tag);
+            g2.draw(new Ellipse2D.Double(8, 8, 2.8, 2.8));
+        }
+
+        private void paintSearch(Graphics2D g2) {
+            g2.draw(new Ellipse2D.Double(5, 5, 10, 10));
+            g2.draw(new Line2D.Double(13.5, 13.5, 20, 20));
+        }
+
+        private void paintCalendar(Graphics2D g2) {
+            g2.draw(new RoundRectangle2D.Double(4, 5, 16, 15, 2, 2));
+            g2.draw(new Line2D.Double(4, 9, 20, 9));
+            g2.draw(new Line2D.Double(8, 3.5, 8, 6.8));
+            g2.draw(new Line2D.Double(16, 3.5, 16, 6.8));
+
+            fillCircle(g2, 8, 13, 0.8);
+            fillCircle(g2, 12, 13, 0.8);
+            fillCircle(g2, 16, 13, 0.8);
+            fillCircle(g2, 8, 17, 0.8);
+            fillCircle(g2, 12, 17, 0.8);
+        }
+
+        private void paintEye(Graphics2D g2) {
+            Path2D p = new Path2D.Double();
+            p.moveTo(3.5, 12);
+            p.curveTo(6, 7.5, 9, 5.8, 12, 5.8);
+            p.curveTo(15, 5.8, 18, 7.5, 20.5, 12);
+            p.curveTo(18, 16.5, 15, 18.2, 12, 18.2);
+            p.curveTo(9, 18.2, 6, 16.5, 3.5, 12);
+            p.closePath();
+
+            g2.draw(p);
+            g2.draw(new Ellipse2D.Double(9, 9, 6, 6));
+            fillCircle(g2, 12, 12, 1.2);
+        }
+
+        private void paintRefresh(Graphics2D g2) {
+            g2.draw(new Arc2D.Double(5, 5, 14, 14, 40, 250, Arc2D.OPEN));
+
+            Path2D p1 = new Path2D.Double();
+            p1.moveTo(18.5, 6);
+            p1.lineTo(18.5, 11);
+            p1.lineTo(14.5, 8.5);
+            g2.draw(p1);
+
+            g2.draw(new Arc2D.Double(5, 5, 14, 14, 220, 250, Arc2D.OPEN));
+
+            Path2D p2 = new Path2D.Double();
+            p2.moveTo(5.5, 18);
+            p2.lineTo(5.5, 13);
+            p2.lineTo(9.5, 15.5);
+            g2.draw(p2);
+        }
+
+        private void paintHistory(Graphics2D g2) {
+            g2.draw(new Arc2D.Double(4.5, 4.5, 15, 15, 35, 300, Arc2D.OPEN));
+
+            Path2D arrow = new Path2D.Double();
+            arrow.moveTo(5, 7);
+            arrow.lineTo(5, 3.5);
+            arrow.lineTo(8.5, 5);
+            g2.draw(arrow);
+
+            g2.draw(new Line2D.Double(12, 8, 12, 12.2));
+            g2.draw(new Line2D.Double(12, 12.2, 15.5, 14.2));
+        }
+
+        private void paintShield(Graphics2D g2) {
+            Path2D p = new Path2D.Double();
+            p.moveTo(12, 3.5);
+            p.lineTo(19, 6.2);
+            p.lineTo(18.2, 12.5);
+            p.curveTo(17.5, 17, 14.8, 19.7, 12, 21);
+            p.curveTo(9.2, 19.7, 6.5, 17, 5.8, 12.5);
+            p.lineTo(5, 6.2);
+            p.closePath();
+
+            g2.draw(p);
+
+            Path2D check = new Path2D.Double();
+            check.moveTo(8.5, 12);
+            check.lineTo(11, 14.5);
+            check.lineTo(15.8, 9.5);
+            g2.draw(check);
+        }
+
+        private void paintTable(Graphics2D g2) {
+            g2.draw(new RoundRectangle2D.Double(4, 5, 16, 14, 1.8, 1.8));
+
+            g2.draw(new Line2D.Double(4, 9, 20, 9));
+            g2.draw(new Line2D.Double(4, 13, 20, 13));
+            g2.draw(new Line2D.Double(4, 17, 20, 17));
+
+            g2.draw(new Line2D.Double(9, 5, 9, 19));
+            g2.draw(new Line2D.Double(15, 5, 15, 19));
         }
 
         private void paintLanguage(Graphics2D g2) {
@@ -360,6 +696,48 @@ public final class TpvIconFactory {
             g2.draw(new Line2D.Double(11, 12, 20, 12));
             g2.draw(new Line2D.Double(20, 12, 16.5, 8.5));
             g2.draw(new Line2D.Double(20, 12, 16.5, 15.5));
+        }
+        private void paintLocation(Graphics2D g2) {
+            Path2D p = new Path2D.Double();
+            p.moveTo(12, 21);
+            p.curveTo(12, 21, 5.5, 14.5, 5.5, 9.5);
+            p.curveTo(5.5, 5.5, 8.4, 3, 12, 3);
+            p.curveTo(15.6, 3, 18.5, 5.5, 18.5, 9.5);
+            p.curveTo(18.5, 14.5, 12, 21, 12, 21);
+            p.closePath();
+
+            g2.draw(p);
+            g2.draw(new Ellipse2D.Double(9.4, 6.9, 5.2, 5.2));
+        }
+
+        private void paintBranch(Graphics2D g2) {
+            g2.draw(new RoundRectangle2D.Double(4, 9, 16, 10.5, 1.8, 1.8));
+            g2.draw(new Line2D.Double(6, 9, 6, 19.5));
+            g2.draw(new Line2D.Double(18, 9, 18, 19.5));
+
+            Path2D roof = new Path2D.Double();
+            roof.moveTo(3.5, 9);
+            roof.lineTo(12, 3.5);
+            roof.lineTo(20.5, 9);
+            roof.closePath();
+            g2.draw(roof);
+
+            g2.draw(new RoundRectangle2D.Double(9.2, 13, 5.6, 6.5, 1.2, 1.2));
+        }
+
+        private void paintFolder(Graphics2D g2) {
+            Path2D p = new Path2D.Double();
+            p.moveTo(3.5, 7);
+            p.lineTo(9.2, 7);
+            p.lineTo(11.2, 9.2);
+            p.lineTo(20.5, 9.2);
+            p.lineTo(20.5, 18.5);
+            p.curveTo(20.5, 19.6, 19.6, 20.5, 18.5, 20.5);
+            p.lineTo(5.5, 20.5);
+            p.curveTo(4.4, 20.5, 3.5, 19.6, 3.5, 18.5);
+            p.closePath();
+
+            g2.draw(p);
         }
 
         private Stroke stroke(float width) {

@@ -8,15 +8,18 @@ import service.AppServices;
 import ui.common.TecladoVirtualDialog;
 import ui.common.TpvDialogUtils;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
 import java.awt.*;
 import java.util.List;
 import java.util.Optional;
 
 public class EmpleadoFormDialog extends JDialog {
+
+    private static final long serialVersionUID = 1L;
 
     private final AppServices services;
     private final Integer idUsuarioEditar;
@@ -34,16 +37,21 @@ public class EmpleadoFormDialog extends JDialog {
     private Integer idEmpleadoCreado;
 
     public EmpleadoFormDialog(Window owner, AppServices services, Integer idUsuarioEditar) {
-        super(owner,
-                idUsuarioEditar == null ? "Nuevo empleado" : "Editar empleado",
-                ModalityType.APPLICATION_MODAL);
+        super(
+                owner,
+                idUsuarioEditar == null
+                        ? I18n.t("employee.form.title.new")
+                        : I18n.t("employee.form.title.edit"),
+                ModalityType.APPLICATION_MODAL
+        );
 
         this.services = services;
         this.idUsuarioEditar = idUsuarioEditar;
         this.modoEdicion = idUsuarioEditar != null && idUsuarioEditar > 0;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(580, 450);
+        setSize(640, 660);
+        setResizable(false);
         setLocationRelativeTo(owner);
 
         buildUI();
@@ -61,11 +69,60 @@ public class EmpleadoFormDialog extends JDialog {
     }
 
     private void buildUI() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(new EmptyBorder(14, 14, 14, 14));
+        JPanel root = new JPanel(new BorderLayout(0, 16));
+        root.setBorder(new EmptyBorder(18, 18, 18, 18));
         root.setBackground(InformeUiTheme.APP_BG);
+        setContentPane(root);
 
-        JPanel form = InformeUiTheme.createCardPanel(new GridBagLayout());
+        JPanel card = InformeUiTheme.createCardPanel(new BorderLayout(0, 18));
+
+        card.add(buildHeader(), BorderLayout.NORTH);
+        card.add(buildForm(), BorderLayout.CENTER);
+        card.add(buildFooter(), BorderLayout.SOUTH);
+
+        root.add(card, BorderLayout.CENTER);
+    }
+
+    private JPanel buildHeader() {
+        JPanel header = transparentPanel(new BorderLayout(14, 0));
+
+        JLabel icon = new JLabel(
+                modoEdicion
+                        ? TpvIconFactory.idCard(38, InformeUiTheme.ACCENT_GOLD)
+                        : TpvIconFactory.user(38, InformeUiTheme.ACCENT_GOLD)
+        );
+
+        JPanel textPanel = transparentPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel(
+                modoEdicion
+                        ? I18n.t("employee.form.header.edit")
+                        : I18n.t("employee.form.header.new")
+        );
+        title.setFont(new Font("SansSerif", Font.BOLD, 25));
+        title.setForeground(InformeUiTheme.TEXT_PRIMARY);
+
+        JLabel subtitle = new JLabel(
+                modoEdicion
+                        ? I18n.t("employee.form.subtitle.edit")
+                        : I18n.t("employee.form.subtitle.new")
+        );
+        subtitle.setFont(InformeUiTheme.FONT_SUBTITLE);
+        subtitle.setForeground(InformeUiTheme.TEXT_SECONDARY);
+
+        textPanel.add(title);
+        textPanel.add(Box.createVerticalStrut(6));
+        textPanel.add(subtitle);
+
+        header.add(icon, BorderLayout.WEST);
+        header.add(textPanel, BorderLayout.CENTER);
+
+        return header;
+    }
+
+    private JPanel buildForm() {
+        JPanel form = transparentPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
@@ -76,7 +133,7 @@ public class EmpleadoFormDialog extends JDialog {
         txtPin = new JPasswordField(22);
         txtConfirmarPin = new JPasswordField(22);
         cmbRol = new JComboBox<>();
-        chkActivo = new JCheckBox("Empleado activo");
+        chkActivo = new JCheckBox(I18n.t("employee.form.active"));
         lblSucursalValor = createValueLabel();
 
         InformeUiTheme.styleTextField(txtNombre);
@@ -87,72 +144,149 @@ public class EmpleadoFormDialog extends JDialog {
         InformeUiTheme.styleCheckBox(chkActivo);
 
         int y = 0;
-        addKeyboardRow(form, gbc, y++, "Nombre:", txtNombre,
-                "Teclado - Nombre empleado", 60, false);
 
-        addKeyboardRow(form, gbc, y++, "Usuario / código:", txtUsuario,
-                "Teclado - Usuario / código", 30, false);
+        addKeyboardRow(
+                form,
+                gbc,
+                y++,
+                I18n.t("employee.form.name"),
+                txtNombre,
+                I18n.t("employee.form.keyboard.name"),
+                60,
+                false,
+                TpvIconFactory.user(16, InformeUiTheme.TEXT_SECONDARY)
+        );
 
-        addRow(form, gbc, y++, "Rol:", cmbRol);
-        addRow(form, gbc, y++, "Sucursal:", lblSucursalValor);
+        addKeyboardRow(
+                form,
+                gbc,
+                y++,
+                I18n.t("employee.form.username"),
+                txtUsuario,
+                I18n.t("employee.form.keyboard.username"),
+                30,
+                false,
+                TpvIconFactory.idCard(16, InformeUiTheme.TEXT_SECONDARY)
+        );
 
-        addKeyboardRow(form, gbc, y++, "PIN:", txtPin,
-                "Teclado - PIN", 8, true);
+        addRow(
+                form,
+                gbc,
+                y++,
+                I18n.t("employee.form.role"),
+                cmbRol,
+                TpvIconFactory.shield(16, InformeUiTheme.TEXT_SECONDARY)
+        );
 
-        addKeyboardRow(form, gbc, y++, "Confirmar PIN:", txtConfirmarPin,
-                "Teclado - Confirmar PIN", 8, true);
+        addRow(
+                form,
+                gbc,
+                y++,
+                I18n.t("employee.form.branch"),
+                lblSucursalValor,
+                TpvIconFactory.branch(16, InformeUiTheme.TEXT_SECONDARY)
+        );
+
+        addKeyboardRow(
+                form,
+                gbc,
+                y++,
+                I18n.t("employee.form.pin"),
+                txtPin,
+                I18n.t("employee.form.keyboard.pin"),
+                8,
+                true,
+                TpvIconFactory.key(16, InformeUiTheme.TEXT_SECONDARY)
+        );
+
+        addKeyboardRow(
+                form,
+                gbc,
+                y++,
+                I18n.t("employee.form.confirmPin"),
+                txtConfirmarPin,
+                I18n.t("employee.form.keyboard.confirmPin"),
+                8,
+                true,
+                TpvIconFactory.key(16, InformeUiTheme.TEXT_SECONDARY)
+        );
 
         gbc.gridx = 1;
         gbc.gridy = y;
         gbc.weightx = 1.0;
         form.add(chkActivo, gbc);
 
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footer.setOpaque(false);
+        return form;
+    }
 
-        JButton btnCancelar = new JButton("Cancelar");
+    private JPanel buildFooter() {
+        JPanel footer = transparentPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+
+        JButton btnCancelar = new JButton(I18n.t("common.cancel"));
         InformeUiTheme.styleSecondaryButton(btnCancelar);
+        btnCancelar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
+        btnCancelar.setIconTextGap(8);
         btnCancelar.addActionListener(e -> dispose());
 
-        JButton btnGuardar = new JButton(modoEdicion ? "Guardar cambios" : "Crear empleado");
+        JButton btnGuardar = new JButton(
+                modoEdicion
+                        ? I18n.t("employee.form.saveChanges")
+                        : I18n.t("employee.form.createEmployee")
+        );
         InformeUiTheme.stylePrimaryButton(btnGuardar);
+        btnGuardar.setIcon(TpvIconFactory.save(18, Color.WHITE));
+        btnGuardar.setIconTextGap(8);
         btnGuardar.addActionListener(e -> onGuardar());
 
         footer.add(btnCancelar);
         footer.add(btnGuardar);
 
-        root.add(form, BorderLayout.CENTER);
-        root.add(footer, BorderLayout.SOUTH);
-
-        setContentPane(root);
+        return footer;
     }
 
-    private void addRow(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent field) {
+    private void addRow(JPanel panel,
+                        GridBagConstraints gbc,
+                        int row,
+                        String label,
+                        JComponent field,
+                        Icon icon) {
+
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0;
-        panel.add(InformeUiTheme.createFieldLabel(label), gbc);
+
+        JLabel lbl = InformeUiTheme.createFieldLabel(label);
+        lbl.setIcon(icon);
+        lbl.setIconTextGap(7);
+
+        panel.add(lbl, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         panel.add(field, gbc);
     }
-    private void addKeyboardRow(
-            JPanel panel,
-            GridBagConstraints gbc,
-            int row,
-            String label,
-            JTextField field,
-            String tituloTeclado,
-            int maxLength,
-            boolean numerico
-    ) {
+
+    private void addKeyboardRow(JPanel panel,
+                                GridBagConstraints gbc,
+                                int row,
+                                String label,
+                                JTextField field,
+                                String tituloTeclado,
+                                int maxLength,
+                                boolean numerico,
+                                Icon icon) {
+
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0;
-        panel.add(InformeUiTheme.createFieldLabel(label), gbc);
 
-        JPanel wrapper = InformeUiTheme.createTransparentPanel(new BorderLayout(8, 0));
+        JLabel lbl = InformeUiTheme.createFieldLabel(label);
+        lbl.setIcon(icon);
+        lbl.setIconTextGap(7);
+
+        panel.add(lbl, gbc);
+
+        JPanel wrapper = transparentPanel(new BorderLayout(8, 0));
         wrapper.add(field, BorderLayout.CENTER);
         wrapper.add(createKeyboardButton(field, tituloTeclado, maxLength, numerico), BorderLayout.EAST);
 
@@ -170,6 +304,7 @@ public class EmpleadoFormDialog extends JDialog {
 
     private void cargarCombos() {
         cmbRol.removeAllItems();
+
         List<Rol> roles = services.usuarioService.getRoles();
         for (Rol rol : roles) {
             cmbRol.addItem(rol);
@@ -180,7 +315,7 @@ public class EmpleadoFormDialog extends JDialog {
         chkActivo.setSelected(true);
 
         if (AppContext.hasTerminalContext()) {
-            lblSucursalValor.setText("Sucursal ID: " + AppContext.getIdSucursal());
+            lblSucursalValor.setText(I18n.t("employee.form.branchId", AppContext.getIdSucursal()));
         }
 
         if (!modoEdicion) {
@@ -188,11 +323,12 @@ public class EmpleadoFormDialog extends JDialog {
         }
 
         Optional<EmpleadoDetalleDTO> opt = services.usuarioService.getDetalleEmpleado(idUsuarioEditar);
+
         if (opt.isEmpty()) {
             TpvDialogUtils.showError(
                     this,
-                    "Error",
-                    "No se pudo cargar el empleado a editar."
+                    I18n.t("common.error"),
+                    I18n.t("employee.form.loadError")
             );
             dispose();
             return;
@@ -203,9 +339,12 @@ public class EmpleadoFormDialog extends JDialog {
         txtNombre.setText(detalle.getNombre());
         txtUsuario.setText(detalle.getUsuario());
         chkActivo.setSelected(detalle.isActivo());
-        lblSucursalValor.setText(detalle.getNombreSucursal() != null
-                ? detalle.getNombreSucursal()
-                : ("Sucursal ID: " + detalle.getIdSucursal()));
+
+        lblSucursalValor.setText(
+                detalle.getNombreSucursal() != null
+                        ? detalle.getNombreSucursal()
+                        : I18n.t("employee.form.branchId", detalle.getIdSucursal())
+        );
 
         seleccionarRol(detalle.getIdRol());
 
@@ -217,8 +356,10 @@ public class EmpleadoFormDialog extends JDialog {
 
     private void seleccionarRol(int idRol) {
         ComboBoxModel<Rol> model = cmbRol.getModel();
+
         for (int i = 0; i < model.getSize(); i++) {
             Rol rol = model.getElementAt(i);
+
             if (rol != null && rol.getIdRol() == idRol) {
                 cmbRol.setSelectedIndex(i);
                 return;
@@ -228,6 +369,7 @@ public class EmpleadoFormDialog extends JDialog {
 
     private EmpleadoSaveRequest leerRequest() {
         EmpleadoSaveRequest request = new EmpleadoSaveRequest();
+
         request.setIdUsuario(idUsuarioEditar);
         request.setNombre(txtNombre.getText());
         request.setUsuario(txtUsuario.getText());
@@ -241,9 +383,11 @@ public class EmpleadoFormDialog extends JDialog {
         request.setIdRol(rol != null ? rol.getIdRol() : 0);
 
         int idSucursal = 0;
+
         if (modoEdicion) {
             Optional<EmpleadoDetalleDTO> detalle = services.usuarioService.getDetalleEmpleado(idUsuarioEditar);
             idSucursal = detalle.map(EmpleadoDetalleDTO::getIdSucursal).orElse(0);
+
         } else if (AppContext.hasTerminalContext()) {
             idSucursal = AppContext.getIdSucursal();
         }
@@ -251,7 +395,6 @@ public class EmpleadoFormDialog extends JDialog {
         request.setIdSucursal(idSucursal);
         request.setActivo(chkActivo.isSelected());
 
-        // NUEVO: datos del admin para auditoría
         request.setIdUsuarioAdmin(AppContext.getUsuarioId());
         request.setIdSucursalAdmin(AppContext.getIdSucursal());
 
@@ -260,16 +403,16 @@ public class EmpleadoFormDialog extends JDialog {
 
     private void validarFormulario() {
         if (txtNombre.getText() == null || txtNombre.getText().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre es obligatorio.");
+            throw new IllegalArgumentException(I18n.t("employee.form.validation.nameRequired"));
         }
 
         if (txtUsuario.getText() == null || txtUsuario.getText().trim().isEmpty()) {
-            throw new IllegalArgumentException("El usuario/código es obligatorio.");
+            throw new IllegalArgumentException(I18n.t("employee.form.validation.usernameRequired"));
         }
 
         Rol rol = (Rol) cmbRol.getSelectedItem();
         if (rol == null) {
-            throw new IllegalArgumentException("Debes seleccionar un rol.");
+            throw new IllegalArgumentException(I18n.t("employee.form.validation.roleRequired"));
         }
 
         if (!modoEdicion) {
@@ -277,11 +420,11 @@ public class EmpleadoFormDialog extends JDialog {
             String confirmar = new String(txtConfirmarPin.getPassword());
 
             if (pin.trim().isEmpty()) {
-                throw new IllegalArgumentException("El PIN es obligatorio.");
+                throw new IllegalArgumentException(I18n.t("employee.form.validation.pinRequired"));
             }
 
             if (!pin.equals(confirmar)) {
-                throw new IllegalArgumentException("La confirmación del PIN no coincide.");
+                throw new IllegalArgumentException(I18n.t("employee.form.validation.pinMismatch"));
             }
         }
     }
@@ -295,6 +438,7 @@ public class EmpleadoFormDialog extends JDialog {
             if (modoEdicion) {
                 services.usuarioService.actualizarEmpleado(request);
                 idEmpleadoCreado = request.getIdUsuario();
+
             } else {
                 idEmpleadoCreado = services.usuarioService.crearEmpleado(request);
             }
@@ -305,14 +449,17 @@ public class EmpleadoFormDialog extends JDialog {
         } catch (Exception ex) {
             TpvDialogUtils.showError(
                     this,
-                    "No se pudo guardar el empleado",
+                    I18n.t("employee.form.saveErrorTitle"),
                     ex.getMessage()
             );
         }
     }
+
     private JButton createKeyboardButton(JTextField field, String titulo, int maxLength, boolean numerico) {
-        JButton button = new JButton("⌨");
+        JButton button = new JButton();
         InformeUiTheme.styleSecondaryButton(button);
+        button.setIcon(TpvIconFactory.key(16, InformeUiTheme.TEXT_PRIMARY));
+        button.setToolTipText(I18n.t("common.search"));
         button.setMargin(new Insets(6, 10, 6, 10));
 
         button.addActionListener(e -> {
@@ -324,5 +471,17 @@ public class EmpleadoFormDialog extends JDialog {
         });
 
         return button;
+    }
+
+    private JPanel transparentPanel() {
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private JPanel transparentPanel(LayoutManager layout) {
+        JPanel panel = new JPanel(layout);
+        panel.setOpaque(false);
+        return panel;
     }
 }

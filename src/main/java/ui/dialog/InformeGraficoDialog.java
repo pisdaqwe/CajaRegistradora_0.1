@@ -3,6 +3,8 @@ package ui.dialog;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import ui.theme.InformeUiTheme;
+import ui.theme.TpvIconFactory;
+import util.I18n;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -124,7 +126,7 @@ public class InformeGraficoDialog extends JDialog {
 			InformeVentasExtraEmpleadoResultDTO ventasExtraEmpleadoResult,
 			InformeRankingEmpleadosExtraResultDTO rankingEmpleadosExtraResult) {
 
-		super(owner, "Visualización de gráfico", ModalityType.APPLICATION_MODAL);
+		super(owner, I18n.t("reportGraph.title"), ModalityType.APPLICATION_MODAL);
 		this.tipoInforme = tipoInforme;
 		this.filterSummary = filterSummary;
 
@@ -212,8 +214,9 @@ public class InformeGraficoDialog extends JDialog {
 		JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		bottom.setOpaque(false);
 
-		JButton btnCerrar = new JButton("Cerrar");
+		JButton btnCerrar = new JButton(I18n.t("common.close"));
 		InformeUiTheme.styleDangerButton(btnCerrar);
+		btnCerrar.setIcon(TpvIconFactory.cancel(18, InformeUiTheme.TEXT_PRIMARY));
 		btnCerrar.addActionListener(e -> dispose());
 
 		bottom.add(btnCerrar);
@@ -230,13 +233,25 @@ public class InformeGraficoDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
+	private String graphLine() {
+		return I18n.t("reportGraph.type.line");
+	}
+
+	private String graphBar() {
+		return I18n.t("reportGraph.type.bar");
+	}
+
+	private String graphPie() {
+		return I18n.t("reportGraph.type.pie");
+	}
+
 	private String[] buildGraphOptions() {
 		List<String> options = new ArrayList<>();
-		options.add("Líneas");
-		options.add("Barras");
+		options.add(graphLine());
+		options.add(graphBar());
 
 		if (supportsPieChart(tipoInforme)) {
-			options.add("Circular");
+			options.add(graphPie());
 		}
 
 		return options.toArray(new String[0]);
@@ -259,9 +274,9 @@ public class InformeGraficoDialog extends JDialog {
 		cmbTipoGrafico.removeAllItems();
 
 		if (tipoInforme == TipoInforme.RESUMEN_EJECUTIVO) {
-			cmbTipoGrafico.addItem("Barras");
-			cmbTipoGrafico.addItem("Circular");
-			cmbTipoGrafico.setSelectedItem("Barras");
+			cmbTipoGrafico.addItem(graphBar());
+			cmbTipoGrafico.addItem(graphPie());
+			cmbTipoGrafico.setSelectedItem(graphBar());
 			return;
 		}
 
@@ -270,17 +285,17 @@ public class InformeGraficoDialog extends JDialog {
 				|| tipoInforme == TipoInforme.VENTAS_NETAS_VS_DEVOLUCIONES || tipoInforme == TipoInforme.VENTAS_POR_CAJA
 				|| tipoInforme == TipoInforme.TIEMPOS_POR_ESTACION || tipoInforme == TipoInforme.MERMA_POR_PERIODO
 				|| tipoInforme == TipoInforme.MOVIMIENTOS_STOCK_AJUSTES) {
-			cmbTipoGrafico.addItem("Líneas");
-			cmbTipoGrafico.addItem("Barras");
-			cmbTipoGrafico.setSelectedItem("Líneas");
+			cmbTipoGrafico.addItem(graphLine());
+			cmbTipoGrafico.addItem(graphBar());
+			cmbTipoGrafico.setSelectedItem(graphLine());
 			return;
 		}
 
 		if (tipoInforme == TipoInforme.PAGOS_POR_METODO || tipoInforme == TipoInforme.EXTRAS_MAS_VENDIDOS
 				|| tipoInforme == TipoInforme.COMBOS_VENDIDOS || tipoInforme == TipoInforme.DESCUENTOS_APLICADOS) {
-			cmbTipoGrafico.addItem("Barras");
-			cmbTipoGrafico.addItem("Circular");
-			cmbTipoGrafico.setSelectedItem("Barras");
+			cmbTipoGrafico.addItem(graphBar());
+			cmbTipoGrafico.addItem(graphPie());
+			cmbTipoGrafico.setSelectedItem(graphBar());
 			return;
 		}
 
@@ -293,13 +308,13 @@ public class InformeGraficoDialog extends JDialog {
 				|| tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_PRODUCTO
 				|| tipoInforme == TipoInforme.VENTAS_EXTRA_POR_EMPLEADO
 				|| tipoInforme == TipoInforme.RANKING_EMPLEADOS_POR_EXTRA) {
-			cmbTipoGrafico.addItem("Barras");
-			cmbTipoGrafico.setSelectedItem("Barras");
+			cmbTipoGrafico.addItem(graphBar());
+			cmbTipoGrafico.setSelectedItem(graphBar());
 			return;
 		}
 
-		cmbTipoGrafico.addItem("Barras");
-		cmbTipoGrafico.setSelectedItem("Barras");
+		cmbTipoGrafico.addItem(graphBar());
+		cmbTipoGrafico.setSelectedItem(graphBar());
 	}
 
 
@@ -311,37 +326,37 @@ public class InformeGraficoDialog extends JDialog {
 
 	    if (tipoInforme == TipoInforme.RESUMEN_EJECUTIVO && resumenEjecutivoResult != null) {
 
-	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	        chart = graphPie().equalsIgnoreCase(selectedGraph)
 	                ? createRealPieChartResumenEjecutivo()
 	                : createRealBarChartResumenEjecutivo();
 
 	    } else if (tipoInforme == TipoInforme.VENTAS_POR_DIA && ventasPorDiaResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartVentasPorDia(modoVista)
 	                : createRealLineChartVentasPorDia(modoVista);
 
 	    } else if (tipoInforme == TipoInforme.VENTAS_POR_FRANJA_HORARIA && ventasFranjaResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartVentasPorFranja(modoVista)
 	                : createRealLineChartVentasPorFranja(modoVista);
 
 	    } else if (tipoInforme == TipoInforme.TICKET_MEDIO_POR_DIA && ticketMedioDiaResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartTicketMedioPorDia(modoVista)
 	                : createRealLineChartTicketMedioPorDia(modoVista);
 
 	    } else if (tipoInforme == TipoInforme.PAGOS_POR_METODO && pagosMetodoResult != null) {
 
-	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	        chart = graphPie().equalsIgnoreCase(selectedGraph)
 	                ? createRealPieChartPagosPorMetodo()
 	                : createRealBarChartPagosPorMetodo();
 
 	    } else if (tipoInforme == TipoInforme.VENTAS_NETAS_VS_DEVOLUCIONES && netoVsDevolucionesResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartVentasNetasVsDevoluciones()
 	                : createRealLineChartVentasNetasVsDevoluciones();
 
@@ -351,19 +366,19 @@ public class InformeGraficoDialog extends JDialog {
 
 	    } else if (tipoInforme == TipoInforme.EXTRAS_MAS_VENDIDOS && extrasVendidosResult != null) {
 
-	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	        chart = graphPie().equalsIgnoreCase(selectedGraph)
 	                ? createRealPieChartExtrasMasVendidos()
 	                : createRealBarChartExtrasMasVendidos();
 
 	    } else if (tipoInforme == TipoInforme.COMBOS_VENDIDOS && combosVendidosResult != null) {
 
-	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	        chart = graphPie().equalsIgnoreCase(selectedGraph)
 	                ? createRealPieChartCombosVendidos()
 	                : createRealBarChartCombosVendidos();
 
 	    } else if (tipoInforme == TipoInforme.DESCUENTOS_APLICADOS && descuentosAplicadosResult != null) {
 
-	        chart = "Circular".equalsIgnoreCase(selectedGraph)
+	        chart = graphPie().equalsIgnoreCase(selectedGraph)
 	                ? createRealPieChartDescuentosAplicados()
 	                : createRealBarChartDescuentosAplicados();
 
@@ -385,7 +400,7 @@ public class InformeGraficoDialog extends JDialog {
 
 	    } else if (tipoInforme == TipoInforme.VENTAS_POR_CAJA && ventasCajaResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartVentasPorCaja()
 	                : createRealLineChartVentasPorCaja();
 
@@ -395,19 +410,19 @@ public class InformeGraficoDialog extends JDialog {
 
 	    } else if (tipoInforme == TipoInforme.TIEMPOS_POR_ESTACION && tiemposEstacionResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartTiemposPorEstacion()
 	                : createRealLineChartTiemposPorEstacion();
 
 	    } else if (tipoInforme == TipoInforme.MERMA_POR_PERIODO && mermaPeriodoResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartMermaPorPeriodo()
 	                : createRealLineChartMermaPorPeriodo();
 
 	    } else if (tipoInforme == TipoInforme.MOVIMIENTOS_STOCK_AJUSTES && movimientosStockResult != null) {
 
-	        chart = "Barras".equalsIgnoreCase(selectedGraph)
+	        chart = graphBar().equalsIgnoreCase(selectedGraph)
 	                ? createRealBarChartMovimientosStockAjustes()
 	                : createRealLineChartMovimientosStockAjustes();
 
@@ -428,7 +443,7 @@ public class InformeGraficoDialog extends JDialog {
 	        chart = createRealBarChartRankingEmpleadosPorExtra();
 
 	    } else {
-	        throw new IllegalStateException("No hay gráfico real implementado para el informe: " + tipoInforme);
+	        throw new IllegalStateException(I18n.t("reportGraph.error.notImplemented", tipoInforme));
 	    }
 
 	    if (chartPanel != null) {

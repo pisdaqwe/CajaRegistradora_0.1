@@ -1,5 +1,7 @@
 package ui.dialog;
 
+import util.I18n;
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -53,7 +55,7 @@ public class AskMeDialog extends JDialog {
     // CONSTRUCTOR
     // =========================================================
     public AskMeDialog(Frame owner, String productName, int maxChars) {
-        super(owner, "ASK ME", true);
+        super(owner, I18n.t("sales.askMe.title"), true);
         this.maxChars = maxChars;
 
         initDialog();
@@ -79,11 +81,11 @@ public class AskMeDialog extends JDialog {
     // CREACIÓN DE COMPONENTES
     // =========================================================
     private void initComponents(String productName) {
-        lblTitle = new JLabel("ASK ME", SwingConstants.CENTER);
+        lblTitle = new JLabel(I18n.t("sales.askMe.header"), SwingConstants.CENTER);
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
 
         String safeProductName = (productName == null || productName.isBlank())
-                ? "Producto"
+                ? I18n.t("sales.askMe.defaultProduct")
                 : productName;
 
         lblProductName = new JLabel(safeProductName, SwingConstants.CENTER);
@@ -193,16 +195,16 @@ public class AskMeDialog extends JDialog {
     private JPanel buildEditActionsRow() {
         JPanel row = new JPanel(new GridLayout(1, 4, BUTTON_GAP, BUTTON_GAP));
 
-        btnCaseToggle = createActionButton("MAYÚS");
+        btnCaseToggle = createActionButton(I18n.t("common.uppercase"));
         btnCaseToggle.addActionListener(e -> toggleUppercase());
 
-        JButton btnSpace = createActionButton("ESPACIO");
+        JButton btnSpace = createActionButton(I18n.t("common.space"));
         btnSpace.addActionListener(e -> appendText(" "));
 
-        JButton btnBackspace = createActionButton("BORRAR");
+        JButton btnBackspace = createActionButton(I18n.t("common.backspace"));
         btnBackspace.addActionListener(e -> backspace());
 
-        JButton btnClear = createActionButton("LIMPIAR");
+        JButton btnClear = createActionButton(I18n.t("common.clean"));
         btnClear.addActionListener(e -> clearText());
 
         row.add(btnCaseToggle);
@@ -216,10 +218,10 @@ public class AskMeDialog extends JDialog {
     private JPanel buildConfirmRow() {
         JPanel row = new JPanel(new GridLayout(1, 2, BUTTON_GAP, BUTTON_GAP));
 
-        JButton btnCancel = createActionButton("CANCELAR");
+        JButton btnCancel = createActionButton(I18n.t("common.cancel"));
         btnCancel.addActionListener(e -> cancel());
 
-        JButton btnConfirm = createActionButton("ACEPTAR");
+        JButton btnConfirm = createActionButton(I18n.t("common.accept"));
         btnConfirm.addActionListener(e -> confirm());
 
         row.add(btnCancel);
@@ -323,7 +325,7 @@ public class AskMeDialog extends JDialog {
         }
 
         if (btnCaseToggle != null) {
-            btnCaseToggle.setText(uppercase ? "MAYÚS" : "minús");
+            btnCaseToggle.setText(uppercase ? I18n.t("common.uppercase") : I18n.t("common.lowercase"));
         }
     }
 
@@ -348,8 +350,8 @@ public class AskMeDialog extends JDialog {
         if (text.isEmpty()) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Introduce una nota antes de confirmar.",
-                    "ASK ME",
+                    I18n.t("sales.askMe.validation.empty"),
+                    I18n.t("sales.askMe.title"),
                     JOptionPane.WARNING_MESSAGE
             );
             return;

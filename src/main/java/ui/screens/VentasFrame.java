@@ -72,6 +72,7 @@ import ui.ventas.OpcionesPanel.OpcionesActionListener;
 import ui.ventas.PagoPanel;
 import ui.ventas.TicketPanel;
 import ui.ventas.VentasCenterPanel;
+import util.I18n;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -84,7 +85,6 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -146,14 +146,17 @@ public class VentasFrame extends BaseTpvFrame {
     }
 
     private static String buildTitleWithCaja(ModoOperacion modoOperacion) {
-        String caja = "(sin caja)";
+        String caja = I18n.t("sales.noCashBox");
         try {
             caja = AppContext.getSesionCajaActual().getNombreCaja();
         } catch (Exception ignored) {
         }
 
-        String prefijo = modoOperacion == ModoOperacion.MERMA ? "Merma" : "Ventas";
-        return prefijo + " - Caja: " + caja;
+        String prefijo = modoOperacion == ModoOperacion.MERMA
+                ? I18n.t("sales.mode.waste")
+                : I18n.t("sales.mode.sales");
+
+        return I18n.t("sales.titleWithCashBox", prefijo, caja);
     }
 
     private void buildUI(Runnable onBack) {
@@ -466,8 +469,8 @@ public class VentasFrame extends BaseTpvFrame {
         if (modoOperacion == ModoOperacion.MERMA) {
             boolean salir = TpvDialogUtils.confirm(
                     this,
-                    "Merma",
-                    "¿Salir del modo merma?"
+                    I18n.t("sales.waste.exit.title"),
+                    I18n.t("sales.waste.exit.message")
             );
 
             if (salir) {
@@ -483,8 +486,8 @@ public class VentasFrame extends BaseTpvFrame {
 
         boolean cancelar = TpvDialogUtils.confirm(
                 this,
-                "Cancelar venta",
-                "¿Cancelar el pedido actual?"
+                I18n.t("sales.cancelOrder.title"),
+                I18n.t("sales.cancelOrder.message")
         );
 
         if (!cancelar) {
@@ -527,8 +530,8 @@ public class VentasFrame extends BaseTpvFrame {
         if (!extra.isDisponible()) {
             TpvDialogUtils.showWarning(
                     this,
-                    "Extra no disponible",
-                    "Ese extra no está disponible en esta sucursal."
+                    I18n.t("sales.extraUnavailable.title"),
+                    I18n.t("sales.extraUnavailable.message")
             );
             return;
         }
@@ -640,8 +643,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (isModoMerma()) {
     		TpvDialogUtils.showInfo(
     				this,
-    				"Modo merma",
-    				"En modo merma no están disponibles descuentos ni promociones."
+    				I18n.t("sales.waste.mode.title"),
+    				I18n.t("sales.waste.discountsUnavailable")
     		);
     		return;
     	}
@@ -649,8 +652,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (ticketSession.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuentos",
-    				"No hay productos en el ticket."
+    				I18n.t("sales.discounts.title"),
+    				I18n.t("sales.emptyTicket.message")
     		);
     		return;
     	}
@@ -679,7 +682,7 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!result.isValido()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuento",
+    				I18n.t("sales.discount.title"),
     				result.getMensaje()
     		);
     		centerPanel.getDescuentoPanel().refresh();
@@ -692,7 +695,7 @@ public class VentasFrame extends BaseTpvFrame {
 
     	TpvDialogUtils.showInfo(
     			this,
-    			"Descuento aplicado",
+    			I18n.t("sales.discount.applied.title"),
     			result.getMensaje()
     	);
     }
@@ -701,8 +704,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (ticketSession.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuento empleado",
-    				"No hay productos en el ticket."
+    				I18n.t("sales.employeeDiscount.title"),
+    				I18n.t("sales.emptyTicket.message")
     		);
     		return;
     	}
@@ -718,8 +721,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (codigoEmpleado == null || codigoEmpleado.isBlank()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuento empleado",
-    				"Debes introducir un código de empleado."
+    				I18n.t("sales.employeeDiscount.title"),
+    				I18n.t("sales.employeeDiscount.code.required")
     		);
     		return;
     	}
@@ -729,8 +732,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (empleadoOpt.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuento empleado",
-    				"No existe ningún empleado con ese código."
+    				I18n.t("sales.employeeDiscount.title"),
+    				I18n.t("sales.employeeDiscount.code.notFound")
     		);
     		return;
     	}
@@ -740,8 +743,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!empleado.isActivo()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuento empleado",
-    				"El empleado indicado está inactivo."
+    				I18n.t("sales.employeeDiscount.title"),
+    				I18n.t("sales.employeeDiscount.inactive")
     		);
     		return;
     	}
@@ -758,7 +761,7 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!result.isValido()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Descuento empleado",
+    				I18n.t("sales.employeeDiscount.title"),
     				result.getMensaje()
     		);
     		centerPanel.getDescuentoPanel().refresh();
@@ -771,7 +774,7 @@ public class VentasFrame extends BaseTpvFrame {
 
     	TpvDialogUtils.showInfo(
     			this,
-    			"Descuento empleado aplicado",
+    			I18n.t("sales.employeeDiscount.applied.title"),
     			result.getMensaje()
     	);
     }
@@ -780,16 +783,16 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!ticketSession.hasDiscount()) {
     		TpvDialogUtils.showInfo(
     				this,
-    				"Descuentos",
-    				"No hay ningún descuento aplicado."
+    				I18n.t("sales.discounts.title"),
+    				I18n.t("sales.discount.noneApplied")
     		);
     		return;
     	}
 
     	boolean confirmado = TpvDialogUtils.confirm(
     			this,
-    			"Quitar descuento",
-    			"¿Deseas quitar el descuento actual del ticket?"
+    			I18n.t("sales.discount.remove.title"),
+    			I18n.t("sales.discount.remove.message")
     	);
 
     	if (!confirmado) {
@@ -802,8 +805,8 @@ public class VentasFrame extends BaseTpvFrame {
 
     	TpvDialogUtils.showInfo(
     			this,
-    			"Descuentos",
-    			"Descuento eliminado correctamente."
+    			I18n.t("sales.discounts.title"),
+    			I18n.t("sales.discount.removed")
     	);
     }
 
@@ -898,8 +901,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (ticketSession.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Cobrar",
-    				"No hay productos en el ticket."
+    				I18n.t("sales.charge.title"),
+    				I18n.t("sales.emptyTicket.message")
     		);
     		return;
     	}
@@ -917,8 +920,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (ticketSession.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Cobrar",
-    				"No hay productos en el ticket."
+    				I18n.t("sales.charge.title"),
+    				I18n.t("sales.emptyTicket.message")
     		);
     		centerPanel.showCatalogo();
     		return;
@@ -989,8 +992,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (ticketSession.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Pago con tarjeta",
-    				"No hay productos en el ticket."
+    				I18n.t("sales.payment.card.title"),
+    				I18n.t("sales.emptyTicket.message")
     		);
     		return;
     	}
@@ -1345,7 +1348,7 @@ public class VentasFrame extends BaseTpvFrame {
     		return objectMapper.writeValueAsString(root);
 
     	} catch (JsonProcessingException e) {
-    		throw new RuntimeException("Error construyendo JSON de descripcion_personalizacion.", e);
+    		throw new RuntimeException(I18n.t("sales.personalizationJsonError"), e);
     	}
     }
 
@@ -1379,7 +1382,7 @@ public class VentasFrame extends BaseTpvFrame {
     	}
 
     	if (itemsPersistidos.size() != ticketSession.getItems().size()) {
-    		throw new IllegalStateException("No coincide el número de items persistidos con los items del ticket.");
+    		throw new IllegalStateException(I18n.t("sales.persistedItemsMismatch"));
     	}
 
     	int idSucursal = AppContext.getIdSucursal();
@@ -1412,7 +1415,7 @@ public class VentasFrame extends BaseTpvFrame {
     			? cobroSession.getTipoServicio().name()
     			: TipoServicio.PARA_TOMAR.name());
 
-    	dto.setProducto(item.getProducto() != null ? item.getProducto().getNombre() : "SIN_PRODUCTO");
+    	dto.setProducto(item.getProducto() != null ? item.getProducto().getNombre() : I18n.t("sales.product.unknown"));
     	dto.setTamano(item.getTamano() != null ? item.getTamano().getNombre() : "");
     	dto.setCantidad(1);
 
@@ -1473,15 +1476,15 @@ public class VentasFrame extends BaseTpvFrame {
 
     	TpvDialogUtils.showInfo(
     			this,
-    			"Pago completado",
-    			"Venta registrada correctamente.\n\nID venta: " + idVenta
+    			I18n.t("sales.payment.success.title"),
+    			I18n.t("sales.payment.success.messageWithId", idVenta)
     	);
     }
 
     private void mostrarErrorRegistroVenta(Exception e) {
     	e.printStackTrace();
 
-    	String mensaje = "No se pudo registrar la venta.";
+    	String mensaje = I18n.t("sales.payment.error.message");
 
     	if (e.getMessage() != null) {
     		mensaje += "\n\n" + e.getMessage();
@@ -1489,12 +1492,12 @@ public class VentasFrame extends BaseTpvFrame {
 
     	Throwable cause = e.getCause();
     	if (cause != null && cause.getMessage() != null) {
-    		mensaje += "\n\nCausa: " + cause.getMessage();
+    		mensaje += "\n\n" + I18n.t("common.cause") + ": " + cause.getMessage();
     	}
 
     	TpvDialogUtils.showError(
     			this,
-    			"Error al registrar venta",
+    			I18n.t("sales.payment.error.title"),
     			mensaje
     	);
     }
@@ -1527,15 +1530,15 @@ public class VentasFrame extends BaseTpvFrame {
 
     private String normalizarNombrePedido(String nombrePedido) {
     	String nombre = (nombrePedido != null) ? nombrePedido.trim() : "";
-    	return nombre.isBlank() ? "Cliente" : nombre;
+    	return nombre.isBlank() ? I18n.t("sales.payment.customer.default") : nombre;
     }
 
     private boolean validarImporteRecibido(BigDecimal importeRecibido, BigDecimal total) {
     	if (importeRecibido == null || importeRecibido.compareTo(BigDecimal.ZERO) <= 0) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Pago",
-    				"Introduce un importe válido."
+    				I18n.t("sales.payment.title"),
+    				I18n.t("sales.payment.invalidAmount")
     		);
     		return false;
     	}
@@ -1547,8 +1550,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (importeRecibido.compareTo(total) < 0) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Pago",
-    				"El importe recibido no puede ser menor que el total."
+    				I18n.t("sales.payment.title"),
+    				I18n.t("sales.payment.amountBelowTotal")
     		);
     		return false;
     	}
@@ -1559,45 +1562,45 @@ public class VentasFrame extends BaseTpvFrame {
     private boolean confirmarCobro(BigDecimal total, BigDecimal entregado, BigDecimal cambio, String metodo) {
     	StringBuilder mensaje = new StringBuilder();
 
-    	mensaje.append("Pedido: ")
+    	mensaje.append(I18n.t("sales.payment.order")).append(": ")
     			.append(cobroSession.getNombrePedido())
     			.append("\n");
 
-    	mensaje.append("Servicio: ")
+    	mensaje.append(I18n.t("sales.payment.service")).append(": ")
     			.append(formatTipoServicio(cobroSession.getTipoServicio()))
     			.append("\n");
 
-    	mensaje.append("Método: ")
-    			.append(metodo)
+    	mensaje.append(I18n.t("sales.payment.method")).append(": ")
+    			.append(formatMetodoCobro(metodo))
     			.append("\n");
 
-    	mensaje.append("Total: ")
+    	mensaje.append(I18n.t("sales.payment.total")).append(": ")
     			.append(formatMoney(total))
     			.append(" €")
     			.append("\n");
 
     	if ("TARJETA".equalsIgnoreCase(metodo)) {
-    		mensaje.append("Cobrado por tarjeta: ")
+    		mensaje.append(I18n.t("sales.payment.cardCharged")).append(": ")
     				.append(formatMoney(total))
     				.append(" €")
     				.append("\n");
     	} else {
-    		mensaje.append("Entregado: ")
+    		mensaje.append(I18n.t("sales.payment.received")).append(": ")
     				.append(formatMoney(entregado))
     				.append(" €")
     				.append("\n");
 
-    		mensaje.append("Cambio: ")
+    		mensaje.append(I18n.t("sales.payment.change")).append(": ")
     				.append(formatMoney(cambio))
     				.append(" €")
     				.append("\n");
     	}
 
-    	mensaje.append("\n¿Confirmar cobro?");
+    	mensaje.append("\n").append(I18n.t("sales.payment.confirm.message"));
 
     	return TpvDialogUtils.confirm(
     			this,
-    			"Confirmar cobro",
+    			I18n.t("sales.payment.confirm.title"),
     			mensaje.toString()
     	);
     }
@@ -1607,7 +1610,7 @@ public class VentasFrame extends BaseTpvFrame {
     }
 
     private String formatMoney(BigDecimal amount) {
-    	DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("es", "ES"));
+    	DecimalFormatSymbols symbols = new DecimalFormatSymbols(I18n.getCurrentLocale());
     	symbols.setDecimalSeparator(',');
     	symbols.setGroupingSeparator('.');
 
@@ -1618,9 +1621,25 @@ public class VentasFrame extends BaseTpvFrame {
 
     private String formatTipoServicio(TipoServicio tipoServicio) {
     	if (tipoServicio == TipoServicio.PARA_LLEVAR) {
-    		return "Para llevar";
+    		return I18n.t("sales.service.takeAway");
     	}
-    	return "Para tomar";
+    	return I18n.t("sales.service.dineIn");
+    }
+
+    private String formatMetodoCobro(String metodo) {
+    	if ("TARJETA".equalsIgnoreCase(metodo)) {
+    		return I18n.t("sales.payment.method.card");
+    	}
+
+    	if ("EFECTIVO EXACTO".equalsIgnoreCase(metodo)) {
+    		return I18n.t("sales.payment.method.exactCash");
+    	}
+
+    	if ("EFECTIVO".equalsIgnoreCase(metodo)) {
+    		return I18n.t("sales.payment.method.cash");
+    	}
+
+    	return metodo != null ? metodo : "";
     }
 
     // =====================================================
@@ -1631,8 +1650,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (isModoMerma()) {
     		TpvDialogUtils.showInfo(
     				this,
-    				"Modo merma",
-    				"En modo merma no están disponibles las opciones comerciales."
+    				I18n.t("sales.waste.mode.title"),
+    				I18n.t("sales.waste.optionsUnavailable")
     		);
     		return;
     	}
@@ -1651,20 +1670,12 @@ public class VentasFrame extends BaseTpvFrame {
     	loadCustomizationForSelectedItem();
     }
 
-    private void onStock() {
-    	TpvDialogUtils.showInfo(
-    			this,
-    			"Stock",
-    			"Stock pendiente de implementar."
-    	);
-    }
-
     private void onReimprimir() {
     	if (isModoMerma()) {
     		TpvDialogUtils.showInfo(
     				this,
-    				"Modo merma",
-    				"En modo merma no está disponible la reimpresión de tickets."
+    				I18n.t("sales.waste.mode.title"),
+    				I18n.t("sales.waste.reprintUnavailable")
     		);
     		return;
     	}
@@ -1682,8 +1693,8 @@ public class VentasFrame extends BaseTpvFrame {
 
     		TpvDialogUtils.showError(
     				this,
-    				"Reimprimir ticket",
-    				"No se pudo abrir el último ticket.\n\n" + e.getMessage()
+    				I18n.t("sales.reprintLast.title"),
+    				I18n.t("sales.reprintLast.error", e.getMessage())
     		);
     	}
     }
@@ -1692,8 +1703,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (isModoMerma()) {
     		TpvDialogUtils.showInfo(
     				this,
-    				"Modo merma",
-    				"En modo merma no está disponible la consulta de tickets."
+    				I18n.t("sales.waste.mode.title"),
+    				I18n.t("sales.waste.ticketsUnavailable")
     		);
     		return;
     	}
@@ -1706,8 +1717,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (isModoMerma()) {
     		TpvDialogUtils.showInfo(
     				this,
-    				"Modo merma",
-    				"En modo merma no están disponibles las devoluciones."
+    				I18n.t("sales.waste.mode.title"),
+    				I18n.t("sales.waste.returnsUnavailable")
     		);
     		return;
     	}
@@ -1722,15 +1733,15 @@ public class VentasFrame extends BaseTpvFrame {
     	} catch (Exception e) {
     		TpvDialogUtils.showError(
     				this,
-    				"Devoluciones",
-    				"No se pudo abrir devoluciones.\n\n" + e.getMessage()
+    				I18n.t("sales.returns.title"),
+    				I18n.t("sales.returns.error", e.getMessage())
     		);
     	}
     }
 
     private void onVolverAdmin() {
     	boolean confirmado = confirmarCancelacionSiHayTicket(
-    			"Hay un pedido en curso.\n\n¿Deseas cancelarlo antes de volver al panel de administración?");
+    			I18n.t("sales.backAdmin.message"));
 
     	if (!confirmado) {
     		return;
@@ -1746,7 +1757,7 @@ public class VentasFrame extends BaseTpvFrame {
 
     private void onCerrarSesion() {
     	boolean confirmado = confirmarCancelacionSiHayTicket(
-    			"Hay un pedido en curso.\n\n¿Deseas cancelarlo antes de cerrar sesión?");
+    			I18n.t("sales.logout.message"));
 
     	if (!confirmado) {
     		return;
@@ -1762,7 +1773,7 @@ public class VentasFrame extends BaseTpvFrame {
 
     private void onNuevoPedido() {
     	boolean confirmado = confirmarCancelacionSiHayTicket(
-    			"Hay un pedido en curso.\n\n¿Deseas cancelarlo y crear un nuevo pedido?");
+    			I18n.t("sales.newOrder.message"));
 
     	if (!confirmado) {
     		return;
@@ -1790,7 +1801,7 @@ public class VentasFrame extends BaseTpvFrame {
 
     	return TpvDialogUtils.confirm(
     			this,
-    			"Pedido en curso",
+    			I18n.t("sales.orderInProgress.title"),
     			mensaje
     	);
     }
@@ -1812,8 +1823,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (productoOpt.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"SKU no encontrado",
-    				"No existe ningún producto con ese SKU en esta sucursal."
+    				I18n.t("sales.sku.notFound.title"),
+    				I18n.t("sales.sku.notFound.message")
     		);
     		return;
     	}
@@ -1823,8 +1834,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!productoCatalogo.isBotonHabilitado()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Producto no disponible",
-    				"Ese producto no se puede vender ahora.\n\nEstado: " + buildEstadoProducto(productoCatalogo)
+    				I18n.t("sales.productUnavailable.title"),
+    				I18n.t("sales.productUnavailable.statusMessage", buildEstadoProducto(productoCatalogo))
     		);
     		return;
     	}
@@ -1853,8 +1864,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (rows == null || rows.isEmpty()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Búsqueda de productos",
-    				"No hay productos disponibles para mostrar."
+    				I18n.t("sales.searchProduct.title"),
+    				I18n.t("sales.searchProduct.empty")
     		);
     		return;
     	}
@@ -1869,8 +1880,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!selectedRow.isBotonHabilitado()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Producto no disponible",
-    				"Ese producto no se puede vender ahora.\n\nEstado: " + selectedRow.getTextoEstado()
+    				I18n.t("sales.productUnavailable.title"),
+    				I18n.t("sales.productUnavailable.statusMessage", selectedRow.getTextoEstado())
     		);
     		return;
     	}
@@ -1990,18 +2001,18 @@ public class VentasFrame extends BaseTpvFrame {
 
     private String buildEstadoProducto(ProductoCatalogoDTO producto) {
     	if (!producto.isDisponible()) {
-    		return "No disponible";
+    		return I18n.t("sales.product.status.unavailable");
     	}
 
     	if (producto.isAgotado()) {
-    		return "Agotado";
+    		return I18n.t("sales.product.status.outOfStock");
     	}
 
     	if (producto.muestraContador()) {
-    		return "Stock: " + producto.getStockActual().stripTrailingZeros().toPlainString();
+    		return I18n.t("sales.product.status.stock", producto.getStockActual().stripTrailingZeros().toPlainString());
     	}
 
-    	return "Disponible";
+    	return I18n.t("sales.product.status.available");
     }
 
     /**
@@ -2082,8 +2093,8 @@ public class VentasFrame extends BaseTpvFrame {
 
     		TpvDialogUtils.showInfo(
     				this,
-    				"Merma registrada",
-    				"Merma registrada correctamente.\nID merma: " + result.getIdMerma()
+    				I18n.t("sales.merma.success.title"),
+    				I18n.t("sales.merma.success.messageWithId", result.getIdMerma())
     		);
 
     		clearAfterMerma();
@@ -2091,22 +2102,20 @@ public class VentasFrame extends BaseTpvFrame {
     	} catch (Exception e) {
     		TpvDialogUtils.showError(
     				this,
-    				"Error",
-    				"Error registrando la merma:\n" + e.getMessage()
+    				I18n.t("sales.merma.error.title"),
+    				I18n.t("sales.merma.error.detail", e.getMessage())
     		);
     		e.printStackTrace();
     	}
     }
 
     private MermaRequest buildMermaRequestFromDialog() {
-    	System.out.print(AppContext.getIdSucursal());
-
     	if (mermaDialogResult == null || !mermaDialogResult.isConfirmed()) {
-    		throw new IllegalStateException("No hay contexto válido de merma.");
+    		throw new IllegalStateException(I18n.t("sales.merma.invalidContext"));
     	}
 
     	if (ticketSession == null || ticketSession.getItems() == null || ticketSession.getItems().isEmpty()) {
-    		throw new IllegalStateException("No hay items en el ticket para registrar como merma.");
+    		throw new IllegalStateException(I18n.t("sales.merma.emptyTicket"));
     	}
 
     	MermaRequest request = new MermaRequest();
@@ -2250,7 +2259,7 @@ public class VentasFrame extends BaseTpvFrame {
     		return objectMapper.writeValueAsString(root);
 
     	} catch (JsonProcessingException e) {
-    		throw new RuntimeException("Error construyendo configuracion_json de merma.", e);
+    		throw new RuntimeException(I18n.t("sales.merma.configJsonError"), e);
     	}
     }
 
@@ -2268,7 +2277,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (item.hasTipoCafeSeleccionado()
     			&& item.getNombreTipoCafeSeleccionado() != null
     			&& !item.getNombreTipoCafeSeleccionado().isBlank()) {
-    		sb.append(" | Café: ").append(item.getNombreTipoCafeSeleccionado().trim());
+    		sb.append(" | ").append(I18n.t("sales.snapshot.coffee")).append(": ")
+    				.append(item.getNombreTipoCafeSeleccionado().trim());
     	}
 
     	for (TicketExtra extra : item.getExtras()) {
@@ -2281,7 +2291,8 @@ public class VentasFrame extends BaseTpvFrame {
 
     	for (String ask : item.getAskMes()) {
     		if (ask != null && !ask.isBlank()) {
-    			sb.append(" | Ask Me: ").append(ask.trim());
+    			sb.append(" | ").append(I18n.t("sales.snapshot.askMe")).append(": ")
+    					.append(ask.trim());
     		}
     	}
 
@@ -2304,26 +2315,26 @@ public class VentasFrame extends BaseTpvFrame {
 
     		TpvDialogUtils.showInfo(
     				this,
-    				"Merma registrada",
-    				"Merma registrada correctamente.\n\nID merma: " + result.getIdMerma()
+    				I18n.t("sales.merma.success.title"),
+    				I18n.t("sales.merma.success.messageWithId", result.getIdMerma())
     		);
 
     	} catch (Exception e) {
     		e.printStackTrace();
 
-    		String mensaje = "No se pudo registrar la merma.";
+    		String mensaje = I18n.t("sales.merma.error.message");
 
     		if (e.getMessage() != null) {
     			mensaje += "\n\n" + e.getMessage();
     		}
 
     		if (e.getCause() != null && e.getCause().getMessage() != null) {
-    			mensaje += "\n\nCausa: " + e.getCause().getMessage();
+    			mensaje += "\n\n" + I18n.t("common.cause") + ": " + e.getCause().getMessage();
     		}
 
     		TpvDialogUtils.showError(
     				this,
-    				"Error al registrar merma",
+    				I18n.t("sales.merma.error.title"),
     				mensaje
     		);
     	}
@@ -2333,8 +2344,8 @@ public class VentasFrame extends BaseTpvFrame {
     	if (!isAdminActual()) {
     		TpvDialogUtils.showWarning(
     				this,
-    				"Acceso denegado",
-    				"Solo administradores o encargados pueden registrar mermas."
+    				I18n.t("sales.accessDenied.title"),
+    				I18n.t("sales.accessDenied.adminOnly")
     		);
     		return;
     	}
