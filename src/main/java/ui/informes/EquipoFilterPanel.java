@@ -8,8 +8,6 @@ import enums.AgrupacionTemporal;
 import enums.ModoVistaInforme;
 import enums.TipoInforme;
 import model.Caja;
-import model.Extra;
-import model.Producto;
 import model.Sucursal;
 import model.Usuario;
 import service.AppServices;
@@ -24,9 +22,19 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+
 public class EquipoFilterPanel extends BaseInformeFilterPanel {
 
-    private final AppServices services;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * 
+	 */
+	
+	private final AppServices services;
 
     private final JSpinner spFechaDesde;
     private final JSpinner spFechaHasta;

@@ -1,8 +1,10 @@
 package app;
 
+import java.util.Set;
+
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-
+import util.AppIcon;
 import config.ConfigLoader;
 import config.DbPool;
 import dao.AuditoriaDao;
@@ -90,9 +92,11 @@ public class MainApp {
         ConfigLoader.load();
         I18n.setLanguage(ConfigLoader.getAppLanguage());
         TpvLookAndFeelManager.apply(ConfigLoader.getAppLookAndFeel());
-
+        System.out.println("ICONOS CARGADOS: " + AppIcon.getIconImages().size());
+        AppIcon.applyToTaskbar();
         System.out.println("[I18N] Idioma cargado: " + I18n.getCurrentLanguageCode());
         DbPool.init();
+        
 
         // =====================================================
         // 2) DAOs GENERALES

@@ -3,6 +3,7 @@ package ui.common;
 import app.AppContext;
 import service.AppServices;
 import ui.dialog.MonitorPreparacionDialog;
+import util.AppIcon;
 import util.I18n;
 
 import javax.swing.*;
@@ -17,7 +18,11 @@ import java.awt.*;
  */
 public abstract class BaseTpvFrame extends JFrame {
 
-    protected final Runnable onLogoutNavigate;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	protected final Runnable onLogoutNavigate;
     protected final AppServices appServices;
 
     private final TpvTopBar topBar;
@@ -29,6 +34,7 @@ public abstract class BaseTpvFrame extends JFrame {
         super(screenTitle);
         this.onLogoutNavigate = onLogoutNavigate;
         this.appServices = appServices;
+        AppIcon.applyTo(this);
 
         // ----------------------------
         // VENTANA

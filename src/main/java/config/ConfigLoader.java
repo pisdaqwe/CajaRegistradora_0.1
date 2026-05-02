@@ -13,10 +13,13 @@ import java.util.Properties;
 
 public final class ConfigLoader {
 
-    private static final String CONFIG_FILE = "config.properties";
+	private static final String CONFIG_FILE = "config.properties";
 
-    private static Properties properties;
-    private static boolean loaded = false;
+	private static Properties properties;
+	private static boolean loaded = false;
+
+	private static Path loadedConfigPath;
+	private static boolean externalConfigLoaded = false;
 
     private ConfigLoader() {
         // Evita instanciación
@@ -31,21 +34,43 @@ public final class ConfigLoader {
             return;
         }
 
-        try (InputStream is = ConfigLoader.class
-                .getClassLoader()
-                .getResourceAsStream(CONFIG_FILE)) {
+        properties = new Properties();
 
-            if (is == null) {
-                throw new RuntimeException(
-                        "No se encontró " + CONFIG_FILE + " en resources"
-                );
+        try {
+            Path externalPath = Paths.get(System.getProperty("user.dir"), CONFIG_FILE)
+                    .toAbsolutePath()
+                    .normalize();
+
+            if (Files.exists(externalPath) && Files.isRegularFile(externalPath)) {
+                try (InputStream is = Files.newInputStream(externalPath)) {
+                    properties.load(is);
+                }
+
+                loadedConfigPath = externalPath;
+                externalConfigLoaded = true;
+                loaded = true;
+
+                System.out.println("[CONFIG] Configuración externa cargada: " + externalPath);
+                return;
             }
 
-            properties = new Properties();
-            properties.load(is);
-            loaded = true;
+            try (InputStream is = ConfigLoader.class
+                    .getClassLoader()
+                    .getResourceAsStream(CONFIG_FILE)) {
 
-            System.out.println("[CONFIG] Configuración cargada correctamente.");
+                if (is == null) {
+                    throw new RuntimeException(
+                            "No se encontró " + CONFIG_FILE + " ni externo ni en resources"
+                    );
+                }
+
+                properties.load(is);
+                loadedConfigPath = null;
+                externalConfigLoaded = false;
+                loaded = true;
+
+                System.out.println("[CONFIG] Configuración interna cargada desde resources.");
+            }
 
         } catch (Exception e) {
             System.err.println("[ERROR] Error cargando configuración");
@@ -341,6 +366,15 @@ public final class ConfigLoader {
 
     private static void saveProperties() {
         try {
+            if (externalConfigLoaded && loadedConfigPath != null) {
+                try (OutputStream os = Files.newOutputStream(loadedConfigPath)) {
+                    properties.store(os, "Configuracion actualizada desde la aplicacion");
+                }
+
+                System.out.println("[CONFIG] Configuración externa actualizada: " + loadedConfigPath);
+                return;
+            }
+
             URL url = ConfigLoader.class.getClassLoader().getResource(CONFIG_FILE);
 
             if (url == null) {
@@ -349,15 +383,18 @@ public final class ConfigLoader {
 
             if (!"file".equalsIgnoreCase(url.getProtocol())) {
                 throw new IllegalStateException(
-                        "El archivo config.properties no es editable en este modo de ejecución."
+                        "El archivo config.properties está dentro del JAR y no es editable. "
+                                + "Crea un config.properties externo junto al ejecutable."
                 );
             }
 
             Path path = Paths.get(url.toURI());
 
             try (OutputStream os = Files.newOutputStream(path)) {
-                properties.store(os, "Configuracion actualizada desde Herramientas de Tecnico");
+                properties.store(os, "Configuracion actualizada desde la aplicacion");
             }
+
+            System.out.println("[CONFIG] Configuración interna actualizada: " + path);
 
         } catch (Exception e) {
             throw new RuntimeException("No se pudo guardar config.properties.", e);
